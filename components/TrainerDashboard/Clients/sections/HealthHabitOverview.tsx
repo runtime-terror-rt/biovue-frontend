@@ -68,7 +68,7 @@ export default function HealthHabitOverview({
       title: "Hydration",
       value:
         apiMetrics?.hydration !== null
-          ? `${apiMetrics.hydration} oz`
+          ? `${apiMetrics.hydration} Ounces`
           : `${staticMetrics.hydration.value} ${staticMetrics.hydration.unit}`,
       icon: Droplet,
     },

@@ -44,9 +44,16 @@ export default function NotificationSettings() {
     try {
       console.log("Updating:", key, newValue);
 
-      await updateNotificationSettings({
-        [key]: newValue,
-      }).unwrap();
+      // Send the entire configuration (minus potentially restrictive timestamps/IDs if handled dynamically, but typically fine to send back what we received)
+      const payload: any = { ...localSettings, [key]: newValue };
+      
+      // Clean up fields that might cause backend validation issues if it's a strict schema
+      delete payload.id;
+      delete payload.user_id;
+      delete payload.created_at;
+      delete payload.updated_at;
+
+      await updateNotificationSettings(payload).unwrap();
 
       toast.success("Notification settings updated");
     } catch (error) {

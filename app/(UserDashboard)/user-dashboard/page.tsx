@@ -24,27 +24,27 @@ import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import LogTodayModal from "@/components/dashboard/LogTodayModal";
 import ChangeSourceModal from "@/components/dashboard/ChangeSourceModal";
-import NotificationBell from "@/components/dashboard/NotificationBell";
-import ProfileDropdown from "@/components/dashboard/ProfileDropdown";
-import ProjectionLimitIndicator from "@/components/dashboard/ProjectionLimitIndicator";
 import ChartsNutrition from "@/components/UserDashboard/Dashboard/ChartsNutrition";
+import DashboardBanner from "@/components/UserDashboard/Dashboard/DashboardBanner";
+import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { useGetHealthReportQuery } from "@/redux/features/api/userDashboard/dashboard/health-report";
-import { useGetInsightsQuery } from "@/redux/features/api/userDashboard/insightsApi";
+import { useGetAiCurrentInsightsQuery } from "@/redux/features/api/userDashboard/Projection/AIInsightsAPI";
 import { useGetUserOverviewChartQuery } from "@/redux/features/api/userDashboard/dashboardApi";
 
 // --- Main Page ---
 const UserDashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
-  const userName = currentUser?.name || "User";
+  const { data: profileResponse } = useGetProfileQuery(currentUser?.id, { skip: !currentUser?.id });
+  const userName = profileResponse?.data?.name || currentUser?.name || "User";
+  console.log(currentUser, "currentUser");
 
   const [showLogModal, setShowLogModal] = useState(false);
   const [showSourceModal, setShowSourceModal] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [dataSource, setDataSource] = useState<"device" | "manual">("device");
   const [days, setDays] = useState(7);
   
   const { data: healthReport, isLoading: isHealthLoading } = useGetHealthReportQuery();
-  const { data: insightsData, isLoading: isInsightsLoading } = useGetInsightsQuery({});
+  const { data: insightsData, isLoading: isInsightsLoading } = useGetAiCurrentInsightsQuery(currentUser?.id, { skip: !currentUser?.id });
   const { data: chartResponse, isLoading: isChartLoading } = useGetUserOverviewChartQuery(days);
 
   const [habitData, setHabitData] = useState({
@@ -74,29 +74,15 @@ const UserDashboard = () => {
   const summary = rawData?.summary;
   const healthOverview = rawData?.health_overview;
   const chartData = chartResponse?.charts;
+  const dynamicInsights = (insightsData?.insights || insightsData?.data) || [];
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header - Only for Dashboard Overview */}
-      <header className="sticky top-0 z-20 flex items-center justify-between py-4 bg-white border-b border-gray-100 px-6 w-full">
-        <h1 className="text-xl font-semibold text-[#1F2D2E]">Dashboard</h1>
-        <div className="flex items-center gap-6 ml-auto">
-          <ProjectionLimitIndicator />
-          <NotificationBell />
-          <div className="flex items-center gap-3 pr-2">
-            <ProfileDropdown roleLabel="User" settingsHref="/user-dashboard/settings" />
-          </div>
-          <Link href="/user-dashboard/upgrade">
-            <button className="flex items-center gap-2 bg-[#0FA4A9] text-white px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
-              <Crown size={18} fill="currentColor" />
-              Upgrade
-            </button>
-          </Link>
-        </div>
-      </header>
-
       {/* Main Content Area with Padding */}
       <div className="flex flex-col gap-6 py-6 container mx-auto pb-12">
+        {/* Top Banner - Mirrored from Landing Page */}
+        <DashboardBanner />
+
         {/* Welcome Message */}
         <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
           <h2 className="text-lg font-bold text-[#1F2D2E] mb-1">
@@ -264,9 +250,9 @@ const UserDashboard = () => {
             {
               label: "Hydration",
               value: healthOverview?.hydration?.current_glasses || 0,
-              unit: "glasses",
+              unit: "Ounces",
               status: "Target",
-              desc: healthOverview?.hydration?.target || "N/A",
+              desc: (healthOverview?.hydration?.target || "N/A").replace(/glasses/gi, "Ounces"),
               color: "text-[#3A86FF]",
             },
             {
@@ -292,7 +278,7 @@ const UserDashboard = () => {
                       ? Number.isInteger(metric.value)
                         ? metric.value
                         : metric.value.toFixed(2)
-                      : metric.value}
+                     : metric.value}
                 </span>
                 <span className="text-[#5F6F73] text-sm font-medium">
                   {metric.unit}
@@ -374,7 +360,7 @@ const UserDashboard = () => {
               <div className="col-span-2 flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-[#0FA4A9]" />
               </div>
-            ) : (insightsData?.data || []).slice(0, 2).map((insight: any, i: number) => {
+            ) : dynamicInsights.slice(0, 2).map((insight: any, i: number) => {
               const cat = insight.category?.toLowerCase() || "";
               const categoryIcon = cat.includes("nutrition") ? <Zap size={20} className="text-[#1F2D2E]" />
                 : cat.includes("cardio") || cat.includes("heart") ? <HeartPulse size={20} className="text-[#1F2D2E]" />
@@ -414,20 +400,20 @@ const UserDashboard = () => {
                 </div>
               );
             })}
-            {!isInsightsLoading && (!insightsData?.data || insightsData.data.length === 0) && (
+            {!isInsightsLoading && dynamicInsights.length === 0 && (
               <>
                 {[
                   {
-                    title: "Improve Diet Quality",
-                    desc: '"Based on logged meals and nutrition quality"',
-                    icon: <Repeat size={20} className="text-[#3A86FF]" />,
+                    title: "URGENT BIOMETRIC DATA VERIFICATION",
+                    desc: '"The recorded height (432.0cm) and weight (91.0 lbs) result in a BMI of 2.2, which is physiologically impossible. This data suggests a major entry error."',
+                    icon: <Scale size={20} className="text-[#3A86FF]" />,
                     badge: "HIGH PRIORITY",
                     iconBg: "bg-[#E4EFFF]",
                   },
                   {
-                    title: "Optimize Sleep Duration",
-                    desc: '"Better recovery and mental clarity"',
-                    icon: <Moon size={20} className="text-[#3A86FF]" />,
+                    title: "ADDRESS ANXIETY RISK FACTORS",
+                    desc: '"Anxiety is identified as your primary health risk, which can impact sleep quality, recovery, and overall metabolic health."',
+                    icon: <HeartPulse size={20} className="text-[#3A86FF]" />,
                     badge: "HIGH PRIORITY",
                     iconBg: "bg-[#E4EFFF]",
                   },

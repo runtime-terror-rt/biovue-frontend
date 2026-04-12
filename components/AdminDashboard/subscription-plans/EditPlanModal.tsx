@@ -224,7 +224,7 @@ export default function EditPlanModal({
                 />
               </div>
 
-              <div className="pt-4 flex items-center gap-4">
+              {/* <div className="pt-4 flex items-center gap-4">
                 <span
                   className={`text-sm font-medium transition-colors ${formData.status ? "text-[#059669]" : "text-[#6B7280]"}`}
                 >
@@ -234,7 +234,7 @@ export default function EditPlanModal({
                   checked={formData.status}
                   onChange={(val) => setFormData({ ...formData, status: val })}
                 />
-              </div>
+              </div> */}
             </div>
           ) : (
             /* PROFESSIONAL PLAN DESIGN */

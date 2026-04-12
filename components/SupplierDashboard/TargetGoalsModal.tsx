@@ -11,6 +11,7 @@ import {
   useUpdateSupplierNoteMutation, 
   useDeleteSupplierNoteMutation 
 } from "@/redux/features/api/SupplierDashboard/SupplierNote";
+import { useGetTargetGoalQuery } from "@/redux/features/api/TrainerDashboard/Clients/TargetGoal/PostTargetGoal";
 import { toast } from "sonner";
 
 interface TargetGoalsModalProps {
@@ -40,6 +41,19 @@ export default function TargetGoalsModal({
   user,
 }: TargetGoalsModalProps) {
   if (!isOpen || !user) return null;
+
+  return <TargetGoalsModalContent onClose={onClose} user={user} />;
+}
+
+// Inner component so hooks are always called after the guard above
+function TargetGoalsModalContent({
+  onClose,
+  user,
+}: {
+  onClose: () => void;
+  user: User;
+}) {
+  const { data: goals = [], isLoading: goalsLoading } = useGetTargetGoalQuery(user.id);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -81,13 +95,18 @@ export default function TargetGoalsModal({
 
         {/* Content */}
         <div className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-          {user.target_goals && user.target_goals.length > 0 ? (
+          {/* Goals Section */}
+          {goalsLoading ? (
+            <div className="flex justify-center py-10 mb-10">
+              <Loader2 className="animate-spin text-[#3A86FF]" size={32} />
+            </div>
+          ) : goals.length > 0 ? (
             <div className="space-y-6 mb-10">
               <div className="flex items-center gap-2 mb-4">
                 <Target className="text-[#3A86FF]" size={20} />
                 <h3 className="text-xl font-bold text-[#041228]">Target Goals</h3>
               </div>
-              {[...user.target_goals].reverse().map((goal, index) => (
+              {[...goals].reverse().map((goal, index) => (
                 <div
                   key={goal.id}
                   className="p-6 bg-[#F8FBFA] rounded-3xl border border-[#D9E6FF] space-y-6"
@@ -96,11 +115,11 @@ export default function TargetGoalsModal({
                     <div className="flex items-center gap-2 text-[#3A86FF]">
                       <Calendar size={18} />
                       <span className="font-bold text-sm uppercase tracking-wider">
-                        Goal Period {user.target_goals.length - index}
+                        Goal Period {goals.length - index}
                       </span>
                     </div>
                     <span className="text-xs font-bold text-[#94A3B8]">
-                      {new Date(goal.start_date).toLocaleDateString()} - {new Date(goal.end_date).toLocaleDateString()}
+                      {new Date(goal.start_date).toLocaleDateString()} – {new Date(goal.end_date).toLocaleDateString()}
                     </span>
                   </div>
 
@@ -137,7 +156,7 @@ export default function TargetGoalsModal({
                       <p className="text-xl font-bold text-[#041228]">{goal.sleep_target}</p>
                     </div>
 
-                    {goal.water_target && (
+                    {goal.water_target != null && (
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-[#94A3B8] mb-1">
                           <Droplets size={14} />
@@ -291,15 +310,16 @@ function SupplierNotesSection({ userId }: { userId: number }) {
                       {note.note}
                     </p>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {/* <button
+                      <button
                         onClick={() => {
                           setEditingNoteId(note.id);
                           setEditingNoteText(note.note);
                         }}
                         className="p-2 text-gray-400 hover:text-[#3A86FF] hover:bg-[#3A86FF]/10 rounded-lg transition-all cursor-pointer"
+                        title="Edit note"
                       >
                         <Edit2 size={16} />
-                      </button> */}
+                      </button>
                       <button
                         onClick={() => handleDeleteNote(note.id)}
                         disabled={isDeleting}

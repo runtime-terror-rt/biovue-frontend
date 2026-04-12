@@ -236,7 +236,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                 <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
                     <Droplets size={14} className="text-[#3A86FF]" />
-                    Water Glasses
+                    Water Ounces
                   </label>
                   <input
                     type="number"

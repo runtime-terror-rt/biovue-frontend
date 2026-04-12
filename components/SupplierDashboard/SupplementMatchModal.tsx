@@ -77,6 +77,26 @@ export default function SupplementMatchModal({
     }
   };
 
+  const buildSupplementMessage = (supp: MatchedProduct): string => {
+    const benefits = supp.health_benefits
+      .slice(0, 3)
+      .map((b) => `• ${b}`)
+      .join("\n");
+    return [
+      `Recommended for You:`,
+      `${supp.name}`,
+      ``,
+      `Why this is recommended`,
+      `${supp.match_reason}`,
+      ``,
+      `Key Benefits`,
+      benefits,
+      ``,
+      `Where to Get It`,
+      `${supp.redirect_url}`,
+    ].join("\n");
+  };
+
   const handleSuggestToUser = async (supp: MatchedProduct) => {
     if (!supplier_id) {
       toast.error("Supplier ID missing");
@@ -84,16 +104,7 @@ export default function SupplementMatchModal({
     }
 
     try {
-      // ✅ Ensure AI data exists (optional safety)
-      if (!matchData?.matched_products?.length) {
-        await findMatch({
-          user_id: user.id.toString(),
-          supplier_id: supplier_id.toString(),
-          user_data: user,
-        }).unwrap();
-      }
-
-      const message = `I recommend ${supp.name} for you.\n\nReason: ${supp.match_reason}\n\nBenefits: ${supp.health_benefits.join(", ")}\n\nView: ${supp.redirect_url}`;
+      const message = buildSupplementMessage(supp);
 
       await sendMessage({
         receiver_id: user.id,
@@ -112,12 +123,15 @@ export default function SupplementMatchModal({
 
     try {
       const allSupps = matchData.matched_products;
-      const intro = `I have analyzed your profile and found ${allSupps.length} supplement matches for you:\n\n`;
-      const details = allSupps.map((supp, index) => 
-        `${index + 1}. ${supp.name}\nReason: ${supp.match_reason}\nBenefits: ${supp.health_benefits.join(", ")}\nView: ${supp.redirect_url}`
-      ).join("\n\n---\n\n");
-      
-      const message = intro + details;
+
+      // Send one combined message with all supplements in the simplified format
+      const sections = allSupps.map((supp, index) =>
+        `— Recommendation ${index + 1} —\n` + buildSupplementMessage(supp)
+      );
+
+      const message =
+        `Hi! I've analysed your profile and found ${allSupps.length} recommendations for you:\n\n` +
+        sections.join("\n\n" + "─".repeat(30) + "\n\n");
 
       await sendMessage({
         receiver_id: user.id,

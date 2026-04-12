@@ -59,7 +59,7 @@ const baseDetails = {
     stress: "Low" as const,
     hydration: {
       value: 64,
-      unit: "oz",
+      unit: "Ounces",
     },
   },
   coachSetGoals: {

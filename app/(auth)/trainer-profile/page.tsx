@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronLeft, Plus, X, Check, Save, Camera } from "lucide-react";
+import { ChevronLeft, Plus, X, Check, Save, Camera, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useCreateUpdateProfileMutation } from "@/redux/features/api/profileApi";
+import { useCreateUpdateProfileMutation, useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import Link from "next/link";
 export default function TrainerProfile() {
   const router = useRouter();
   const user = useSelector(selectCurrentUser);
+  const { data: profileResponse } = useGetProfileQuery(user?.id, { skip: !user?.id });
   const [createUpdateProfile, { isLoading }] = useCreateUpdateProfileMutation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,6 +25,8 @@ export default function TrainerProfile() {
     weight: "",
     location: "",
     experience_years: "",
+    zipcode: "",
+    prof_service_type: "local",
   });
 
   const [specialties, setSpecialties] = useState<string[]>([
@@ -44,10 +47,16 @@ export default function TrainerProfile() {
   const [newService, setNewService] = useState("");
 
   useEffect(() => {
-    if (user?.name) {
-      setFormData((prev) => ({ ...prev, name: user.name }));
+    if (user || profileResponse) {
+      setFormData((prev) => ({
+        ...prev,
+        // Prioritize profileResponse since it matches the Dashboard behavior
+        name: prev.name || profileResponse?.data?.name || user?.name || "",
+        zipcode: prev.zipcode || profileResponse?.data?.profile?.zipcode || user?.profile?.zipcode || "",
+        prof_service_type: prev.prof_service_type !== "local" ? prev.prof_service_type : (profileResponse?.data?.profile?.prof_service_type || user?.profile?.prof_service_type || "local"),
+      }));
     }
-  }, [user]);
+  }, [user, profileResponse]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -111,6 +120,12 @@ export default function TrainerProfile() {
     data.append("bio", bio);
     data.append("user_type", "professional");
     data.append("profession_type", "trainer_coach");
+
+    if (formData.name) {
+      data.append("name", formData.name);
+    }
+    data.append("zipcode", formData.zipcode);
+    data.append("prof_service_type", formData.prof_service_type);
 
     specialties.forEach((s) => data.append("specialties[]", s));
     services.forEach((s) => data.append("services[]", s));
@@ -210,9 +225,14 @@ export default function TrainerProfile() {
                   <label className="text-xs font-bold text-[#64748B] uppercase tracking-wide">
                     Full Name
                   </label>
-                  <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-5 py-4 text-sm font-medium text-[#1E293B]">
-                    {formData.name || "Alex Thompson"}
-                  </div>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Alex Thompson"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-5 py-4 text-sm font-medium text-[#1E293B] focus:outline-none focus:border-[#3B82F6]"
+                  />
                 </div>
               </div>
 
@@ -297,6 +317,37 @@ export default function TrainerProfile() {
                     placeholder="5"
                     className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-5 py-4 text-sm font-medium text-[#1E293B] focus:outline-none focus:border-[#3B82F6]"
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-[#64748B] uppercase tracking-wide">
+                    Zip Code
+                  </label>
+                  <input
+                    type="text"
+                    name="zipcode"
+                    value={formData.zipcode}
+                    onChange={handleChange}
+                    placeholder="12345"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-5 py-4 text-sm font-medium text-[#1E293B] focus:outline-none focus:border-[#3B82F6]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-[#64748B] uppercase tracking-wide">
+                    Service Type
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="prof_service_type"
+                      value={formData.prof_service_type}
+                      onChange={handleChange}
+                      className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-5 py-4 text-sm font-medium text-[#1E293B] focus:outline-none focus:border-[#3B82F6] appearance-none"
+                    >
+                      <option value="local">Local</option>
+                      <option value="remote">Remote</option>
+                      <option value="both">Both</option>
+                    </select>
+                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#98A2B3] pointer-events-none" />
+                  </div>
                 </div>
               </div>
             </div>

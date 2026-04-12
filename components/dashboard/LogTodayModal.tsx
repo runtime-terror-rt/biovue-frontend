@@ -59,7 +59,7 @@ const LogTodayModal = ({
       weight: Number(habitData.weight) || 0,
       daily_steps: Number(habitData.steps) || 0,
       sleep_hours: Number(habitData.sleep) || 0,
-      water_glasses: 8, // Fixed mapping or from data? Modal doesn't have water count yet
+      water_glasses: Number(habitData.water) || 64, 
       log_date: new Date().toISOString().slice(0, 10),
     };
 
@@ -338,10 +338,10 @@ const LogTodayModal = ({
                 className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-[#5F6F73] text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-50"
               >
                 <option value="">Select.....</option>
-                <option value="less_1L">Less than 1L</option>
-                <option value="1_2L">1-2 Liters</option>
-                <option value="2_3L">2-3 Liters</option>
-                <option value="3L_plus">3+ Liters</option>
+                <option value="30">Less than 32 Ounces</option>
+                <option value="64">32-64 Ounces</option>
+                <option value="96">64-96 Ounces</option>
+                <option value="128">96+ Ounces</option>
               </select>
             </div>
           </div>

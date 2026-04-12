@@ -10,6 +10,7 @@ import Tooltip from "@/components/Tooltip";
 
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectCurrentUser } from "@/redux/features/slice/authSlice";
+import { useSubscriptionStatus } from "@/lib/hooks/useSubscriptionStatus";
 
 type Role = "user" | "trainer" | "admin" | "nutritionist";
 
@@ -29,17 +30,19 @@ export default function Sidebar({ role }: SidebarProps) {
   const [openSubmenus, setOpenSubmenus] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
-  const isRestricted = (() => {
-    if (role !== "user" || !user?.created_at) return false;
-
-    const createdDate = new Date(user.created_at);
-    const today = new Date();
-    const diffInDays = (today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
-
-    return diffInDays > 7 || !user.plan_id;
-  })();
+  const restrictionState = useSubscriptionStatus();
+  const isRestricted = role === "user" ? restrictionState.restricted : false;
 
   const restrictedLabels = ["Projections", "Projection Galary", "Insights", "Habits", "Support", "Message"];
+
+  const getTooltipMessage = (reason: string) => {
+    switch (reason) {
+      case "low_credits_or_expiring_soon": return "Low credits or subscription expiring soon! Please upgrade to maintain access.";
+      case "subscription_expired_or_no_credits": return "Subscription expired or no credits remaining! Please upgrade your plan to continue.";
+      case "trial_ended": return "Trial period ended. Please choose a plan to continue.";
+      default: return "To access this feature, you need an active subscription plan.";
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -148,7 +151,7 @@ export default function Sidebar({ role }: SidebarProps) {
                 {/* Parent Menu Item */}
                 <div className="flex items-center group relative">
                   {isItemRestricted ? (
-                    <Tooltip message="To access this feature, you need an active subscription plan.">
+                    <Tooltip message={getTooltipMessage(restrictionState.reason)}>
                       <div
                         className={`flex-1 flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap text-gray-400 opacity-50 cursor-not-allowed`}
                       >
@@ -195,9 +198,8 @@ export default function Sidebar({ role }: SidebarProps) {
 
                         if (isChildRestricted) {
                           return (
-                            <Tooltip message="To access this feature, you need an active subscription plan.">
+                            <Tooltip key={child.label} message={getTooltipMessage(restrictionState.reason)}>
                               <div
-                                key={child.label}
                                 className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors text-gray-400 opacity-50 cursor-not-allowed`}
                               >
                                 - {child.label}

@@ -181,7 +181,6 @@ export default function AddPlanModal({
                     className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl appearance-none cursor-pointer"
                   >
                     <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
                     <option value="annual">Annual</option>
                   </select>
                 </div>
@@ -311,7 +310,6 @@ export default function AddPlanModal({
                       className="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl appearance-none"
                     >
                       <option value="monthly">Monthly</option>
-                      <option value="yearly">Yearly</option>
                       <option value="annual">Annual</option>
                     </select>
                   </div>

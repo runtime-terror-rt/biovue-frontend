@@ -1,6 +1,14 @@
 "use client";
 
-import { AlertCircleIcon, Edit2, MoreVertical, Trash2, Plus, Filter } from "lucide-react";
+import {
+  AlertCircleIcon,
+  Edit2,
+  MoreVertical,
+  Trash2,
+  Plus,
+  Filter,
+  ShieldCheck,
+} from "lucide-react";
 import Swal from "sweetalert2";
 import {
   useGetPlansQuery,
@@ -9,6 +17,7 @@ import {
 } from "@/redux/features/api/adminDashboard/plan";
 import { useState } from "react";
 import ViewPlanDetailsModal from "./view-details";
+import { useTogglePlanStatusMutation } from "@/redux/features/api/adminDashboard/PlanStatus";
 
 interface SubscriptionPlansTableProps {
   plans: Plan[];
@@ -23,12 +32,42 @@ export default function SubscriptionPlansTable({
 }: SubscriptionPlansTableProps) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [statusPlan, setStatusPlan] = useState<Plan | null>(null);
+  const [deletePlan, { isLoading: isDeleting }] = useDeletePlanMutation();
+  const [toggleStatus, { isLoading: isUpdating }] =
+    useTogglePlanStatusMutation();
   const [isViewOpen, setIsViewOpen] = useState(false);
   const getTypeColor = (type: string) => {
     if (type.toLowerCase() === "individual") {
       return "bg-[#8746E726] text-[#8746E7] border-[#8746E7]";
     }
     return "bg-[#0FA4A926] text-[#0FA4A9] border-[#0FA4A9]";
+  };
+
+  const handleToggleStatus = async () => {
+    if (!statusPlan) return;
+
+    try {
+      const res = await toggleStatus(statusPlan.id).unwrap();
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: res.message || "Plan status updated",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      setIsStatusModalOpen(false);
+      setStatusPlan(null);
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: "Could not update plan status",
+      });
+    }
   };
 
   return (
@@ -81,8 +120,12 @@ export default function SubscriptionPlansTable({
                 ${Number(plan.price).toFixed(2)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`flex items-center gap-2 text-sm ${plan.status ? "text-[#22C55E]" : "text-red-500"}`}>
-                  <span className={`w-2 h-2 rounded-full ${plan.status ? "bg-[#22C55E]" : "bg-red-500"}`}></span>
+                <span
+                  className={`flex items-center gap-2 text-sm ${plan.status ? "text-[#22C55E]" : "text-red-500"}`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${plan.status ? "bg-[#22C55E]" : "bg-red-500"}`}
+                  ></span>
                   {plan.status ? "Active" : "Inactive"}
                 </span>
               </td>
@@ -124,23 +167,66 @@ export default function SubscriptionPlansTable({
                       </button>
                       <button
                         onClick={() => {
+                          setStatusPlan(plan);
+                          setIsStatusModalOpen(true);
                           setOpenMenuId(null);
+                        }}
+                        className="w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                      >
+                        <ShieldCheck /> Update Status
+                      </button>
+                      <button
+                        // onClick={() => {
+                        //   setOpenMenuId(null);
+                        //   Swal.fire({
+                        //     title: "Are you sure?",
+                        //     text: "You won't be able to revert this!",
+                        //     icon: "warning",
+                        //     showCancelButton: true,
+                        //     confirmButtonColor: "#3085d6",
+                        //     cancelButtonColor: "#d33",
+                        //     confirmButtonText: "Yes, delete it!",
+                        //   }).then((result) => {
+                        //     if (result.isConfirmed) {
+                        //       onDelete(plan.id.toString());
+                        //       Swal.fire({
+                        //         title: "Deleted!",
+                        //         text: "The plan has been deleted.",
+                        //         icon: "success",
+                        //       });
+                        //     }
+                        //   });
+                        // }}
+                        onClick={() => {
+                          setOpenMenuId(null);
+
                           Swal.fire({
                             title: "Are you sure?",
                             text: "You won't be able to revert this!",
                             icon: "warning",
                             showCancelButton: true,
-                            confirmButtonColor: "#3085d6",
-                            cancelButtonColor: "#d33",
+                            confirmButtonColor: "#d33",
+                            cancelButtonColor: "#6b7280",
                             confirmButtonText: "Yes, delete it!",
-                          }).then((result) => {
+                          }).then(async (result) => {
                             if (result.isConfirmed) {
-                              onDelete(plan.id.toString());
-                              Swal.fire({
-                                title: "Deleted!",
-                                text: "The plan has been deleted.",
-                                icon: "success",
-                              });
+                              try {
+                                await deletePlan(plan.id).unwrap();
+
+                                Swal.fire({
+                                  icon: "success",
+                                  title: "Deleted!",
+                                  text: "The plan has been deleted.",
+                                  timer: 1500,
+                                  showConfirmButton: false,
+                                });
+                              } catch (error) {
+                                Swal.fire({
+                                  icon: "error",
+                                  title: "Failed!",
+                                  text: "Something went wrong while deleting.",
+                                });
+                              }
                             }
                           });
                         }}
@@ -156,6 +242,62 @@ export default function SubscriptionPlansTable({
           ))}
         </tbody>
       </table>
+      {isStatusModalOpen && statusPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl">
+            <h2 className="text-lg font-bold mb-4 text-center">
+              Update Plan Status
+            </h2>
+
+            <p className="text-sm text-gray-500 text-center mb-6">
+              Choose status for <strong>{statusPlan.name}</strong>
+            </p>
+
+            <div className="flex gap-3">
+              {/* Activate */}
+              <button
+                disabled={isUpdating || statusPlan.status === true}
+                onClick={handleToggleStatus}
+                className={`flex-1 py-2 rounded-lg transition font-medium
+      ${
+        statusPlan.status
+          ? "bg-green-100 text-green-600 cursor-not-allowed border border-green-300"
+          : "bg-green-600 text-white hover:bg-green-700"
+      }
+    `}
+              >
+                {statusPlan.status ? "Active ✓" : "Activate"}
+              </button>
+
+              {/* Deactivate */}
+              <button
+                disabled={isUpdating || statusPlan.status === false}
+                onClick={handleToggleStatus}
+                className={`flex-1 py-2 rounded-lg transition font-medium
+      ${
+        !statusPlan.status
+          ? "bg-red-100 text-red-500 cursor-not-allowed border border-red-300"
+          : "bg-red-500 text-white hover:bg-red-600"
+      }
+    `}
+              >
+                {!statusPlan.status ? "Inactive ✓" : "Deactivate"}
+              </button>
+            </div>
+
+            {/* Cancel */}
+            <button
+              onClick={() => {
+                setIsStatusModalOpen(false);
+                setStatusPlan(null);
+              }}
+              className="mt-4 w-full text-sm text-gray-500 hover:underline"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       <ViewPlanDetailsModal
         isOpen={isViewOpen}
         plan={selectedPlan}

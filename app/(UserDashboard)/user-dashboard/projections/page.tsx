@@ -41,6 +41,7 @@ import {
 } from "@/redux/features/api/userDashboard/Projection/AIInsightsAPI";
 import { useRouter } from "next/navigation";
 import ProjectionGallery from "@/components/dashboard/ProjectionGallery";
+import SubscriptionGuard from "@/components/common/SubscriptionGuard";
 
 type Step = "input" | "loading" | "results";
 type TimeHorizon = "6 months" | "1 year" | "5 years";
@@ -611,31 +612,33 @@ const ProjectionsPage = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 md:p-10 container mx-auto">
-      {step === "loading" && renderLoadingStep()}
-      {step === "input" && renderInputStep()}
-      {step === "results" && renderResultsStep()}
+    <SubscriptionGuard>
+      <div className="min-h-screen p-6 md:p-10 container mx-auto">
+        {step === "loading" && renderLoadingStep()}
+        {step === "input" && renderInputStep()}
+        {step === "results" && renderResultsStep()}
 
-      {/* Footer Disclaimer for Input Page */}
-      {step === "input" && (
-        <div className="mt-12 bg-[#E4F4F5] rounded-xl p-6 border border-[#0FA4A9]/20 flex items-start gap-4">
-          <AlertCircle className="text-[#1F2D2E] shrink-0" size={20} />
-          <p className="text-[10px] text-[#1F2D2E] leading-relaxed">
-            <span className="font-bold uppercase tracking-wider">
-              Disclaimer:
-            </span>{" "}
-            Information and projections provided by BioVue Digital Wellness are
-            for informational and illustrative purposes only, reflect relative
-            changes rather than exact outcomes, and do not constitute medical
-            advice. BioVue Digital Wellness is not liable for decisions or
-            outcomes based on this information; users should consult a qualified
-            medical professional for medical guidance.
-          </p>
-        </div>
-      )}
+        {/* Footer Disclaimer for Input Page */}
+        {step === "input" && (
+          <div className="mt-12 bg-[#E4F4F5] rounded-xl p-6 border border-[#0FA4A9]/20 flex items-start gap-4">
+            <AlertCircle className="text-[#1F2D2E] shrink-0" size={20} />
+            <p className="text-[10px] text-[#1F2D2E] leading-relaxed">
+              <span className="font-bold uppercase tracking-wider">
+                Disclaimer:
+              </span>{" "}
+              Information and projections provided by BioVue Digital Wellness are
+              for informational and illustrative purposes only, reflect relative
+              changes rather than exact outcomes, and do not constitute medical
+              advice. BioVue Digital Wellness is not liable for decisions or
+              outcomes based on this information; users should consult a qualified
+              medical professional for medical guidance.
+            </p>
+          </div>
+        )}
 
-      {/* <ProjectionGallery /> */}
-    </div>
+        {/* <ProjectionGallery /> */}
+      </div>
+    </SubscriptionGuard>
   );
 };
 

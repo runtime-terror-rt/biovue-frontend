@@ -4,10 +4,12 @@ import { useState } from "react";
 import DashboardHeading from "@/components/common/DashboardHeading";
 import ClientsTable from "@/components/TrainerDashboard/Clients/ClientsTable";
 import { Client } from "@/components/TrainerDashboard/overview/data";
-import { ArrowDownUp, Funnel, User, UserPlus } from "lucide-react";
+import { ArrowDownUp, Funnel, UserPlus } from "lucide-react";
 import { useGetTrainerOverviewQuery } from "@/redux/features/api/TrainerDashboard/trainerOverviewApi";
+import { useSendInvitationMutation } from "@/redux/features/api/TrainerDashboard/SendInvitation";
+import { toast } from "sonner";
 
-type InviteStep = "email" | "review" | "success" | null;
+type InviteStep = "email" | null;
 
 function Modal({
   children,
@@ -43,7 +45,8 @@ export default function ClientsPage() {
 
   const [inviteStep, setInviteStep] = useState<InviteStep>(null);
   const [clientEmail, setClientEmail] = useState("");
-  const [agreed, setAgreed] = useState(false);
+  const [sendInvitation, { isLoading: isSending }] =
+    useSendInvitationMutation();
 
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const statusOptions = [
@@ -65,17 +68,19 @@ export default function ClientsPage() {
     const matchesSearch =
       client.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (client.goal || "").toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     const matchesStatus =
-      statusFilter === "all" || 
+      statusFilter === "all" ||
       client.status.toLowerCase().replace(/\s+/g, "-").includes(statusFilter);
-      
+
     return matchesSearch && matchesStatus;
   });
   // Sort logic
   const sortedClients = [...filteredClients].sort((a, b) => {
-    if (sortOption === "Name (A-Z)") return a.user_name.localeCompare(b.user_name);
-    if (sortOption === "Name (Z-A)") return b.user_name.localeCompare(a.user_name);
+    if (sortOption === "Name (A-Z)")
+      return a.user_name.localeCompare(b.user_name);
+    if (sortOption === "Name (Z-A)")
+      return b.user_name.localeCompare(a.user_name);
     // Activity-based sorting can be extended with real timestamps
     return 0;
   });
@@ -100,11 +105,19 @@ export default function ClientsPage() {
       {/* Summary cards */}
       <div className="flex flex-wrap gap-4">
         <div className="px-4 py-3 border rounded-lg bg-white">
-          Total Clients: {isLoading ? "..." : (stats?.active_clients?.value || apiClients.length)}
+          Total Clients:{" "}
+          {isLoading
+            ? "..."
+            : stats?.active_clients?.value || apiClients.length}
         </div>
         <div className="px-4 py-3 border rounded-lg bg-[#C7343405] text-[#C73434]">
           Needs Attention:{" "}
-          {isLoading ? "..." : (stats?.needing_attention?.value || apiClients.filter((c) => c.status.toLowerCase().includes("attention")).length)}
+          {isLoading
+            ? "..."
+            : stats?.needing_attention?.value ||
+              apiClients.filter((c) =>
+                c.status.toLowerCase().includes("attention"),
+              ).length}
         </div>
         <div className="px-4 py-3 border rounded-lg bg-white">
           Active This Week: {isLoading ? "..." : apiClients.length}
@@ -216,97 +229,47 @@ export default function ClientsPage() {
           />
 
           <button
-            disabled={!clientEmail}
-            onClick={() => setInviteStep("review")}
+            disabled={!clientEmail || isSending}
+            // onClick={async () => {
+            //   try {
+            //     await sendInvitation({ email: clientEmail }).unwrap();
+            //     toast.success("Invitation sent successfully");
+            //     setInviteStep(null);
+            //     setClientEmail("");
+            //   } catch (error) {
+            //     console.error("Failed to send invitation:", error);
+            //     toast.error("Failed to send invitation. Please try again.");
+            //   }
+            // }}
+            onClick={async () => {
+              try {
+                const res = await sendInvitation({
+                  email: clientEmail,
+                }).unwrap();
+
+                if (res.success) {
+                  toast.success(res.message);
+                  setInviteStep(null);
+                  setClientEmail("");
+                } else {
+                  toast.error(res.message || "Something went wrong");
+                }
+              } catch (error: any) {
+                toast.error(
+                  error?.data?.message ||
+                    "Failed to send invitation. Please try again.",
+                );
+              }
+            }}
             className="mt-3 md:mt-7 cursor-pointer w-full bg-teal-600 text-white py-2 rounded-lg disabled:opacity-50"
           >
-            Send Invitation
+            {isSending ? "Sending..." : "Send Invitation"}
           </button>
 
           <p className="text-xs text-gray-500 mt-2">
             Your client will receive an email invite to join and connect with
             you.
           </p>
-        </Modal>
-      )}
-      {inviteStep === "review" && (
-        <Modal onClose={() => setInviteStep(null)}>
-          <h2 className="text-2xl font-semibold mb-2">Review & Permissions</h2>
-          <p className="text-[#5F6F73] text-base mb-3 md:mb-5">
-            Confirm invitation details for your new client.
-          </p>
-
-          <div className="flex items-center gap-2 bg-[#9AAEB21A] rounded-lg p-4 mb-4">
-            <p>
-              <User className="text-[#0D9488]" size={32} />
-            </p>
-            <div>
-              <p className="text-sm text-gray-500">{clientEmail}</p>
-            </div>
-          </div>
-
-          <label className="flex text-[#0D9488] bg-[#9AAEB21A] p-4 items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-1 "
-            />
-            I confirm this client has agreed to share wellness data with me for
-            coaching purposes.
-          </label>
-
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={() => setInviteStep("email")}
-              className="flex-1 border py-2 rounded-lg"
-            >
-              Back
-            </button>
-            <button
-              disabled={!agreed}
-              onClick={() => {
-                setInviteStep("success");
-              }}
-              className="flex-1 cursor-pointer bg-[#0FA4A9] text-white py-2 rounded-lg disabled:opacity-50"
-            >
-              Confirm & Send
-            </button>
-          </div>
-        </Modal>
-      )}
-      {inviteStep === "success" && (
-        <Modal onClose={() => setInviteStep(null)}>
-          <div className="text-center">
-            <div className="mx-auto mb-4 w-16 h-16 text-3xl rounded-xl bg-[#3A86FF25] text-[#3A86FF] flex items-center justify-center">
-              ✓
-            </div>
-
-            <h2 className="text-2xl font-semibold">
-              Invitation sent successfully
-            </h2>
-            <p className="text-sm text-[#8C9094] mt-2">
-              The client will appear in your list once they accept the invite.
-            </p>
-
-            <button
-              onClick={() => setInviteStep(null)}
-              className="mt-6 w-full px-6 cursor-pointer bg-[#0FA4A9] text-white py-4 hover:opacity-80 rounded-lg"
-            >
-              View Clients
-            </button>
-
-            <button
-              onClick={() => {
-                setClientEmail("");
-                setAgreed(false);
-                setInviteStep("email");
-              }}
-              className="mt-5 cursor-pointer w-full border border-[#0FA4A9]! px-6 py-4 hover:opacity-80 text-[#0FA4A9] rounded-lg"
-            >
-              Invite Another Client
-            </button>
-          </div>
         </Modal>
       )}
 

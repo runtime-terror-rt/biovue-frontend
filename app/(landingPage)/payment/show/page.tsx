@@ -6,9 +6,20 @@ import Image from "next/image";
 import { CheckCircle2, ArrowRight, Home, LayoutDashboard, Loader2, Receipt } from "lucide-react";
 import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
 import { cn } from "@/lib/utils";
+import { useDispatch } from "react-redux";
+import { baseApi } from "@/redux/features/api/baseApi";
+import { useEffect } from "react";
 
 const PaymentSuccessPage = () => {
   const { data, isLoading, isError } = useGetPaymentSummaryQuery();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (data?.success) {
+      console.log("Payment successful, invalidating tags...");
+      dispatch(baseApi.util.invalidateTags(["Projection", "Profile"]));
+    }
+  }, [data, dispatch]);
 
   console.log(data,"showpricing data ")
 
@@ -21,7 +32,7 @@ const PaymentSuccessPage = () => {
     );
   }
 
-  if (isError || !data?.success) {
+  if (isError || !data?.success || !data?.latest_payment) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center justify-center p-6 text-center">
         <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
@@ -64,7 +75,7 @@ const PaymentSuccessPage = () => {
           
           <h1 className="text-4xl md:text-5xl font-bold text-[#1F2D2E] mb-3">Subscription Confirmed!</h1>
           <p className="text-[#5F6F73] text-lg">
-            Thank you, <span className="text-[#1F2D2E] font-semibold">{user.name}</span>. Your {latest_payment.plan.name} plan is now active.
+            Thank you, <span className="text-[#1F2D2E] font-semibold">{user?.name || 'Customer'}</span>. Your {latest_payment?.plan?.name || 'Subscription'} plan is now active.
           </p>
         </div>
 
@@ -73,12 +84,12 @@ const PaymentSuccessPage = () => {
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-50">
             <div>
               <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-1">Transaction ID</p>
-              <p className="text-[#1F2D2E] font-mono text-sm break-all">{latest_payment.transaction_id}</p>
+              <p className="text-[#1F2D2E] font-mono text-sm break-all">{latest_payment?.transaction_id || 'N/A'}</p>
             </div>
             <div className="text-right">
               <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-1">Status</p>
               <span className="bg-[#E6F6F6] text-[#0FA4A9] text-xs font-bold px-3 py-1 rounded-full border border-[#B2E2E3]">
-                {latest_payment.status.toUpperCase()}
+                {(latest_payment?.status || 'Active').toUpperCase()}
               </span>
             </div>
           </div>
@@ -90,21 +101,21 @@ const PaymentSuccessPage = () => {
                    <div className="w-3 h-3 rounded-full bg-[#3A86FF]" />
                 </div>
                 <div>
-                  <p className="font-bold text-[#1F2D2E]">{latest_payment.plan.name} Plan</p>
-                  <p className="text-xs text-[#5F6F73] font-medium">Billed {latest_payment.currency.toUpperCase()}</p>
+                  <p className="font-bold text-[#1F2D2E]">{latest_payment?.plan?.name || 'Membership'} Plan</p>
+                  <p className="text-xs text-[#5F6F73] font-medium">Billed {(latest_payment?.currency || 'USD').toUpperCase()}</p>
                 </div>
               </div>
-              <p className="text-xl font-bold text-[#1F2D2E]">${latest_payment.amount}</p>
+              <p className="text-xl font-bold text-[#1F2D2E]">${latest_payment?.amount || '0.00'}</p>
             </div>
 
             <div className="flex justify-between items-center text-sm px-2">
               <span className="text-[#5F6F73] font-medium">Subtotal</span>
-              <span className="text-[#1F2D2E] font-semibold">${latest_payment.amount}</span>
+              <span className="text-[#1F2D2E] font-semibold">${latest_payment?.amount || '0.00'}</span>
             </div>
            
             <div className="pt-4 border-t border-gray-50 flex justify-between items-center px-2">
               <span className="text-base font-bold text-[#1F2D2E]">Total Amount Paid</span>
-              <span className="text-2xl font-black text-[#0FA4A9]">${latest_payment.amount}</span>
+              <span className="text-2xl font-black text-[#0FA4A9]">${latest_payment?.amount || '0.00'}</span>
             </div>
           </div>
 
