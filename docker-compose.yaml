@@ -1,0 +1,19 @@
+services:
+  client:
+    restart: unless-stopped
+    container_name: biovue-frontend
+    profiles:
+      - prod
+    image: softvence/biovue-frontend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+    ports:
+      - "3000:3000"
