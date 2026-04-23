@@ -92,7 +92,7 @@ export default function ChatArea({
                   className={`flex flex-col ${isSupplier ? "items-end" : "items-start"}`}
                 >
                   <div
-                    className={`max-w-[75%] px-6 py-4 rounded-3xl text-sm leading-relaxed shadow-xs ${
+                    className={`max-w-[75%] px-6 py-4 rounded-3xl text-sm leading-relaxed shadow-xs whitespace-pre-wrap ${
                       isSupplier
                         ? "bg-[#E4F0FF] text-[#041228] rounded-tr-none"
                         : "bg-[#F8FBFA] border border-[#E4EFFF] text-[#5F6F73] rounded-tl-none"

@@ -268,7 +268,7 @@ const MessagesPage = () => {
                         >
                           <div
                             className={cn(
-                              "px-5 py-3 rounded-2xl shadow-sm mb-1.5 text-[15px] leading-relaxed",
+                              "px-5 py-3 rounded-2xl shadow-sm mb-1.5 text-[15px] leading-relaxed whitespace-pre-wrap",
                               isMe
                                 ? "bg-[#C7F5CB] text-[#1F2D2E] rounded-tr-none"
                                 : "bg-white text-[#1F2D2E] border border-gray-100 rounded-tl-none",

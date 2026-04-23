@@ -25,14 +25,14 @@ import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { toast } from "sonner";
 
 /** Chat APIs often use limited VARCHAR; long AI text commonly triggers 500 from the main API. */
-const MAX_SUGGEST_MESSAGE_CHARS = 2400;
+const MAX_SUGGEST_MESSAGE_CHARS = 100000;
 
 function prepareMessageForChatApi(raw: string): string {
   const cleaned = raw.replace(/\u0000/g, "").trim();
   if (cleaned.length <= MAX_SUGGEST_MESSAGE_CHARS) return cleaned;
   return (
-    cleaned.slice(0, MAX_SUGGEST_MESSAGE_CHARS - 140).trim() +
-    "\n\n[Message trimmed to fit chat limits. Reply to your supplier for the full details.]"
+    cleaned.slice(0, MAX_SUGGEST_MESSAGE_CHARS - 100).trim() +
+    "\n\n[Message trimmed to fit limits. Please reply for more details.]"
   );
 }
 
@@ -137,29 +137,31 @@ export default function SupplementMatchModal({
     options?: { includeOverallSummary?: boolean },
   ): string => {
     const benefits = (supp.health_benefits ?? [])
-      .slice(0, 8)
-      .map((b) => `• ${b}`)
+      .slice(0, 4)
+      .map((b) => `✅ ${b}`)
       .join("\n");
     const warnings = (supp.warnings ?? [])
       .filter(Boolean)
-      .map((w) => `• ${w}`)
+      .slice(0, 2)
+      .map((w) => `⚠️ ${w}`)
       .join("\n");
+
     const lines: string[] = [
-      `Personalized supplement suggestion`,
+      `🌟 PERSONALIZED SUPPLEMENT SUGGESTION`,
       ``,
-      `Product: ${supp.name}`,
-      `Category: ${supp.category}`,
-      `Match score: ${Math.round(supp.match_score)}%`,
+      `📦 Product: ${supp.name}`,
+      `🏷️ Category: ${supp.category}`,
+      `🎯 Match Score: ${Math.round(supp.match_score)}%`,
       ``,
-      `Why this is recommended`,
+      `💡 WHY THIS IS RECOMMENDED:`,
       supp.match_reason,
       ``,
     ];
     if (benefits) {
-      lines.push(`Key benefits`, benefits, ``);
+      lines.push(`✨ KEY BENEFITS:`, benefits, ``);
     }
     if (warnings) {
-      lines.push(`Important notes`, warnings, ``);
+      lines.push(`⚠️ IMPORTANT NOTES:`, warnings, ``);
     }
     if (ctx?.completeness_warning) {
       const pct =
@@ -167,20 +169,22 @@ export default function SupplementMatchModal({
           ? Math.round(Number(ctx.profile_completeness))
           : null;
       lines.push(
-        `Profile`,
+        `📊 PROFILE STATUS:`,
         pct != null
           ? `${ctx.completeness_warning} (Profile completeness: ${pct}%).`
           : ctx.completeness_warning,
         ``,
       );
     }
-    if (options?.includeOverallSummary && ctx?.recommendation_summary) {
-      const summary = ctx.recommendation_summary;
-      const short =
-        summary.length > 600 ? `${summary.slice(0, 597).trim()}...` : summary;
-      lines.push(`Overall summary`, short, ``);
+
+    const summary =
+      ctx?.recommendation_summary ?? matchData?.recommendation_summary;
+
+    if (options?.includeOverallSummary && summary) {
+      lines.push(`📋 OVERALL SUMMARY:`, summary, ``);
     }
-    lines.push(`Learn more`, supp.redirect_url);
+
+    lines.push(`🔗 Product Link:`, supp.redirect_url);
     return lines.join("\n");
   };
 
@@ -198,13 +202,15 @@ export default function SupplementMatchModal({
 
     const compactMessage = prepareMessageForChatApi(
       [
-        `Supplement suggestion: ${supp.name}`,
-        `Match: ${Math.round(supp.match_score || 0)}%`,
-        (supp.match_reason || "").length > 320
-          ? `${supp.match_reason.slice(0, 317)}...`
+        `🌟 SUGGESTION: ${supp.name}`,
+        `🎯 Match: ${Math.round(supp.match_score || 0)}%`,
+        ``,
+        `💡 Reason:`,
+        (supp.match_reason || "").length > 200
+          ? `${supp.match_reason.slice(0, 197)}...`
           : supp.match_reason || "",
         ``,
-        `Link: ${supp.redirect_url || ""}`,
+        `🔗 Link: ${supp.redirect_url || ""}`,
       ].join("\n"),
     );
 
@@ -261,13 +267,13 @@ export default function SupplementMatchModal({
       const fullSummary = matchData?.recommendation_summary;
       const summaryBlock =
         fullSummary != null
-          ? `\n\nOverall summary\n${
-              fullSummary.length > 800
-                ? `${fullSummary.slice(0, 797).trim()}...`
+          ? `\n\n📋 OVERALL SUMMARY\n${
+              fullSummary.length > 400
+                ? `${fullSummary.slice(0, 397).trim()}...`
                 : fullSummary
             }\n\n`
           : "\n\n";
-      const header = `Hi! I've analysed your profile and have ${allSupps.length} recommendation(s) for you.${summaryBlock}`;
+      const header = `Hi! 👋 I've analysed your profile and have ${allSupps.length} recommendation(s) for you.${summaryBlock}`;
 
       const sections = allSupps.map(
         (supp, index) =>
@@ -294,12 +300,12 @@ export default function SupplementMatchModal({
       // Fallback to sending extremely minimal suggestion message if the huge one fails
       try {
         const minimalSummary = matchData?.matched_products
-          ?.map((p) => `- ${p.name}`)
+          ?.map((p) => `📦 ${p.name}`)
           .join("\n");
         await sendMessage({
           receiver_id: Number(user.id),
           email: user.email,
-          message: `Hi ${user.name}, I've analysed your profile and found ${matchData?.matched_products?.length} match(es) for you:\n${minimalSummary}\n\nPlease check my specific suggestions or the AI matching section for details.`,
+          message: `Hi ${user.name} 👋, I've analysed your profile and found ${matchData?.matched_products?.length} match(es) for you:\n\n${minimalSummary}\n\nPlease check my specific suggestions or the AI matching section for details.`,
         }).unwrap();
         toast.success(`Brief match summary sent to ${user.name}`);
       } catch (errFallback) {
