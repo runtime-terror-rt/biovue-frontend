@@ -192,7 +192,7 @@ export default function SuggestedClientsPage() {
                           <User size={20} className="text-primary/60" />
                         </div>
                         <span className="font-bold text-[#041228]">
-                          #{item.user_profile.user_id}
+                          {item.user_profile.name}
                         </span>
                       </div>
                     </TableCell>
@@ -296,17 +296,23 @@ export default function SuggestedClientsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="pt-2">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-2xl font-black text-[#041228]">
-                        Client #{selectedSuggestion.user_profile.user_id}
-                      </h3>
+                  <div className="pt-2 flex-1">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex flex-col gap-0.5">
+                        <h3 className="text-2xl font-black text-[#041228]">
+                          {selectedSuggestion.user_profile.name}
+                        </h3>
+                        <p className="text-sm text-gray-500 font-medium">
+                          {selectedSuggestion.user_profile.email}
+                        </p>
+                      </div>
                       <div
-                        className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${getPriorityColor(selectedSuggestion.priority)}`}
+                        className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${getPriorityColor(selectedSuggestion.priority)} shadow-sm border`}
                       >
                         Match Score: {10 - selectedSuggestion.priority}/10
                       </div>
                     </div>
+
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
                         <Target size={14} className="text-emerald-500" />
@@ -419,6 +425,7 @@ export default function SuggestedClientsPage() {
                 <div className="mt-10">
                   <button
                     onClick={() => {
+                      setInviteEmail(selectedSuggestion.user_profile.email);
                       setSelectedSuggestion(null);
                       setIsInviteModalOpen(true);
                     }}
