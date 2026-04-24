@@ -11,6 +11,8 @@ import RescheduleEventModal from "@/components/TrainerDashboard/calendar/Resched
 import { ChevronLeft, ChevronRight, Filter, Plus } from "lucide-react";
 import { useState } from "react";
 import { useUpdateScheduleMutation } from "@/redux/features/api/TrainerDashboard/Calendar/CreateSchedule";
+import DailyCalendar from "@/components/TrainerDashboard/calendar/DailyCalendar";
+import MonthlyCalendar from "@/components/TrainerDashboard/calendar/MonthlyCalendar";
 
 export type CalendarEventStatus = "missed" | "scheduled" | "completed";
 
@@ -33,8 +35,8 @@ export default function CalendarPage() {
   const [openClientFilter, setOpenClientFilter] = useState(false);
   const [openTypeFilter, setOpenTypeFilter] = useState(false);
 
-  const [selectedClient, setSelectedClient] = useState("All Clients");
-  const [selectedType, setSelectedType] = useState("All Types");
+  // const [selectedClient, setSelectedClient] = useState("All Clients");
+  // const [selectedType, setSelectedType] = useState("All Types");
 
   const [isReminderOpen, setIsReminderOpen] = useState(false);
   const [isCheckinOpen, setIsCheckinOpen] = useState(false);
@@ -74,19 +76,39 @@ export default function CalendarPage() {
 
   const { data: scheduleData, isLoading, isError } = useGetSchedulesQuery();
 
-  const formatRange = (s: Date, e: Date) =>
-    `${s.toLocaleDateString("en-US", {
+  const formatRange = (s: Date, e: Date) => {
+    if (view === "day") {
+      return currentDate.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+    if (view === "month") {
+      return currentDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      });
+    }
+    return `${s.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-    })} ${e.toLocaleDateString("en-US", {
+    })} - ${e.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
-    })} -`;
+    })}`;
+  };
 
-  const changeWeek = (direction: "prev" | "next") => {
+  const changeDate = (direction: "prev" | "next") => {
     const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() + (direction === "next" ? 7 : -7));
+    if (view === "day") {
+      newDate.setDate(currentDate.getDate() + (direction === "next" ? 1 : -1));
+    } else if (view === "week") {
+      newDate.setDate(currentDate.getDate() + (direction === "next" ? 7 : -7));
+    } else {
+      newDate.setMonth(currentDate.getMonth() + (direction === "next" ? 1 : -1));
+    }
     setCurrentDate(newDate);
   };
 
@@ -147,8 +169,24 @@ export default function CalendarPage() {
       <div className="bg-white rounded-2xl p-4 mb-6 shadow-sm border border-[#F1F5F9]">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-2">
           {/* View Toggle */}
-          <div className="bg-[#E0F2F1]  flex-1 md:flex-none px-8 py-2.5 text-sm  capitalize transition-all font-semiboldtext-[#64748B] rounded-lg p-1 flex items-center w-full md:w-auto">
-            <p>Your Schedules</p>
+          <div className="bg-[#F1F5F9] p-1 rounded-xl flex items-center gap-1">
+            {views.map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-6 py-2 text-sm font-bold capitalize transition-all rounded-lg ${
+                  view === v
+                    ? "bg-white text-[#0D9488] shadow-sm"
+                    : "text-[#64748B] hover:text-[#475569]"
+                } cursor-pointer`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+
+          <div className="bg-[#E0F2F1] hidden md:flex px-6 py-2 text-sm capitalize font-semibold text-[#0D9488] rounded-xl border border-[#CCFBF1]">
+            <p>Active View: {view}</p>
           </div>
 
           {/* Date Navigation + Filters */}
@@ -156,28 +194,28 @@ export default function CalendarPage() {
             {/* Date Navigation */}
             <div className="flex items-center gap-4">
               <button
-                onClick={() => changeWeek("prev")}
-                className="p-2 hover:bg-[#F1F5F9] rounded-lg transition-colors text-[#64748B]"
+                onClick={() => changeDate("prev")}
+                className="p-2 hover:bg-[#F1F5F9] rounded-lg transition-colors text-[#64748B] cursor-pointer"
               >
-                <ChevronLeft className="w-5 h-5 cursor-pointer" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
 
-              <span className="text-[15px] font-semibold text-[#1E293B] whitespace-nowrap min-w-50 text-center">
+              <span className="text-[15px] font-bold text-[#1E293B] whitespace-nowrap min-w-[200px] text-center">
                 {formatRange(start, end)}
               </span>
 
               <button
-                onClick={() => changeWeek("next")}
-                className="p-2 hover:bg-[#F1F5F9] rounded-lg transition-colors text-[#64748B]"
+                onClick={() => changeDate("next")}
+                className="p-2 hover:bg-[#F1F5F9] rounded-lg transition-colors text-[#64748B] cursor-pointer"
               >
-                <ChevronRight className="w-5 h-5 cursor-pointer" />
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
 
             {/* Filter Buttons */}
-            <div className="flex items-center gap-3 relative w-full md:w-auto">
+            {/* <div className="flex items-center gap-3 relative w-full md:w-auto"> */}
               {/* Client Filter */}
-              <button
+              {/* <button
                 onClick={() => {
                   setOpenClientFilter((v) => !v);
                   setOpenTypeFilter(false);
@@ -186,10 +224,10 @@ export default function CalendarPage() {
               >
                 <Filter className="w-4 h-4 text-[#94A3B8]" />
                 {selectedClient}
-              </button>
+              </button> */}
 
               {/* Type Filter */}
-              <button
+              {/* <button
                 onClick={() => {
                   setOpenTypeFilter((v) => !v);
                   setOpenClientFilter(false);
@@ -206,7 +244,7 @@ export default function CalendarPage() {
 
               {openClientFilter && <FilterDropdown type="client" />}
               {openTypeFilter && <FilterDropdown type="type" />}
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -228,12 +266,31 @@ export default function CalendarPage() {
             </p>
           </div>
         ) : (
-          <WeeklyCalendar
-            startDate={start}
-            schedules={scheduleData?.data}
-            onEventClick={handleEventClick}
-            onAddCheckin={handleDateCellClick}
-          />
+          <>
+            {view === "day" && (
+              <DailyCalendar
+                date={currentDate}
+                schedules={scheduleData?.data}
+                onEventClick={handleEventClick}
+              />
+            )}
+            {view === "week" && (
+              <WeeklyCalendar
+                startDate={start}
+                schedules={scheduleData?.data}
+                onEventClick={handleEventClick}
+                onAddCheckin={handleDateCellClick}
+              />
+            )}
+            {view === "month" && (
+                <MonthlyCalendar
+                    currentDate={currentDate}
+                    schedules={scheduleData?.data}
+                    onEventClick={handleEventClick}
+                    onAddCheckin={handleDateCellClick}
+                />
+            )}
+          </>
         )}
       </div>
 
