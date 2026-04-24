@@ -43,6 +43,9 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null,
   );
+  const [preselectedDate, setPreselectedDate] = useState<string | undefined>(
+    undefined,
+  );
 
   const views: Array<"day" | "week" | "month"> = ["day", "week", "month"];
 
@@ -96,6 +99,16 @@ export default function CalendarPage() {
     setIsRescheduleOpen(false);
   };
 
+  const handleDateCellClick = (date?: string) => {
+    setPreselectedDate(date);
+    setIsCheckinOpen(true);
+  };
+
+  const handleHeaderAddCheckin = () => {
+    setPreselectedDate(undefined);
+    setIsCheckinOpen(true);
+  };
+
   const handleSendReminderFromDetails = () => {
     setIsEventDetailsOpen(false);
     setIsReminderOpen(true);
@@ -122,7 +135,7 @@ export default function CalendarPage() {
             <Plus size={16} /> <span>Add Reminder</span>
           </button>
           <button
-            onClick={() => setIsCheckinOpen(true)}
+            onClick={handleHeaderAddCheckin}
             className="flex px-5 py-2.5 text-sm font-medium cursor-pointer bg-[#0D9488] text-white rounded-xl hover:bg-[#0B7A70] items-center gap-2 transition-all shadow-sm"
           >
             <Plus size={16} /> <span>Schedule Check-in</span>
@@ -219,7 +232,7 @@ export default function CalendarPage() {
             startDate={start}
             schedules={scheduleData?.data}
             onEventClick={handleEventClick}
-            onAddCheckin={() => setIsCheckinOpen(true)}
+            onAddCheckin={handleDateCellClick}
           />
         )}
       </div>
@@ -232,6 +245,7 @@ export default function CalendarPage() {
       <ScheduleCheckinModal
         isOpen={isCheckinOpen}
         onClose={() => setIsCheckinOpen(false)}
+        initialDate={preselectedDate}
       />
       <EventDetailsModal
         isOpen={isEventDetailsOpen}

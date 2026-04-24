@@ -320,11 +320,17 @@ export default function SuggestedClientsPage() {
                             key={i}
                             className="text-[10px] font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-xl border border-red-100"
                           >
-                            {concern}
+                            {concern.replace(/_/g, ' ')}
                           </div>
                         ),
                       )}
                     </div>
+                    {selectedSuggestion.user_profile.goal_description && selectedSuggestion.user_profile.goal_description !== "N/A" && (
+                      <p className="mt-4 text-xs text-gray-500 leading-relaxed border-l-2 border-primary/20 pl-3">
+                        <span className="font-bold uppercase text-[9px] tracking-wider text-gray-400 block mb-1">Bio / Goal Description</span>
+                        {selectedSuggestion.user_profile.goal_description}
+                      </p>
+                    )}
                   </div>
                 </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Calendar, Clock } from "lucide-react";
+import { X, Calendar, Clock, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import { useUpdateScheduleMutation } from "@/redux/features/api/TrainerDashboard/Calendar/CreateSchedule";
 import { toast } from "sonner";
@@ -35,10 +35,11 @@ export default function EventDetailsModal({
 }: Props) {
   const [status, setStatus] = useState<"missed" | "completed">("missed");
   const [updateSchedule, { isLoading }] = useUpdateScheduleMutation();
+  const isCompleted = event?.status === "completed";
 
   useEffect(() => {
     if (event?.status) {
-      setStatus(event.status === "scheduled" ? "missed" : (event.status as "missed" | "completed"));
+      setStatus(event.status as "missed" | "completed");
     }
   }, [event]);
 
@@ -53,6 +54,7 @@ export default function EventDetailsModal({
       })
     : "N/A";
   const handleSaveStatus = async () => {
+    if (isCompleted) return;
     try {
       await updateSchedule({
         id: event.id,
@@ -123,7 +125,7 @@ export default function EventDetailsModal({
           </div>
 
           {/* Details Section */}
-          <div className="border-2 border-[#3B82F6] rounded-xl p-5 mb-6">
+          <div className={`border-2 rounded-xl p-5 mb-6 ${isCompleted ? 'border-[#22C55E]/30 bg-emerald-50/10' : 'border-[#3B82F6]'}`}>
             <h5 className="text-[13px] font-medium text-[#94A3B8] mb-4">
               Timing
             </h5>
@@ -165,49 +167,61 @@ export default function EventDetailsModal({
 
             <div className="flex gap-3">
               <button
+                disabled={isCompleted}
                 onClick={() => setStatus("missed")}
-                className={`flex-1 py-2 rounded-lg text-sm font-bold border ${
+                className={`flex-1 py-2 rounded-lg text-sm font-bold border transition-all ${
                   status === "missed"
                     ? "bg-[#FEE2E2] text-[#EF4444] border-[#EF4444]"
-                    : "border-[#E5E7EB] text-[#64748B]"
-                }`}
+                    : "border-[#E5E7EB] text-[#64748B] hover:bg-gray-50"
+                } ${isCompleted ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 Missed
               </button>
 
               <button
+                disabled={isCompleted}
                 onClick={() => setStatus("completed")}
-                className={`flex-1 py-2 rounded-lg text-sm font-bold border ${
+                className={`flex-1 py-2 rounded-lg text-sm font-bold border transition-all ${
                   status === "completed"
                     ? "bg-[#DCFCE7] text-[#22C55E] border-[#22C55E]"
-                    : "border-[#E5E7EB] text-[#64748B]"
-                }`}
+                    : "border-[#E5E7EB] text-[#64748B] hover:bg-gray-50"
+                } ${isCompleted ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 Completed
               </button>
             </div>
+            {isCompleted && (
+              <p className="text-[10px] text-emerald-600 mt-2 font-medium flex items-center gap-1">
+                <CheckCircle2 size={12} /> This meeting is marked as completed and cannot be modified.
+              </p>
+            )}
           </div>
           {/* Actions */}
           <div className="grid grid-cols-1 gap-4">
             <button
               onClick={onSendReminder}
-              className="py-3.5 rounded-xl border border-[#F1F5F9] text-[#475569] font-bold text-sm hover:bg-gray-50 transition-colors cursor-pointer"
+              disabled={isCompleted}
+              className="py-3.5 rounded-xl border border-[#F1F5F9] text-[#475569] font-bold text-sm hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Send Reminder
             </button>
-            <button
-              onClick={handleSaveStatus}
-              disabled={isLoading}
-              className="py-3.5 rounded-xl bg-[#afc8ff] cursor-pointer text-black font-bold text-sm hover:opacity-90 transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
-            >
-              {isLoading ? "Saving..." : "Save Status"}
-            </button>
-            <button
-              onClick={onReschedule}
-              className="py-3.5 rounded-xl bg-[#0D9488] text-white font-bold text-sm hover:opacity-90 transition-all shadow-md active:scale-[0.98] cursor-pointer"
-            >
-              Reschedule
-            </button>
+            {!isCompleted && (
+              <>
+                <button
+                  onClick={handleSaveStatus}
+                  disabled={isLoading}
+                  className="py-3.5 rounded-xl bg-[#afc8ff] cursor-pointer text-black font-bold text-sm hover:opacity-90 transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
+                >
+                  {isLoading ? "Saving..." : "Save Status"}
+                </button>
+                <button
+                  onClick={onReschedule}
+                  className="py-3.5 rounded-xl bg-[#0D9488] text-white font-bold text-sm hover:opacity-90 transition-all shadow-md active:scale-[0.98] cursor-pointer"
+                >
+                  Reschedule
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
