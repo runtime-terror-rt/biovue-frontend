@@ -43,6 +43,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
     sleep_hours: "",
     water_glasses: "",
   });
+  const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -183,20 +184,47 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Weight */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
-                    <Scale size={14} className="text-[#3A86FF]" />
-                    Weight (kg/lbs)
-                  </label>
-                  <input
-                    type="number"
-                    name="weight"
-                    value={formData.weight}
-                    onChange={handleChange}
-                    placeholder="Enter value..."
-                    className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
-                  />
+                  <div className="flex items-center justify-between ml-1">
+                    <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider flex items-center gap-2">
+                      <Scale size={14} className="text-[#3A86FF]" />
+                      Weight
+                    </label>
+                    <div className="flex bg-gray-100/80 rounded-lg p-1 border border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setWeightUnit("kg")}
+                        className={`px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                          weightUnit === "kg"
+                            ? "bg-white text-[#3A86FF] shadow-sm"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        KG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWeightUnit("lbs")}
+                        className={`px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                          weightUnit === "lbs"
+                            ? "bg-white text-[#3A86FF] shadow-sm"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        LBS
+                      </button>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      name="weight"
+                      value={formData.weight}
+                      onChange={handleChange}
+                      placeholder={`Enter value in ${weightUnit}...`}
+                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
+                    />
+                  </div>
                 </div>
 
                 {/* Steps */}
