@@ -503,14 +503,19 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
             <label className="text-[#1F2D2E] font-semibold text-[16px]">
               Daily Calorie Target
             </label>
-            <input
+            {/* <input
               type="number"
               value={calorieTarget}
               onChange={(e) =>
                 setCalorieTarget(parseInt(e.target.value) || 2000)
               }
               className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-right font-semibold focus:outline-none focus:border-[#3A86FF]"
-            />
+            /> */}
+            <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg">
+    <span className="font-bold text-[#3A86FF] text-lg">
+      {calorieTarget} kcal
+    </span>
+  </div>
           </div>
 
           {/* Progress Bar */}
