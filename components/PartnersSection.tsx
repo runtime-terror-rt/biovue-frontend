@@ -15,11 +15,10 @@ const PartnersSection = () => {
     return null;
   }
 
-
   const displayPartners = [...partners, ...partners, ...partners];
 
   return (
-    <section className="py-24 relative overflow-hidden bg-[#F4FBFA]">
+    <section className="py-24 relative overflow-x-hidden overflow-y-visible bg-[#F4FBFA]">
       <div className="container mx-auto px-4 md:px-8 mb-16 md:mb-20 text-center">
         <motion.h2
           initial={{ opacity: 0, y: -20 }}
@@ -27,7 +26,7 @@ const PartnersSection = () => {
           viewport={{ once: true }}
           className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6"
           style={{
-            background: "linear-gradient(270deg, #4F6BFF 0%, #7B3FE4 100%)",
+            background: "linear-gradient(270deg, #0fa4a9 0%, #0d9488 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
@@ -42,16 +41,16 @@ const PartnersSection = () => {
           transition={{ delay: 0.2 }}
           className="text-xl md:text-2xl font-normal max-w-5xl mx-auto text-[#5F6F73]"
         >
-          Collaborating with trusted leaders to provide premium wellness experiences.
+          Collaborating with trusted leaders to provide premium wellness
+          experiences.
         </motion.p>
       </div>
 
-      <div className="relative w-full overflow-hidden flex flex-col items-center justify-center py-4">
+      <div className="relative w-full overflow-visible flex flex-col items-center justify-center py-12">
         {/* Superior Edge Fade Effects */}
         <div className="absolute left-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-r from-landing to-transparent z-20 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-l from-landing to-transparent z-20 pointer-events-none" />
 
-        <div className="overflow-hidden">
+        <div className="w-full overflow-visible px-10">
           <motion.div
             className="flex gap-8 whitespace-nowrap"
             animate={{
@@ -72,22 +71,49 @@ const PartnersSection = () => {
             {displayPartners.map((partner: any, index: number) => (
               <motion.div
                 key={`${partner.id}-${index}`}
-                whileHover={{ 
-                  scale: 1.03,
-                  borderColor: "rgba(15, 164, 169, 0.4)",
-                  backgroundColor: "#ffffff"
+                whileHover={{
+                  scale: 1.06,
+                  y: -4,
+                  transition: { duration: 0.2, ease: "easeOut" },
                 }}
-                className="flex flex-col items-center justify-center  backdrop-blur-sm border border-black/5 rounded-2xl p-4 min-w-[180px] md:min-w-[200px] h-[140px] md:h-[160px] shadow-sm transition-all duration-300 group cursor-pointer"
+                className="
+    relative flex flex-col items-center justify-center
+    min-w-[200px] md:min-w-[240px]
+    h-[140px] md:h-[160px]
+    border border-[#0fa4a9]/40
+    rounded-2xl bg-white/50
+    overflow-hidden
+    transition-transform duration-100
+    shadow-sm group-hover:shadow-lg
+    group cursor-pointer
+  "
               >
-                <div className="relative w-24 h-24 md:w-28 md:h-28 flex items-center justify-center">
+                {/* Logo */}
+                <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center z-10">
                   <Image
                     src={partner.image_url}
                     alt={partner.company}
                     fill
-                    className="object-contain grayscale group-hover:grayscale-0 transition-all duration-500 p-2"
+                    className="
+        object-contain p-2
+        grayscale-[30%] opacity-80
+        group-hover:grayscale-0 group-hover:opacity-100
+        transition-all duration-500
+      "
                   />
                 </div>
-                <p className="text-xs font-semibold text-para-text group-hover:text-primary mt-2 transition-colors">
+
+                {/* Company Name (hidden → slide up) */}
+                <p
+                  className="
+      absolute bottom-2 left-0 w-full
+      text-xs md:text-sm font-medium
+      text-center text-primary
+      opacity-0 translate-y-4
+      group-hover:opacity-100 group-hover:translate-y-0
+      transition-all duration-500
+    "
+                >
                   {partner.company}
                 </p>
               </motion.div>

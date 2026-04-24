@@ -250,7 +250,7 @@ export default function MyProductsPage() {
       {/* View Modal */}
       {isViewModalOpen && selectedProduct && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-96 relative">
+          <div className="bg-white rounded-2xl p-6 max-w-3xl relative">
             <button
               className="absolute top-4 right-4"
               onClick={() => setIsViewModalOpen(false)}
