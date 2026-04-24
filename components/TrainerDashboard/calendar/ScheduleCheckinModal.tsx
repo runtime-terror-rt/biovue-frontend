@@ -28,8 +28,12 @@ export default function ScheduleCheckinModal({
 
   // Pre-fill date when opened with an initialDate
   useEffect(() => {
-    if (isOpen && initialDate) {
-      setSelectedDate(initialDate);
+    if (isOpen) {
+      if (initialDate) {
+        setSelectedDate(initialDate);
+      } else {
+        setSelectedDate("");
+      }
     }
   }, [isOpen, initialDate]);
   if (!isOpen) return null;

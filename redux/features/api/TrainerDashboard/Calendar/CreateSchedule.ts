@@ -34,9 +34,9 @@ export const scheduleApi = baseApi.injectEndpoints({
       CreateScheduleResponse,
       CreateSchedulePayload
     >({
-      query: ({ id, ...body }) => ({
-        url: `/schedule-checkin/${id}`,
-        method: "PUT",
+      query: (body) => ({
+        url: "/schedule-checkin",
+        method: "POST",
         body,
       }),
       invalidatesTags: [{ type: "Schedule", id: "LIST" }, "Clients"],

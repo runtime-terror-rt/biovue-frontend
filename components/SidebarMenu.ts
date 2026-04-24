@@ -1,4 +1,10 @@
-import { Cable, Fingerprint, ImageDownIcon, LucideIcon } from "lucide-react";
+import {
+  BrainCircuitIcon,
+  Cable,
+  Fingerprint,
+  ImageDownIcon,
+  LucideIcon,
+} from "lucide-react";
 import {
   LayoutGrid,
   TrendingUp,
@@ -40,7 +46,11 @@ export const SIDEBAR_MENU: SidebarMenu = {
       icon: TrendingUp,
       href: "/user-dashboard/projections",
     },
-    { label: "Projection Galary", icon: ImageDownIcon, href: "/user-dashboard/projection-galary" },
+    {
+      label: "Projection Galary",
+      icon: ImageDownIcon,
+      href: "/user-dashboard/projection-galary",
+    },
     { label: "Insights", icon: Brain, href: "/user-dashboard/insights" },
     { label: "Habits", icon: Repeat, href: "/user-dashboard/habits" },
     { label: "Support", icon: HeartHandshake, href: "/user-dashboard/support" },
@@ -54,7 +64,16 @@ export const SIDEBAR_MENU: SidebarMenu = {
       icon: LayoutGrid,
       href: "/trainer-dashboard/overview",
     },
-    { label: "Clients", icon: Users, href: "/trainer-dashboard/clients" },
+    {
+      label: "Connected Clients",
+      icon: Users,
+      href: "/trainer-dashboard/clients",
+    },
+    {
+      label: "Suggested Clients",
+      icon: BrainCircuitIcon,
+      href: "/trainer-dashboard/suggested-clients",
+    },
     { label: "Programs", icon: FileText, href: "/trainer-dashboard/programs" },
     { label: "Messages", icon: Mail, href: "/trainer-dashboard/messages" },
     { label: "Calendar", icon: Calendar, href: "/trainer-dashboard/calendar" },
@@ -78,16 +97,6 @@ export const SIDEBAR_MENU: SidebarMenu = {
       label: "Subscription Plans",
       icon: CreditCard,
       href: "/admin-dashboard/subscription-plans",
-      // children: [
-      //   {
-      //     label: "Individual Plans",
-      //     href: "/admin-dashboard/subscription-plans?type=individual",
-      //   },
-      //   {
-      //     label: "Professional Plans",
-      //     href: "/admin-dashboard/subscription-plans?type=professional",
-      //   },
-      // ],
     },
     { label: "Reports", icon: FileText, href: "/admin-dashboard/reports" },
     {

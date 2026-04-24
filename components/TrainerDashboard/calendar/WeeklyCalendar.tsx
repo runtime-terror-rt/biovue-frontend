@@ -9,9 +9,9 @@ const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 interface Props {
   startDate: Date;
   onEventClick: (event: CalendarEvent) => void;
-  onAddCheckin: () => void;
-  schedules?: ScheduleItem[];
-}
+   onAddCheckin: (date?: string) => void;
+   schedules?: ScheduleItem[];
+ }
 
 export default function WeeklyCalendar({
   startDate,
@@ -114,10 +114,10 @@ export default function WeeklyCalendar({
                 );
               }
               return (
-                <EmptyCell
-                  key={`empty-${colIndex}-${rowIndex}`}
-                  onClick={onAddCheckin}
-                />
+                 <EmptyCell
+                   key={`empty-${colIndex}-${rowIndex}`}
+                   onClick={() => onAddCheckin(formatDateLocal(dates[colIndex]))}
+                 />
               );
             })}
           </div>
@@ -126,7 +126,7 @@ export default function WeeklyCalendar({
         {/* If no schedules at all, ensure at least one empty row shows */}
         {schedules.length === 0 &&
           Array.from({ length: 7 }).map((_, i) => (
-            <EmptyCell key={`empty-initial-${i}`} onClick={onAddCheckin} />
+            <EmptyCell key={`empty-initial-${i}`} onClick={() => onAddCheckin(formatDateLocal(dates[i]))} />
           ))}
       </div>
     </div>

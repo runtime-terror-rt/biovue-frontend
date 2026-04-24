@@ -45,6 +45,7 @@ const defaultForm: AdFormData = {
   start_date: "",
   end_date: "",
   status: true,
+  redirect_link: "",
 };
 
 export default function AddEditBannerModal({
@@ -72,6 +73,7 @@ export default function AddEditBannerModal({
         end_date: existingBanner.end_date,
         status: existingBanner.status === 1 || existingBanner.status === true,
         image: null,
+        redirect_link: existingBanner.redirect_link || "",
       });
       setPreviewImage(existingBanner.image || "");
     } else {
@@ -129,6 +131,7 @@ export default function AddEditBannerModal({
     fd.append("placement", formData.placement.length > 0 ? formData.placement.join(", ") : "Home Screen Top");
     fd.append("start_date", formData.start_date);
     fd.append("end_date", formData.end_date);
+    fd.append("redirect_link", formData.redirect_link);
     // Explicitly leaving out "status" as it's not in the Postman payload and could be failing validation
 
     try {
@@ -187,6 +190,22 @@ export default function AddEditBannerModal({
                 placeholder="e.g. Summer Wellness Campaign 2024"
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0FA4A9] bg-[#F9F5FE]"
                 required
+              />
+            </div>
+
+            {/* Redirect Link */}
+            <div className="mb-4">
+              <div className="flex items-center gap-1 mb-1">
+                <h2 className="text-sm">Redirect Link</h2>
+              </div>
+              <input
+                type="text"
+                value={formData.redirect_link}
+                onChange={(e) =>
+                  setFormData({ ...formData, redirect_link: e.target.value })
+                }
+                placeholder="e.g. https://biovue.app/pricing"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0FA4A9] bg-[#F9F5FE]"
               />
             </div>
 
