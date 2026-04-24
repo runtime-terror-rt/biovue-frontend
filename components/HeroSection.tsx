@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import { X, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useGetActiveAdsQuery } from "@/redux/features/api/activeAds";
 
 const DecorationSVG = ({ className }: { className?: string }) => (
   <svg
@@ -39,8 +41,33 @@ const DecorationSVG = ({ className }: { className?: string }) => (
 );
 
 const HeroSection = () => {
+  const { data: adsData } = useGetActiveAdsQuery();
   const [bannerVisible, setBannerVisible] = useState(true);
   const [activeDot, setActiveDot] = useState(0);
+
+  // Filter ads for Home Screen Top placement
+  const ads = adsData?.filter(ad => ad.placement.includes("Home Screen Top")) || [];
+
+  // Auto-cycle carousel - resets on manual interaction
+  useEffect(() => {
+    if (ads.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveDot((prev) => (prev + 1) % ads.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [ads.length, activeDot]);
+
+  const activeAd = ads[activeDot];
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveDot((prev) => (prev - 1 + ads.length) % ads.length);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveDot((prev) => (prev + 1) % ads.length);
+  };
 
   return (
     <section className="relative flex flex-col items-center justify-center text-center pt-28 sm:pt-32 pb-16 md:pb-24 overflow-hidden min-h-screen bg-white">
@@ -56,67 +83,103 @@ const HeroSection = () => {
       </div>
 
       {/* Promotional Banner */}
-      {bannerVisible && (
+      {bannerVisible && (ads.length > 0 || !adsData) && (
         <div className="container mx-auto px-4 w-full mb-8 sm:mb-10">
           <div className="relative rounded-2xl overflow-hidden shadow-2xl">
             {/* Banner Image Background */}
-            <div className="relative w-full h-[180px] sm:h-[260px] md:h-[320px] lg:h-[380px]">
-              <Image
-                src="/images/landing/banner.png"
-                alt="Summer Wellness Sale 50% Off"
-                fill
-                className="object-cover object-center"
-                priority
-              />
-              {/* Overlay with content */}
-              <div className="absolute inset-0 flex items-center px-4 sm:px-8 md:px-10">
-                <div className="flex items-center  gap-3 sm:gap-8">
-                  <h2
-                    style={{
-                      color: "#FFF",
-                      fontFamily: "'Clash Display', sans-serif",
-                      fontStyle: "normal",
-                      fontWeight: 600,
-                    }}
-                    className="drop-shadow-lg text-left text-xl sm:text-3xl md:text-4xl lg:text-[46px] leading-tight lg:leading-[46px]"
-                  >
-                    Summer Wellness Sale: 50% Off
-                  </h2>
-                  <Link
-                    href="/pricing"
-                    style={{ gap: "10px" }}
-                    className="inline-flex items-center justify-center bg-white text-[#1A1A1A] text-xs sm:text-sm font-bold px-5 sm:px-6 py-2  rounded-full hover:bg-gray-100 transition-all shadow-md whitespace-nowrap "
-                  >
-                    Shop Now
-                    <ExternalLink size={12} className="sm:w-[16px] sm:h-[16px]" />
-                  </Link>
-                </div>
-              </div>
+            <div className="relative w-full h-[180px] sm:h-[260px] md:h-[320px] lg:h-[380px] overflow-hidden">
+              <AnimatePresence initial={false} mode="popLayout">
+                <motion.div
+                  key={activeDot}
+                  initial={{ x: 100, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -100, opacity: 0 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="absolute inset-0"
+                >
+                  <Image
+                    src={activeAd?.image || "/images/landing/banner.png"}
+                    alt={activeAd?.ads_title || "Summer Wellness Sale 50% Off"}
+                    fill
+                    className="object-cover object-center"
+                    priority
+                  />
+                  {/* Overlay with content - Centered without background */}
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center text-center px-4 sm:px-10">
+                    <div className="flex flex-col items-center gap-4 sm:gap-6 max-w-3xl">
+                      <h2
+                        style={{
+                          color: "#FFF",
+                          fontFamily: "'Clash Display', sans-serif",
+                          fontStyle: "normal",
+                          fontWeight: 700,
+                        }}
+                        className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] text-center text-2xl sm:text-4xl md:text-5xl lg:text-[54px] leading-tight"
+                      >
+                        {activeAd?.ads_title || "Summer Wellness Sale: 50% Off"}
+                      </h2>
+                      <Link
+                        href={activeAd?.redirect_link || "/pricing"}
+                        style={{ gap: "10px" }}
+                        className="inline-flex items-center justify-center bg-white text-[#1A1A1A] text-xs sm:text-base font-bold px-8 sm:px-10 py-2.5 sm:py-3.5 rounded-full hover:bg-[#F2F4F7] transition-all shadow-xl whitespace-nowrap active:scale-95"
+                      >
+                        Shop Now
+                        <ExternalLink size={16} className="sm:w-[20px] sm:h-[20px]" />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
 
               {/* Close Button */}
               <button
-                onClick={() => setBannerVisible(false)}
-                className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-all border border-white/30 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setBannerVisible(false);
+                }}
+                className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-all border border-white/30 cursor-pointer z-20"
                 aria-label="Close banner"
               >
                 <X size={14} className="sm:w-[16px] sm:h-[16px]" />
               </button>
 
-              {/* Dot Indicators */}
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                {[0, 1, 2].map((dot) => (
+              {/* Navigation Arrows */}
+              {ads.length > 1 && (
+                <>
                   <button
-                    key={dot}
-                    onClick={() => setActiveDot(dot)}
-                    className={`transition-all rounded-full cursor-pointer ${
-                      activeDot === dot
-                        ? "w-5 h-1.5 sm:w-6 sm:h-2 bg-white"
-                        : "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white/50"
-                    }`}
-                    aria-label={`Slide ${dot + 1}`}
-                  />
-                ))}
-              </div>
+                    onClick={handlePrev}
+                    className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-all border border-white/30 cursor-pointer z-10"
+                    aria-label="Previous slide"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-all border border-white/30 cursor-pointer z-10"
+                    aria-label="Next slide"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </>
+              )}
+
+              {/* Dot Indicators */}
+              {ads.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                  {ads.map((_, dot) => (
+                    <button
+                      key={dot}
+                      onClick={() => setActiveDot(dot)}
+                      className={`transition-all rounded-full cursor-pointer ${
+                        activeDot === dot
+                          ? "w-5 h-1.5 sm:w-6 sm:h-2 bg-white"
+                          : "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white/50"
+                      }`}
+                      aria-label={`Slide ${dot + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -11,9 +11,9 @@ const PartnersSection = () => {
 
   const partners = data?.data || [];
 
-  if (isLoading || !Array.isArray(partners) || partners.length === 0) {
-    return null;
-  }
+  // if (isLoading || !Array.isArray(partners) || partners.length === 0) {
+  //   return null;
+  // }
 
   const displayPartners = [...partners, ...partners, ...partners];
 
@@ -48,38 +48,52 @@ const PartnersSection = () => {
 
       <div className="relative w-full overflow-visible flex flex-col items-center justify-center py-12">
         {/* Superior Edge Fade Effects */}
-        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-r from-landing to-transparent z-20 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-40 bg-linear-to-r from-landing to-transparent z-20 pointer-events-none" />
 
         <div className="w-full overflow-visible px-10">
-          <motion.div
-            className="flex gap-8 whitespace-nowrap"
-            animate={{
-              x: isPaused ? undefined : [0, "-33.33%"],
-            }}
-            transition={{
-              x: {
-                repeat: Infinity,
-                repeatType: "loop",
-                duration: 25,
-                ease: "linear",
-              },
-            }}
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-            style={{ width: "max-content" }}
-          >
-            {displayPartners.map((partner: any, index: number) => (
-              <motion.div
-                key={`${partner.id}-${index}`}
-                whileHover={{
-                  scale: 1.06,
-                  y: -4,
-                  transition: { duration: 0.2, ease: "easeOut" },
-                }}
-                className="
+          {isLoading ? (
+            <div className="text-center text-[#5F6F73] text-lg">
+              Loading partners...
+            </div>
+          ) : !Array.isArray(partners) || partners.length === 0 ? (
+            <div className="flex flex-col items-center justify-center text-center">
+              <p className="text-xl md:text-2xl font-medium text-[#5F6F73]">
+                No partners available yet
+              </p>
+              <p className="text-sm text-[#8aa0a4] mt-2">
+                We are currently onboarding new collaborators
+              </p>
+            </div>
+          ) : (
+            <motion.div
+              className="flex gap-8 whitespace-nowrap"
+              animate={{
+                x: isPaused ? undefined : [0, "-33.33%"],
+              }}
+              transition={{
+                x: {
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  duration: 25,
+                  ease: "linear",
+                },
+              }}
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+              style={{ width: "max-content" }}
+            >
+              {displayPartners.map((partner: any, index: number) => (
+                <motion.div
+                  key={`${partner.id}-${index}`}
+                  whileHover={{
+                    scale: 1.06,
+                    y: -4,
+                    transition: { duration: 0.2, ease: "easeOut" },
+                  }}
+                  className="
     relative flex flex-col items-center justify-center
-    min-w-[200px] md:min-w-[240px]
-    h-[140px] md:h-[160px]
+    min-w-50 md:min-w-60
+    h-35 md:h-40
     border border-[#0fa4a9]/40
     rounded-2xl bg-white/50
     overflow-hidden
@@ -87,25 +101,25 @@ const PartnersSection = () => {
     shadow-sm group-hover:shadow-lg
     group cursor-pointer
   "
-              >
-                {/* Logo */}
-                <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center z-10">
-                  <Image
-                    src={partner.image_url}
-                    alt={partner.company}
-                    fill
-                    className="
+                >
+                  {/* Logo */}
+                  <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center z-10">
+                    <Image
+                      src={partner.image_url}
+                      alt={partner.company}
+                      fill
+                      className="
         object-contain p-2
-        grayscale-[30%] opacity-80
+        grayscale-30 opacity-80
         group-hover:grayscale-0 group-hover:opacity-100
         transition-all duration-500
       "
-                  />
-                </div>
+                    />
+                  </div>
 
-                {/* Company Name (hidden → slide up) */}
-                <p
-                  className="
+                  {/* Company Name (hidden → slide up) */}
+                  <p
+                    className="
       absolute bottom-2 left-0 w-full
       text-xs md:text-sm font-medium
       text-center text-primary
@@ -113,12 +127,13 @@ const PartnersSection = () => {
       group-hover:opacity-100 group-hover:translate-y-0
       transition-all duration-500
     "
-                >
-                  {partner.company}
-                </p>
-              </motion.div>
-            ))}
-          </motion.div>
+                  >
+                    {partner.company}
+                  </p>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </div>
     </section>
