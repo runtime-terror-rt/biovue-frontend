@@ -1,5 +1,7 @@
 export interface UserProfile {
   user_id: string;
+  name: string;
+  email: string;
   goal: string;
   goal_description: string;
   key_health_concerns: string[];

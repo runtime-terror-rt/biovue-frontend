@@ -1,14 +1,13 @@
 "use client";
 
 import { useGetSchedulesQuery } from "@/redux/features/api/TrainerDashboard/Calendar/GetSchedule";
-import FilterDropdown from "@/components/TrainerDashboard/calendar/FilterDropdown";
 import WeeklyCalendar from "@/components/TrainerDashboard/calendar/WeeklyCalendar";
 import DashboardHeading from "@/components/common/DashboardHeading";
 import SendReminderModal from "@/components/TrainerDashboard/calendar/SendReminderModal";
 import ScheduleCheckinModal from "@/components/TrainerDashboard/calendar/ScheduleCheckinModal";
 import EventDetailsModal from "@/components/TrainerDashboard/calendar/EventDetailsModal";
 import RescheduleEventModal from "@/components/TrainerDashboard/calendar/RescheduleEventModal";
-import { ChevronLeft, ChevronRight, Filter, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useState } from "react";
 import { useUpdateScheduleMutation } from "@/redux/features/api/TrainerDashboard/Calendar/CreateSchedule";
 import DailyCalendar from "@/components/TrainerDashboard/calendar/DailyCalendar";
@@ -31,13 +30,6 @@ export interface CalendarEvent {
 export default function CalendarPage() {
   const [view, setView] = useState<"day" | "week" | "month">("week");
   const [currentDate, setCurrentDate] = useState(new Date());
-
-  const [openClientFilter, setOpenClientFilter] = useState(false);
-  const [openTypeFilter, setOpenTypeFilter] = useState(false);
-
-  // const [selectedClient, setSelectedClient] = useState("All Clients");
-  // const [selectedType, setSelectedType] = useState("All Types");
-
   const [isReminderOpen, setIsReminderOpen] = useState(false);
   const [isCheckinOpen, setIsCheckinOpen] = useState(false);
   const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false);
@@ -200,7 +192,7 @@ export default function CalendarPage() {
                 <ChevronLeft className="w-5 h-5" />
               </button>
 
-              <span className="text-[15px] font-bold text-[#1E293B] whitespace-nowrap min-w-[200px] text-center">
+              <span className="text-[15px] font-bold text-[#1E293B] whitespace-nowrap min-w-50 text-center">
                 {formatRange(start, end)}
               </span>
 
@@ -250,7 +242,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar */}
-      <div className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] overflow-hidden min-h-[400px]">
+      <div className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] overflow-hidden min-h-100">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center p-20 gap-4">
             <div className="w-10 h-10 border-4 border-[#0D9488] border-t-transparent rounded-full animate-spin"></div>
