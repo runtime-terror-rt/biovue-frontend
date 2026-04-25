@@ -43,6 +43,7 @@ import {
   Lock,
 } from "lucide-react";
 
+
 const OnboardingStepsPage = () => {
   const [step, setStep] = useState(1);
   const [totalSteps] = useState(7);
@@ -87,10 +88,13 @@ const OnboardingStepsPage = () => {
     useCreateUpdateProfileMutation();
   const [fetchInsights] = useFetchInsightsMutation();
   const [fetchFutureInsights] = useFetchFutureInsightsMutation();
-  const [processPayment, { isLoading: isProcessingPayment }] = useProcessPaymentMutation();
+  const [processPayment, { isLoading: isProcessingPayment }] =
+    useProcessPaymentMutation();
   const { data: plansData } = useGetPlansQuery("monthly");
 
-  const plans = (plansData || []).filter(p => p.plan_type === "individual" && p.status);
+  const plans = (plansData || []).filter(
+    (p) => p.plan_type === "individual" && p.status,
+  );
   const router = useRouter();
   const user = useSelector(selectCurrentUser);
   const [unitSystem, setUnitSystem] = useState<"imperial" | "metric">(
@@ -226,10 +230,10 @@ const OnboardingStepsPage = () => {
                 number: formData.cardNumber,
                 expiry: formData.expiryDate,
                 cvv: formData.cvc,
-                name: formData.cardName
-              }
+                name: formData.cardName,
+              },
             }).unwrap();
-            
+
             if (paymentRes.checkout_url) {
               toast.info("Redirecting to payment...");
               window.location.href = paymentRes.checkout_url;
@@ -288,7 +292,9 @@ const OnboardingStepsPage = () => {
           <div className="w-10" /> {/* Spacer for back arrow */}
           <div className="flex-1 px-0">
             <div className="flex justify-between items-center mb-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              <span>STEP {step} OF {totalSteps}</span>
+              <span>
+                STEP {step} OF {totalSteps}
+              </span>
               <span>{progress}% Complete</span>
             </div>
             <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -384,7 +390,6 @@ const OnboardingStepsPage = () => {
               </button>
             </div>
           )}
-
           {step === 2 && (
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-[rgba(58,134,255,0.25)] shadow-sm">
               {/* <div className="flex items-center gap-3 mb-2">
@@ -492,7 +497,9 @@ const OnboardingStepsPage = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, height: e.target.value })
                       }
-                      placeholder={unitSystem === "metric" ? "170 cm" : "60 inch"}
+                      placeholder={
+                        unitSystem === "metric" ? "170 cm" : "60 inch"
+                      }
                       className="flex-1 bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 text-gray-700 font-medium"
                     />
                     <select className="w-32 bg-[#F8FAFB] border border-gray-100 rounded-xl py-4 px-5 text-gray-500 font-medium">
@@ -514,7 +521,9 @@ const OnboardingStepsPage = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, weight: e.target.value })
                       }
-                      placeholder={unitSystem === "metric" ? "70 kg" : "170 lbs"}
+                      placeholder={
+                        unitSystem === "metric" ? "70 kg" : "170 lbs"
+                      }
                       className="flex-1 bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 text-gray-700 font-medium"
                     />
                     <select className="w-32 bg-[#F8FAFB] border border-gray-100 rounded-xl py-4 px-5 text-gray-500 font-medium">
@@ -588,7 +597,6 @@ const OnboardingStepsPage = () => {
               </div>
             </div>
           )}
-
           {step === 3 && (
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-[rgba(58,134,255,0.25)] shadow-sm">
               <div className="flex items-center gap-3 mb-2">
@@ -720,11 +728,16 @@ const OnboardingStepsPage = () => {
                     className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-5 text-gray-400 font-medium appearance-none"
                   >
                     <option value="">Select.....</option>
-                    <option value="Excellent">Excellent - Whole-food based</option>
-                    <option value="Good">Good - Mostly healthy, some moderation needed</option>
-                    <option value="Average">Fair - High in processed foods/sugars</option>
+                    <option value="Excellent">
+                      Excellent - Whole-food based
+                    </option>
+                    <option value="Good">
+                      Good - Mostly healthy, some moderation needed
+                    </option>
+                    <option value="Average">
+                      Fair - High in processed foods/sugars
+                    </option>
                     <option value="Bad">Poor - Little nutritional value</option>
-                   
                   </select>
                 </div>
 
@@ -795,7 +808,6 @@ const OnboardingStepsPage = () => {
               </div>
             </div>
           )}
-
           {step === 4 && (
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-[rgba(58,134,255,0.25)] shadow-sm">
               <div className="flex items-center gap-3 mb-2">
@@ -882,7 +894,6 @@ const OnboardingStepsPage = () => {
               </div>
             </div>
           )}
-
           {step === 5 && (
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-[rgba(58,134,255,0.25)] shadow-sm">
               <div className="flex items-center gap-3 mb-2">
@@ -993,7 +1004,8 @@ const OnboardingStepsPage = () => {
                 </button>
               </div>
             </div>
-          )}          {step === 6 && (
+          )}{" "}
+          {step === 6 && (
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-[rgba(58,134,255,0.25)] shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-[#E8F1FF] rounded-xl flex items-center justify-center text-[#3A86FF]">
@@ -1004,19 +1016,22 @@ const OnboardingStepsPage = () => {
                 </h2>
               </div>
               <p className="text-gray-400 text-[15px] mb-8 ml-12">
-                Select a plan to unlock AI body projections and wellness insights
+                Select a plan to unlock AI body projections and wellness
+                insights
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                 {plans.map((plan) => (
                   <div
                     key={plan.id}
-                    onClick={() => setFormData({ ...formData, plan_id: plan.id })}
+                    onClick={() =>
+                      setFormData({ ...formData, plan_id: plan.id })
+                    }
                     className={cn(
                       "p-6 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden",
                       formData.plan_id === plan.id
                         ? "border-[#3A86FF] bg-[#F8FAFF]"
-                        : "border-gray-100 hover:border-[#3A86FF]/30"
+                        : "border-gray-100 hover:border-[#3A86FF]/30",
                     )}
                   >
                     {formData.plan_id === plan.id && (
@@ -1026,16 +1041,28 @@ const OnboardingStepsPage = () => {
                     )}
                     <div className="flex flex-col gap-4">
                       <div>
-                        <h3 className="text-[#041228] font-bold text-lg">{plan.name}</h3>
+                        <h3 className="text-[#041228] font-bold text-lg">
+                          {plan.name}
+                        </h3>
                         <div className="flex items-baseline gap-1 mt-1">
-                          <span className="text-2xl font-bold text-[#3A86FF]">${plan.price}</span>
-                          <span className="text-gray-400 text-xs font-medium">/month</span>
+                          <span className="text-2xl font-bold text-[#3A86FF]">
+                            ${plan.price}
+                          </span>
+                          <span className="text-gray-400 text-xs font-medium">
+                            /month
+                          </span>
                         </div>
                       </div>
                       <ul className="space-y-2">
                         {plan.features.slice(0, 4).map((feature, i) => (
-                          <li key={i} className="flex items-start gap-2 text-[13px] text-gray-500">
-                            <CheckCircle size={14} className="text-[#0FA4A9] mt-0.5" />
+                          <li
+                            key={i}
+                            className="flex items-start gap-2 text-[13px] text-gray-500"
+                          >
+                            <CheckCircle
+                              size={14}
+                              className="text-[#0FA4A9] mt-0.5"
+                            />
                             {feature}
                           </li>
                         ))}
@@ -1046,17 +1073,22 @@ const OnboardingStepsPage = () => {
               </div>
 
               {/* Payment Info Placeholder */}
-              {formData.plan_id && plans.find(p => p.id === formData.plan_id)?.price !== "0.00" && (
-                <div className="mb-10 p-6 bg-[#F8FAFB] rounded-2xl border border-dashed border-gray-300">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Zap size={20} className="text-[#3A86FF]" />
-                    <h3 className="text-[#041228] font-bold text-[15px]">Secure Payment Information</h3>
+              {formData.plan_id &&
+                plans.find((p) => p.id === formData.plan_id)?.price !==
+                  "0.00" && (
+                  <div className="mb-10 p-6 bg-[#F8FAFB] rounded-2xl border border-dashed border-gray-300">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Zap size={20} className="text-[#3A86FF]" />
+                      <h3 className="text-[#041228] font-bold text-[15px]">
+                        Secure Payment Information
+                      </h3>
+                    </div>
+                    <p className="text-gray-400 text-xs mb-4">
+                      You will be securely redirected to Stripe to provide your
+                      credit card information after saving your profile.
+                    </p>
                   </div>
-                  <p className="text-gray-400 text-xs mb-4">
-                    You will be securely redirected to Stripe to provide your credit card information after saving your profile.
-                  </p>
-                </div>
-              )}
+                )}
 
               <div className="flex justify-center flex-col md:flex-row items-center">
                 <button
@@ -1070,7 +1102,6 @@ const OnboardingStepsPage = () => {
               </div>
             </div>
           )}
-
           {step === 7 && (
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-[rgba(58,134,255,0.25)] shadow-sm">
               <div className="flex items-center gap-3 mb-2">
@@ -1082,7 +1113,8 @@ const OnboardingStepsPage = () => {
                 </h2>
               </div>
               <p className="text-gray-400 text-[15px] mb-8 ml-12">
-                Secure your wellness future. We collect these details to ensure seamless transitions between plans.
+                Secure your wellness future. We collect these details to ensure
+                seamless transitions between plans.
               </p>
 
               <div className="max-w-xl mx-auto w-full flex flex-col gap-6">
@@ -1097,16 +1129,26 @@ const OnboardingStepsPage = () => {
                   </div>
                   <div className="flex flex-col gap-4">
                     <div className="text-xl font-mono tracking-[0.25em]">
-                      {formData.cardNumber ? formData.cardNumber.replace(/\d{4}(?=.)/g, '$& ') : "**** **** **** ****"}
+                      {formData.cardNumber
+                        ? formData.cardNumber.replace(/\d{4}(?=.)/g, "$& ")
+                        : "**** **** **** ****"}
                     </div>
                     <div className="flex justify-between items-end">
                       <div className="flex flex-col">
-                        <span className="text-[8px] uppercase tracking-wider opacity-60">Card Holder</span>
-                        <span className="text-sm font-bold uppercase tracking-widest">{formData.cardName || "Your Name"}</span>
+                        <span className="text-[8px] uppercase tracking-wider opacity-60">
+                          Card Holder
+                        </span>
+                        <span className="text-sm font-bold uppercase tracking-widest">
+                          {formData.cardName || "Your Name"}
+                        </span>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="text-[8px] uppercase tracking-wider opacity-60">Expires</span>
-                        <span className="text-sm font-bold">{formData.expiryDate || "MM/YY"}</span>
+                        <span className="text-[8px] uppercase tracking-wider opacity-60">
+                          Expires
+                        </span>
+                        <span className="text-sm font-bold">
+                          {formData.expiryDate || "MM/YY"}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1115,32 +1157,48 @@ const OnboardingStepsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Card Name */}
                   <div className="md:col-span-2 space-y-2">
-                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">Cardholder Name</label>
+                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
+                      Cardholder Name
+                    </label>
                     <input
                       type="text"
                       className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-4 text-gray-700 font-medium focus:ring-2 focus:ring-[#3A86FF]/10 outline-none"
                       placeholder="JOHN DOE"
                       value={formData.cardName}
-                      onChange={(e) => setFormData({ ...formData, cardName: e.target.value.toUpperCase() })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          cardName: e.target.value.toUpperCase(),
+                        })
+                      }
                     />
                   </div>
 
                   {/* Card Number */}
                   <div className="md:col-span-2 space-y-2">
-                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">Card Number</label>
+                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
+                      Card Number
+                    </label>
                     <input
                       type="text"
                       maxLength={16}
                       className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-4 text-gray-700 font-medium focus:ring-2 focus:ring-[#3A86FF]/10 outline-none"
                       placeholder="**** **** **** ****"
                       value={formData.cardNumber}
-                      onChange={(e) => setFormData({ ...formData, cardNumber: e.target.value.replace(/\D/g, '') })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          cardNumber: e.target.value.replace(/\D/g, ""),
+                        })
+                      }
                     />
                   </div>
 
                   {/* Expiry */}
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">Expiry Date</label>
+                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
+                      Expiry Date
+                    </label>
                     <input
                       type="text"
                       placeholder="MM/YY"
@@ -1148,8 +1206,9 @@ const OnboardingStepsPage = () => {
                       className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-4 text-gray-700 font-medium focus:ring-2 focus:ring-[#3A86FF]/10 outline-none"
                       value={formData.expiryDate}
                       onChange={(e) => {
-                        let v = e.target.value.replace(/\D/g, '');
-                        if (v.length >= 2) v = v.substring(0, 2) + '/' + v.substring(2);
+                        let v = e.target.value.replace(/\D/g, "");
+                        if (v.length >= 2)
+                          v = v.substring(0, 2) + "/" + v.substring(2);
                         setFormData({ ...formData, expiryDate: v });
                       }}
                     />
@@ -1157,14 +1216,21 @@ const OnboardingStepsPage = () => {
 
                   {/* CVC */}
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">CVC / CVV</label>
+                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
+                      CVC / CVV
+                    </label>
                     <input
                       type="password"
                       maxLength={3}
                       placeholder="***"
                       className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-4 text-gray-700 font-medium focus:ring-2 focus:ring-[#3A86FF]/10 outline-none"
                       value={formData.cvc}
-                      onChange={(e) => setFormData({ ...formData, cvc: e.target.value.replace(/\D/g, '') })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          cvc: e.target.value.replace(/\D/g, ""),
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -1172,7 +1238,9 @@ const OnboardingStepsPage = () => {
                 <div className="flex items-start gap-3 mt-2 p-4 bg-blue-50/50 rounded-xl border border-[#3A86FF]/10">
                   <Lock size={16} className="text-[#3A86FF] mt-0.5 shrink-0" />
                   <p className="text-[11px] text-gray-500 leading-relaxed italic">
-                    Your payment information is encrypted and securely stored. We will not charge your card for free plans. For paid plans, your subscription will begin immediately.
+                    Your payment information is encrypted and securely stored.
+                    We will not charge your card for free plans. For paid plans,
+                    your subscription will begin immediately.
                   </p>
                 </div>
               </div>
@@ -1183,7 +1251,7 @@ const OnboardingStepsPage = () => {
                   disabled={isSubmitting || isProcessingPayment}
                   className="w-full md:w-auto min-w-[320px] bg-[#0FA4A9] text-white py-4 px-10 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all shadow-lg shadow-[#0FA4A9]/20 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {(isSubmitting || isProcessingPayment) ? (
+                  {isSubmitting || isProcessingPayment ? (
                     <>
                       <Loader2 className="animate-spin" size={22} />
                       Processing...
