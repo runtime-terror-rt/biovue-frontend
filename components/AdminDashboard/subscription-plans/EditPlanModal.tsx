@@ -73,6 +73,7 @@ export default function EditPlanModal({
       features: (plan.features || []).join("\n"),
       duration: plan.duration || 30,
       member_limit: plan.member_limit,
+      projection_limit: plan.projection_limit ?? null,
     });
   }, [plan, isOpen]);
 
@@ -85,7 +86,7 @@ export default function EditPlanModal({
     try {
       await updatePlan({
         id: plan.id,
-        ...formData,
+        ...formData, // ✅ projection_limit যাবে এখানেই
         price: formData.price.toString(),
         features: formData.features.split("\n").filter((f) => f.trim() !== ""),
       }).unwrap();
@@ -189,6 +190,22 @@ export default function EditPlanModal({
                     USD
                   </span>
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#4B5563] mb-1.5">
+                  Projection Limit
+                </label>
+                <input
+                  type="number"
+                  value={formData.projection_limit || 0}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      projection_limit: parseInt(e.target.value),
+                    })
+                  }
+                  className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F39F6]/20 focus:border-[#4F39F6] transition-all"
+                />
               </div>
 
               <div className="grid grid-cols-1">
@@ -346,19 +363,29 @@ export default function EditPlanModal({
                     </div>
                   </div>
 
+                  {/* <div>
+                    <label className="block text-sm font-medium text-[#4B5563] mb-1.5">
+                      Projection Limit
+                    </label>
+                    <input
+                      type="number"
+                      
+                      className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F39F6]/20 focus:border-[#4F39F6] transition-all"
+                    />
+                  </div> */}
                   <div>
                     <label className="block text-sm font-medium text-[#4B5563] mb-1.5">
                       Projection Limit
                     </label>
                     <input
                       type="number"
-                      // value={formData.member_limit || 0}
-                      // onChange={(e) =>
-                      //   setFormData({
-                      //     ...formData,
-                      //     member_limit: parseInt(e.target.value),
-                      //   })
-                      // }
+                      value={formData.projection_limit || 0}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          projection_limit: parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F39F6]/20 focus:border-[#4F39F6] transition-all"
                     />
                   </div>

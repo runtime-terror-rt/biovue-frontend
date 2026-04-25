@@ -10,6 +10,7 @@ export interface Plan {
   features: string[];
   status: boolean;
   price: string | number;
+  projection_limit?: number | null;
 }
 
 interface ApiResponse<T> {
