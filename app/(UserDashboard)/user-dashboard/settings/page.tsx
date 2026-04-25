@@ -609,7 +609,7 @@ const ProfileEditView = ({
     thyroid_issue: 0,
     current_medication: "",
     profile_id: "",
-    unit_system: "imperial",
+    unit_system: "",
   });
 
   useEffect(() => {

@@ -359,11 +359,11 @@ const PricingPage = () => {
                   key={plan.id}
                   compact
                   title={plan.name}
-                  capacity={
-                    plan.member_limit
-                      ? `Up to ${plan.member_limit} clients`
-                      : "Unlimited clients"
-                  }
+                  // capacity={
+                  //   plan.member_limit
+                  //     ? `Up to ${plan.member_limit} clients`
+                  //     : "Unlimited clients"
+                  // }
                   // price={
                   //   plan.price === "0.00" || plan.price === 0
                   //     ? "Custom"
