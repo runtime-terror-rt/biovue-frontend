@@ -13,7 +13,7 @@ const DashboardBanner = () => {
   const [activeDot, setActiveDot] = useState(0);
 
   // Filter ads for Free Dashboard placement
-  const ads = adsData?.filter(ad => ad.placement.includes("Free Dashboard")) || [];
+  const ads = adsData?.filter(ad => ad.placement.includes("Home Screen Top") || ad.placement.includes("Free Dashboard")) || [];
 
   // Auto-cycle carousel - resets on manual interaction
   useEffect(() => {
@@ -80,7 +80,7 @@ const DashboardBanner = () => {
                         {activeAd?.ads_title || "Summer Wellness Sale: 50% Off"}
                       </h2>
                       <Link
-                        href={activeAd?.redirect_link || "/user-dashboard/upgrade"}
+                        href={activeAd?.redirect_url || "/user-dashboard/upgrade"}
                         className="inline-flex items-center justify-center bg-white text-[#1A1A1A] text-xs sm:text-base font-bold px-8 sm:px-10 py-2.5 sm:py-3.5 rounded-full hover:bg-[#F2F4F7] transition-all shadow-xl whitespace-nowrap active:scale-95 border-none"
                       >
                         Shop Now

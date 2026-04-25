@@ -382,11 +382,7 @@ const PricingPage = () => {
                       ? "" 
                       : billingCycle === "monthly" ? "/Month" : "/Year"
                   }
-                  subtext={
-                    plan.price !== "0.00" && plan.price !== 0
-                      ? "7 days free trial"
-                      : ""
-                  }
+                  subtext=""
                   features={(() => {
                     const overrideTexts = [
                       "Dedicated account manager",
@@ -463,7 +459,7 @@ const PricingPage = () => {
                               plan.price === "0.00" ||
                               plan.price === 0
                             ? "Contact Via Mail"
-                            : "Start 7-Day Free Trial"
+                            : "Get Started"
                   }
                   ctaColor="bg-[#0FA4A9]"
                   onSelect={() => handlePlanSelection(plan)}
