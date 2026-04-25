@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { useCreateUpdateProfileMutation } from "@/redux/features/api/profileApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
@@ -12,6 +13,8 @@ import {
   useFetchInsightsMutation,
   useFetchFutureInsightsMutation,
 } from "@/redux/features/api/userDashboard/insightsApi";
+import { useGetPlansQuery } from "@/redux/features/api/adminDashboard/plan";
+import { useProcessPaymentMutation } from "@/redux/features/api/paymentApi";
 import {
   Loader2,
   ChevronLeft,
@@ -40,6 +43,7 @@ import {
 
 const OnboardingStepsPage = () => {
   const [step, setStep] = useState(1);
+  const [totalSteps] = useState(6);
   const [agreed, setAgreed] = useState(false);
 
   // Form states (simplified for UI demonstration)
@@ -68,12 +72,18 @@ const OnboardingStepsPage = () => {
     // Step 5
     medicalHistory: [] as string[],
     currentMedications: "",
+    // Step 6
+    plan_id: null as number | null,
   });
 
   const [createUpdateProfile, { isLoading: isSubmitting }] =
     useCreateUpdateProfileMutation();
   const [fetchInsights] = useFetchInsightsMutation();
   const [fetchFutureInsights] = useFetchFutureInsightsMutation();
+  const [processPayment, { isLoading: isProcessingPayment }] = useProcessPaymentMutation();
+  const { data: plansData } = useGetPlansQuery("monthly");
+
+  const plans = (plansData || []).filter(p => p.plan_type === "individual" && p.status);
   const router = useRouter();
   const user = useSelector(selectCurrentUser);
   const [unitSystem, setUnitSystem] = useState<"imperial" | "metric">(
@@ -191,17 +201,31 @@ const OnboardingStepsPage = () => {
         // Automated Insights Fetching
         try {
           fetchInsights({ user_id: Number(user?.id) });
-
           fetchFutureInsights({
             user_id: String(user?.id),
             timeframe: "5 years",
           });
-
-          console.log(
-            "Triggered automated insights fetching in the background",
-          );
         } catch (error) {
           console.error("Failed to trigger automated insights:", error);
+        }
+
+        // If a plan is selected, process payment
+        if (formData.plan_id) {
+          try {
+            const paymentRes = await processPayment({
+              plan_id: formData.plan_id,
+              billing: "monthly"
+            }).unwrap();
+            
+            if (paymentRes.checkout_url) {
+              toast.info("Redirecting to payment...");
+              window.location.href = paymentRes.checkout_url;
+              return;
+            }
+          } catch (paymentErr) {
+            console.error("Payment processing error:", paymentErr);
+            toast.error("Profile saved, but failed to initiate payment.");
+          }
         }
 
         router.push("/personalize-journey/onboarding?completed=true");
@@ -215,15 +239,14 @@ const OnboardingStepsPage = () => {
   };
 
   const nextStep = () => {
-    if (step < 5) setStep(step + 1);
+    if (step < totalSteps) setStep(step + 1);
   };
 
   const prevStep = () => {
     if (step > 1) setStep(step - 1);
   };
 
-  const progress =
-    step === 1 ? 20 : step === 2 ? 40 : step === 3 ? 60 : step === 4 ? 80 : 100;
+  const progress = Math.round((step / totalSteps) * 100);
 
   return (
     <div className="bg-[#F8FAFB]  overflow-hidden">
@@ -252,7 +275,7 @@ const OnboardingStepsPage = () => {
           <div className="w-10" /> {/* Spacer for back arrow */}
           <div className="flex-1 px-0">
             <div className="flex justify-between items-center mb-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              <span>STEP {step} OF 5</span>
+              <span>STEP {step} OF {totalSteps}</span>
               <span>{progress}% Complete</span>
             </div>
             <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -941,7 +964,7 @@ const OnboardingStepsPage = () => {
                 />
               </div>
 
-              <div className="mb-8">
+              <div className="mb-4">
                 <p className="text-[#3A86FF] text-[13px] font-medium">
                   This information is private & encrypted
                 </p>
@@ -949,18 +972,93 @@ const OnboardingStepsPage = () => {
 
               <div className="flex justify-center flex-col md:flex-row items-center">
                 <button
+                  onClick={nextStep}
+                  className="w-full md:w-auto min-w-[320px] bg-[#0FA4A9] text-white py-4 px-10 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all shadow-lg shadow-[#0FA4A9]/20 cursor-pointer"
+                >
+                  Continue
+                  <ArrowRight size={22} />
+                </button>
+              </div>
+            </div>
+          )}          {step === 6 && (
+            <div className="bg-white rounded-2xl p-6 md:p-8 border border-[rgba(58,134,255,0.25)] shadow-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-[#E8F1FF] rounded-xl flex items-center justify-center text-[#3A86FF]">
+                  <Crown size={22} />
+                </div>
+                <h2 className="text-[#041228] text-2xl font-bold">
+                  Choose Your Plan
+                </h2>
+              </div>
+              <p className="text-gray-400 text-[15px] mb-8 ml-12">
+                Select a plan to unlock AI body projections and wellness insights
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                {plans.map((plan) => (
+                  <div
+                    key={plan.id}
+                    onClick={() => setFormData({ ...formData, plan_id: plan.id })}
+                    className={cn(
+                      "p-6 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden",
+                      formData.plan_id === plan.id
+                        ? "border-[#3A86FF] bg-[#F8FAFF]"
+                        : "border-gray-100 hover:border-[#3A86FF]/30"
+                    )}
+                  >
+                    {formData.plan_id === plan.id && (
+                      <div className="absolute top-0 right-0 bg-[#3A86FF] text-white px-3 py-1 text-[10px] font-bold rounded-bl-lg">
+                        SELECTED
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <h3 className="text-[#041228] font-bold text-lg">{plan.name}</h3>
+                        <div className="flex items-baseline gap-1 mt-1">
+                          <span className="text-2xl font-bold text-[#3A86FF]">${plan.price}</span>
+                          <span className="text-gray-400 text-xs font-medium">/month</span>
+                        </div>
+                      </div>
+                      <ul className="space-y-2">
+                        {plan.features.slice(0, 4).map((feature, i) => (
+                          <li key={i} className="flex items-start gap-2 text-[13px] text-gray-500">
+                            <CheckCircle size={14} className="text-[#0FA4A9] mt-0.5" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Payment Info Placeholder */}
+              {formData.plan_id && plans.find(p => p.id === formData.plan_id)?.price !== "0.00" && (
+                <div className="mb-10 p-6 bg-[#F8FAFB] rounded-2xl border border-dashed border-gray-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Zap size={20} className="text-[#3A86FF]" />
+                    <h3 className="text-[#041228] font-bold text-[15px]">Secure Payment Information</h3>
+                  </div>
+                  <p className="text-gray-400 text-xs mb-4">
+                    You will be securely redirected to Stripe to provide your credit card information after saving your profile.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex justify-center flex-col md:flex-row items-center">
+                <button
                   onClick={handleSubmit}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isProcessingPayment}
                   className="w-full md:w-auto min-w-[320px] bg-[#0FA4A9] text-white py-4 px-10 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all shadow-lg shadow-[#0FA4A9]/20 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? (
+                  {(isSubmitting || isProcessingPayment) ? (
                     <>
                       <Loader2 className="animate-spin" size={22} />
-                      Submitting...
+                      Processing...
                     </>
                   ) : (
                     <>
-                      Continue
+                      {formData.plan_id ? "Finish & Pay" : "Continue"}
                       <ArrowRight size={22} />
                     </>
                   )}
