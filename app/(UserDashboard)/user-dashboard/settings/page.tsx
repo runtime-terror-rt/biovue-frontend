@@ -609,6 +609,7 @@ const ProfileEditView = ({
     thyroid_issue: 0,
     current_medication: "",
     profile_id: "",
+    unit_system: "imperial",
   });
 
   useEffect(() => {
@@ -653,6 +654,7 @@ const ProfileEditView = ({
         thyroid_issue: m?.thyroid_issue || 0,
         current_medication: m?.current_medication || "",
         profile_id: p?.id?.toString() || "",
+        unit_system: p?.unit_system || "imperial",
       });
 
       if (p?.image) {
@@ -722,6 +724,8 @@ const ProfileEditView = ({
       data.append("sex", formData.sex);
       data.append("height", formData.height);
       data.append("weight", formData.weight);
+      data.append("unit", formData.unit_system);
+      data.append("unit_system", formData.unit_system);
       data.append("location", formData.location);
       data.append("agreed_terms", "1");
       data.append("body_fat", formData.body_fat);
@@ -915,7 +919,7 @@ const ProfileEditView = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-3">
               <label className="text-xs text-[#5F6F73] font-bold uppercase tracking-widest">
-                HEIGHT (IN)
+                HEIGHT ({formData.unit_system === "metric" ? "CM" : "IN"})
               </label>
               <input
                 type="number"
@@ -928,7 +932,7 @@ const ProfileEditView = ({
             </div>
             <div className="flex flex-col gap-3">
               <label className="text-xs text-[#5F6F73] font-bold uppercase tracking-widest">
-                WEIGHT (LBS)
+                WEIGHT ({formData.unit_system === "metric" ? "KG" : "LBS"})
               </label>
               <input
                 type="number"
