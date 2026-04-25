@@ -119,7 +119,7 @@ const HeroSection = () => {
                         {activeAd?.ads_title || "Summer Wellness Sale: 50% Off"}
                       </h2>
                       <Link
-                        href={activeAd?.redirect_link || "/pricing"}
+                        href={activeAd?.redirect_url || "/pricing"}
                         style={{ gap: "10px" }}
                         className="inline-flex items-center justify-center bg-white text-[#1A1A1A] text-xs sm:text-base font-bold px-8 sm:px-10 py-2.5 sm:py-3.5 rounded-full hover:bg-[#F2F4F7] transition-all shadow-xl whitespace-nowrap active:scale-95"
                       >

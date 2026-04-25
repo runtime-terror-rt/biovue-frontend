@@ -11,7 +11,7 @@ export interface Ad {
   status: number;
   created_at: string;
   updated_at: string;
-  redirect_link: string;
+  redirect_url: string;
 }
 
 export interface AdsResponse {

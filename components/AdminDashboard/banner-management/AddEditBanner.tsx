@@ -45,7 +45,7 @@ const defaultForm: AdFormData = {
   start_date: "",
   end_date: "",
   status: true,
-  redirect_link: "",
+  redirect_url: "",
 };
 
 export default function AddEditBannerModal({
@@ -73,7 +73,7 @@ export default function AddEditBannerModal({
         end_date: existingBanner.end_date,
         status: existingBanner.status === 1 || existingBanner.status === true,
         image: null,
-        redirect_link: existingBanner.redirect_link || "",
+        redirect_url: existingBanner.redirect_url || "",
       });
       setPreviewImage(existingBanner.image || "");
     } else {
@@ -131,7 +131,7 @@ export default function AddEditBannerModal({
     fd.append("placement", formData.placement.length > 0 ? formData.placement.join(", ") : "Home Screen Top");
     fd.append("start_date", formData.start_date);
     fd.append("end_date", formData.end_date);
-    fd.append("redirect_link", formData.redirect_link);
+    fd.append("redirect_url", formData.redirect_url);
     // Explicitly leaving out "status" as it's not in the Postman payload and could be failing validation
 
     try {
@@ -196,17 +196,29 @@ export default function AddEditBannerModal({
             {/* Redirect Link */}
             <div className="mb-4">
               <div className="flex items-center gap-1 mb-1">
-                <h2 className="text-sm">Redirect Link</h2>
+                <h2 className="text-sm">Redirect URL</h2>
               </div>
               <input
                 type="text"
-                value={formData.redirect_link}
+                value={formData.redirect_url}
                 onChange={(e) =>
-                  setFormData({ ...formData, redirect_link: e.target.value })
+                  setFormData({ ...formData, redirect_url: e.target.value })
                 }
                 placeholder="e.g. https://biovue.app/pricing"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0FA4A9] bg-[#F9F5FE]"
+                className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 bg-[#F9F5FE] ${
+                  formData.redirect_url.length > 255 
+                    ? "border-red-500 focus:ring-red-200" 
+                    : "border-gray-200 focus:ring-[#0FA4A9]"
+                }`}
               />
+              <div className="flex justify-between mt-1">
+                <p className={`text-[10px] font-medium ${formData.redirect_url.length > 255 ? "text-red-500" : "text-gray-400"}`}>
+                  {formData.redirect_url.length > 255 ? "⚠ URL might be too long for the database (Max 255 recommended)" : "URL for the banner click action"}
+                </p>
+                <span className={`text-[10px] font-bold ${formData.redirect_url.length > 255 ? "text-red-500" : "text-gray-400"}`}>
+                  {formData.redirect_url.length}/255
+                </span>
+              </div>
             </div>
 
             {/* Banner Type */}

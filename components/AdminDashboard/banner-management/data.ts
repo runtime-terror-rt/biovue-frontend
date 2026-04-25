@@ -7,7 +7,7 @@ export interface Ad {
   start_date: string;
   end_date: string;
   status: boolean | number;
-  redirect_link: string;
+  redirect_url: string;
 }
 
 export interface AdFormData {
@@ -18,5 +18,5 @@ export interface AdFormData {
   start_date: string;
   end_date: string;
   status: boolean;
-  redirect_link: string;
+  redirect_url: string;
 }
