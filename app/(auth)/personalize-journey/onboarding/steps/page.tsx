@@ -39,11 +39,13 @@ import {
   FileText,
   BookOpen,
   Crown,
+  CreditCard,
+  Lock,
 } from "lucide-react";
 
 const OnboardingStepsPage = () => {
   const [step, setStep] = useState(1);
-  const [totalSteps] = useState(6);
+  const [totalSteps] = useState(7);
   const [agreed, setAgreed] = useState(false);
 
   // Form states (simplified for UI demonstration)
@@ -74,6 +76,11 @@ const OnboardingStepsPage = () => {
     currentMedications: "",
     // Step 6
     plan_id: null as number | null,
+    // Step 7
+    cardNumber: "",
+    expiryDate: "",
+    cvc: "",
+    cardName: "",
   });
 
   const [createUpdateProfile, { isLoading: isSubmitting }] =
@@ -214,7 +221,13 @@ const OnboardingStepsPage = () => {
           try {
             const paymentRes = await processPayment({
               plan_id: formData.plan_id,
-              billing: "monthly"
+              billing: "monthly",
+              card_info: {
+                number: formData.cardNumber,
+                expiry: formData.expiryDate,
+                cvv: formData.cvc,
+                name: formData.cardName
+              }
             }).unwrap();
             
             if (paymentRes.checkout_url) {
@@ -1047,6 +1060,125 @@ const OnboardingStepsPage = () => {
 
               <div className="flex justify-center flex-col md:flex-row items-center">
                 <button
+                  onClick={nextStep}
+                  disabled={!formData.plan_id}
+                  className="w-full md:w-auto min-w-[320px] bg-[#0FA4A9] text-white py-4 px-10 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all shadow-lg shadow-[#0FA4A9]/20 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  Continue
+                  <ArrowRight size={22} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 7 && (
+            <div className="bg-white rounded-2xl p-6 md:p-8 border border-[rgba(58,134,255,0.25)] shadow-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-[#E8F1FF] rounded-xl flex items-center justify-center text-[#3A86FF]">
+                  <CreditCard size={22} />
+                </div>
+                <h2 className="text-[#041228] text-2xl font-bold">
+                  Payment Information
+                </h2>
+              </div>
+              <p className="text-gray-400 text-[15px] mb-8 ml-12">
+                Secure your wellness future. We collect these details to ensure seamless transitions between plans.
+              </p>
+
+              <div className="max-w-xl mx-auto w-full flex flex-col gap-6">
+                {/* Credit Card Preview Card */}
+                <div className="relative h-48 w-full rounded-2xl bg-gradient-to-br from-[#1F2D2E] to-[#3A86FF] p-6 text-white shadow-xl overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Crown size={120} />
+                  </div>
+                  <div className="flex justify-between items-start mb-10">
+                    <div className="w-12 h-10 bg-yellow-400/80 rounded-md shadow-inner" />
+                    <CreditCard size={32} className="opacity-80" />
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    <div className="text-xl font-mono tracking-[0.25em]">
+                      {formData.cardNumber ? formData.cardNumber.replace(/\d{4}(?=.)/g, '$& ') : "**** **** **** ****"}
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <div className="flex flex-col">
+                        <span className="text-[8px] uppercase tracking-wider opacity-60">Card Holder</span>
+                        <span className="text-sm font-bold uppercase tracking-widest">{formData.cardName || "Your Name"}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[8px] uppercase tracking-wider opacity-60">Expires</span>
+                        <span className="text-sm font-bold">{formData.expiryDate || "MM/YY"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Card Name */}
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">Cardholder Name</label>
+                    <input
+                      type="text"
+                      className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-4 text-gray-700 font-medium focus:ring-2 focus:ring-[#3A86FF]/10 outline-none"
+                      placeholder="JOHN DOE"
+                      value={formData.cardName}
+                      onChange={(e) => setFormData({ ...formData, cardName: e.target.value.toUpperCase() })}
+                    />
+                  </div>
+
+                  {/* Card Number */}
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">Card Number</label>
+                    <input
+                      type="text"
+                      maxLength={16}
+                      className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-4 text-gray-700 font-medium focus:ring-2 focus:ring-[#3A86FF]/10 outline-none"
+                      placeholder="**** **** **** ****"
+                      value={formData.cardNumber}
+                      onChange={(e) => setFormData({ ...formData, cardNumber: e.target.value.replace(/\D/g, '') })}
+                    />
+                  </div>
+
+                  {/* Expiry */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">Expiry Date</label>
+                    <input
+                      type="text"
+                      placeholder="MM/YY"
+                      maxLength={5}
+                      className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-4 text-gray-700 font-medium focus:ring-2 focus:ring-[#3A86FF]/10 outline-none"
+                      value={formData.expiryDate}
+                      onChange={(e) => {
+                        let v = e.target.value.replace(/\D/g, '');
+                        if (v.length >= 2) v = v.substring(0, 2) + '/' + v.substring(2);
+                        setFormData({ ...formData, expiryDate: v });
+                      }}
+                    />
+                  </div>
+
+                  {/* CVC */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">CVC / CVV</label>
+                    <input
+                      type="password"
+                      maxLength={3}
+                      placeholder="***"
+                      className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-4 text-gray-700 font-medium focus:ring-2 focus:ring-[#3A86FF]/10 outline-none"
+                      value={formData.cvc}
+                      onChange={(e) => setFormData({ ...formData, cvc: e.target.value.replace(/\D/g, '') })}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 mt-2 p-4 bg-blue-50/50 rounded-xl border border-[#3A86FF]/10">
+                  <Lock size={16} className="text-[#3A86FF] mt-0.5 shrink-0" />
+                  <p className="text-[11px] text-gray-500 leading-relaxed italic">
+                    Your payment information is encrypted and securely stored. We will not charge your card for free plans. For paid plans, your subscription will begin immediately.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-center flex-col md:flex-row items-center mt-10">
+                <button
                   onClick={handleSubmit}
                   disabled={isSubmitting || isProcessingPayment}
                   className="w-full md:w-auto min-w-[320px] bg-[#0FA4A9] text-white py-4 px-10 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all shadow-lg shadow-[#0FA4A9]/20 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
@@ -1058,7 +1190,7 @@ const OnboardingStepsPage = () => {
                     </>
                   ) : (
                     <>
-                      {formData.plan_id ? "Finish & Pay" : "Continue"}
+                      Complete Setup
                       <ArrowRight size={22} />
                     </>
                   )}
