@@ -149,7 +149,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-[16px] p-6 md:p-8 shadow-2xl w-full max-w-[600px] pointer-events-auto border border-[#3A86FF]/25 flex flex-col gap-6"
+              className="bg-white rounded-3xl p-6 md:p-8 shadow-2xl w-full max-w-150 pointer-events-auto border border-[#3A86FF]/25 flex flex-col gap-6"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
