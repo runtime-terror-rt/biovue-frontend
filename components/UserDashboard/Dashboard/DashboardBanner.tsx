@@ -6,11 +6,19 @@ import Link from "next/link";
 import { X, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGetActiveAdsQuery } from "@/redux/features/api/activeAds";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 
 const DashboardBanner = () => {
+  const currentUser = useSelector(selectCurrentUser);
   const { data: adsData } = useGetActiveAdsQuery();
   const [isVisible, setIsVisible] = useState(true);
   const [activeDot, setActiveDot] = useState(0);
+
+  // Only show banner for Free Trial users or users without a plan
+  const isFreeTrial =
+    !currentUser?.plan_id ||
+    currentUser?.plan_name?.toLowerCase().includes("free trial");
 
   // Filter ads for Free Dashboard placement
   const ads = adsData?.filter(ad => ad.placement.includes("Home Screen Top") || ad.placement.includes("Free Dashboard")) || [];
@@ -38,7 +46,7 @@ const DashboardBanner = () => {
 
   return (
     <AnimatePresence>
-      {isVisible && (ads.length > 0 || !adsData) && (
+      {isVisible && isFreeTrial && (ads.length > 0 || !adsData) && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
