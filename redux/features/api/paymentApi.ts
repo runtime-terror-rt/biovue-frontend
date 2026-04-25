@@ -6,7 +6,16 @@ export interface PaymentProcessResponse {
   session_id: string;
   amount: number;
 }
-
+export type RequestPayload = {
+  plan_id: number;
+  billing: string;
+  card_info?: {
+    number: string;
+    expiry: string;
+    cvv: string;
+    name?: string;
+  };
+};
 export interface PaymentSummaryResponse {
   success: boolean;
   user: {
@@ -63,11 +72,15 @@ export interface PlansResponse {
 
 export const paymentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getSubscriptionPlans: builder.query<PlansResponse, { billing: string; type: string }>({
+    getSubscriptionPlans: builder.query<
+      PlansResponse,
+      { billing: string; type: string }
+    >({
       query: ({ billing, type }) => `/plans?billing=${billing}&type=${type}`,
       providesTags: ["Plans"],
     }),
-    processPayment: builder.mutation<PaymentProcessResponse, { plan_id: number; billing: string }>({
+    // processPayment: builder.mutation<PaymentProcessResponse, { plan_id: number; billing: string }>({
+    processPayment: builder.mutation<PaymentProcessResponse, RequestPayload>({
       query: (body) => ({
         url: "/payment/process",
         method: "POST",
@@ -78,7 +91,10 @@ export const paymentApi = baseApi.injectEndpoints({
       query: () => "/payment/show",
       providesTags: ["PaymentSummary"],
     }),
-    cancelSubscription: builder.mutation<{ success: boolean; message: string }, void>({
+    cancelSubscription: builder.mutation<
+      { success: boolean; message: string },
+      void
+    >({
       query: () => ({
         url: "/payment/cancel",
         method: "POST",
@@ -89,6 +105,11 @@ export const paymentApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
-export const { useGetSubscriptionPlansQuery, useProcessPaymentMutation, useGetPaymentSummaryQuery, useCancelSubscriptionMutation } = paymentApi;
+export const {
+  useGetSubscriptionPlansQuery,
+  useProcessPaymentMutation,
+  useGetPaymentSummaryQuery,
+  useCancelSubscriptionMutation,
+} = paymentApi;
 
 export default paymentApi;
