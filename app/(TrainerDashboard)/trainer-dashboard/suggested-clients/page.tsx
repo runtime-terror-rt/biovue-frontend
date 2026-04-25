@@ -75,6 +75,7 @@ export default function SuggestedClientsPage() {
     try {
       const res = await sendInvitation({
         email: inviteEmail,
+        trainer_id: user?.id || user?.user_id || "",
         match_reason: inviteMatchReason,
         recommended_actions: inviteRecommendedActions,
       }).unwrap();
