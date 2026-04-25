@@ -46,8 +46,8 @@ const OnboardingStepsPage = () => {
   const [formData, setFormData] = useState({
     age: "30",
     sex: "",
-    height: "170",
-    weight: "70",
+    height: "",
+    weight: "",
     bodyFat: "",
     location: "Dublin",
     zipcode: "",
@@ -99,17 +99,10 @@ const OnboardingStepsPage = () => {
       ); // Normalize to "Male"/"Female"
       // apiData.append("height", formData.height);
       // apiData.append("weight", formData.weight);
-      // Normalize to metric before sending
-      let finalHeight = Number(formData.height);
-      let finalWeight = Number(formData.weight);
-
-
-
-      // Always send metric to backend
-      // apiData.append("height", finalHeight.toFixed(1)); // cm
-      apiData.append("height", Math.round(finalHeight).toString());
-      // apiData.append("weight", finalWeight.toFixed(1)); // kg
-      apiData.append("weight", Math.round(finalWeight).toString());
+      apiData.append("height", formData.height);
+      apiData.append("weight", formData.weight);
+      apiData.append("unit", unitSystem);
+      apiData.append("unit_system", unitSystem);
       apiData.append("body_fat", formData.bodyFat || "0");
       apiData.append("location", formData.location);
       apiData.append("zipcode", formData.zipcode);
@@ -463,6 +456,7 @@ const OnboardingStepsPage = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, height: e.target.value })
                       }
+                      placeholder={unitSystem === "metric" ? "170 cm" : "60 inch"}
                       className="flex-1 bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 text-gray-700 font-medium"
                     />
                     <select className="w-32 bg-[#F8FAFB] border border-gray-100 rounded-xl py-4 px-5 text-gray-500 font-medium">
@@ -484,6 +478,7 @@ const OnboardingStepsPage = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, weight: e.target.value })
                       }
+                      placeholder={unitSystem === "metric" ? "70 kg" : "170 lbs"}
                       className="flex-1 bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 text-gray-700 font-medium"
                     />
                     <select className="w-32 bg-[#F8FAFB] border border-gray-100 rounded-xl py-4 px-5 text-gray-500 font-medium">
@@ -681,15 +676,20 @@ const OnboardingStepsPage = () => {
                     <Utensils size={18} className="text-[#3A86FF]" />
                     Overall Diet Quality
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.diet}
                     onChange={(e) =>
                       setFormData({ ...formData, diet: e.target.value })
                     }
-                    placeholder="e.g. Good, Excellent"
-                    className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-5 text-gray-700 font-medium"
-                  />
+                    className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-5 text-gray-400 font-medium appearance-none"
+                  >
+                    <option value="">Select.....</option>
+                    <option value="Excellent">Excellent - Whole-food based</option>
+                    <option value="Good">Good - Mostly healthy, some moderation needed</option>
+                    <option value="Average">Fair - High in processed foods/sugars</option>
+                    <option value="Bad">Poor - Little nutritional value</option>
+                   
+                  </select>
                 </div>
 
                 {/* Fast Food */}
@@ -698,15 +698,19 @@ const OnboardingStepsPage = () => {
                     <Utensils size={18} className="text-[#3A86FF]" />
                     Fast Food Frequency
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.fastFood}
                     onChange={(e) =>
                       setFormData({ ...formData, fastFood: e.target.value })
                     }
-                    placeholder="e.g. Once a week"
-                    className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-5 text-gray-700 font-medium"
-                  />
+                    className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-5 text-gray-400 font-medium appearance-none"
+                  >
+                    <option value="">Select.....</option>
+                    <option value="Daily">Daily</option>
+                    <option value="Once a week">Once a week</option>
+                    <option value="Once a month">Once a month</option>
+                    <option value="Occasionally">Occasionally</option>
+                  </select>
                 </div>
 
                 {/* Stress */}
