@@ -35,7 +35,6 @@ export const nutritionApi = baseApi.injectEndpoints({
     }),
   }),
 });
-
 export const {
   useGetNutritionLogsQuery,
   useGetSingleNutritionLogQuery,
