@@ -43,6 +43,8 @@ export default function SuggestedClientsPage() {
     useState<Suggestion | null>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteMatchReason, setInviteMatchReason] = useState("");
+  const [inviteRecommendedActions, setInviteRecommendedActions] = useState<string[]>([]);
 
   const [sendInvitation, { isLoading: isSending }] =
     useSendInvitationMutation();
@@ -71,7 +73,11 @@ export default function SuggestedClientsPage() {
 
   const handleSendInvite = async () => {
     try {
-      const res = await sendInvitation({ email: inviteEmail }).unwrap();
+      const res = await sendInvitation({
+        email: inviteEmail,
+        match_reason: inviteMatchReason,
+        recommended_actions: inviteRecommendedActions,
+      }).unwrap();
       if (res.success) {
         toast.success(res.message || "Invitation sent successfully");
         setIsInviteModalOpen(false);
@@ -346,7 +352,7 @@ export default function SuggestedClientsPage() {
                       <div className="flex items-center gap-2 mb-3">
                         <BrainCircuit size={18} className="text-primary" />
                         <span className="text-xs font-bold text-primary uppercase tracking-widest">
-                          AI Analysis
+                          Match Reason
                         </span>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed italic">
@@ -426,6 +432,8 @@ export default function SuggestedClientsPage() {
                   <button
                     onClick={() => {
                       setInviteEmail(selectedSuggestion.user_profile.email);
+                      setInviteMatchReason(selectedSuggestion.match_reason);
+                      setInviteRecommendedActions(selectedSuggestion.recommended_actions);
                       setSelectedSuggestion(null);
                       setIsInviteModalOpen(true);
                     }}
@@ -457,7 +465,7 @@ export default function SuggestedClientsPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative bg-white rounded-[40px] w-full max-w-md p-10 shadow-2xl overflow-hidden"
+              className="relative bg-white rounded-[40px] w-full max-w-lg p-10 shadow-2xl overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-2xl" />
 
@@ -469,22 +477,45 @@ export default function SuggestedClientsPage() {
                   Invite Client
                 </h2>
                 <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-                  Enter the client&apos;s email address below to send them a formal
-                  invitation to join your roster.
+                  Customize the invitation details to help the client understand why they are a great match for your coaching.
                 </p>
 
                 <div className="space-y-6">
+                  {/* Email */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] ml-1">
                       Email Address
                     </label>
-                    <input
-                      type="email"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="client@email.com"
-                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary focus:bg-white transition-all outline-none text-[#041228] font-medium"
-                    />
+                    <div className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-[#041228] font-medium opacity-80 text-sm">
+                      {inviteEmail}
+                    </div>
+                  </div>
+
+                  {/* Match Reason */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] ml-1">
+                      Match Reason
+                    </label>
+                    <div className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-[#041228] font-medium opacity-80 text-sm leading-relaxed">
+                      {inviteMatchReason}
+                    </div>
+                  </div>
+
+                  {/* Recommended Actions */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] ml-1">
+                      Recommended Actions
+                    </label>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2 [scrollbar-width:thin]">
+                      {inviteRecommendedActions.map((action, idx) => (
+                        <div key={idx} className="flex items-start gap-3 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
+                          <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                          <span className="text-[#041228] text-xs font-medium leading-tight opacity-80">
+                            {action}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="pt-2">
