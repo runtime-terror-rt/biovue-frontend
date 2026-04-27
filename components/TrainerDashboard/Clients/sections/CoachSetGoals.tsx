@@ -160,7 +160,7 @@ export default function CoachSetGoals({
     !targetWeight || !weeklyWorkoutGoal || !dailyStepGoal || !sleepTarget;
   return (
     <Card className="border-none ">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="">
         <CardContent className="p-6 bg-white rounded-lg md:col-span-2">
           <div className="flex justify-between items-start mb-4 md:mb-7">
             <div>
@@ -282,7 +282,7 @@ export default function CoachSetGoals({
         </CardContent>
         {/* side component */}
         <div className="space-y-6 md:col-span-1">
-          <Card className="border-none  bg-[#0D9488] text-white overflow-hidden">
+          {/* <Card className="border-none  bg-[#0D9488] text-white overflow-hidden">
             <CardContent className="p-5 space-y-3">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-base font-medium tracking-wider uppercase opacity-80">
@@ -325,7 +325,7 @@ export default function CoachSetGoals({
                 </p>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </Card>
