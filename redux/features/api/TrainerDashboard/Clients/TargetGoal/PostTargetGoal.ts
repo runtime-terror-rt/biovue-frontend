@@ -1,66 +1,3 @@
-// "use client";
-
-// import { baseApi } from "../../../baseApi";
-
-// export interface TargetGoal {
-//   id: number;
-//   user_id: number;
-//   target_weight: number;
-//   weekly_workout_goal: number;
-//   daily_step_goal: number;
-//   sleep_target: number;
-//   is_active: boolean;
-//   start_date: string;
-//   end_date: string;
-//   created_at: string;
-//   updated_at: string;
-// }
-
-// export interface GetTargetGoalResponse {
-//   success: boolean;
-//   message: string;
-//   data: TargetGoal;
-// }
-
-// export interface TargetGoalRequest {
-//   user_id: number;
-//   target_weight: number;
-//   weekly_workout_goal: number;
-//   daily_step_goal: number;
-//   sleep_target: number;
-//   start_date: string;
-//   end_date: string;
-// }
-
-// export interface TargetGoalResponse {
-//   success: boolean;
-//   message: string;
-//   data: TargetGoal;
-// }
-
-// export const targetGoalApi = baseApi.injectEndpoints({
-//   endpoints: (builder) => ({
-//     getTargetGoal: builder.query<GetTargetGoalResponse, void>({
-//       query: () => ({
-//         url: "/goals",
-//         method: "GET",
-//       }),
-//       providesTags: ["TargetGoals"],
-//     }),
-
-//     createTargetGoal: builder.mutation<TargetGoalResponse, TargetGoalRequest>({
-//       query: (body) => ({
-//         url: "/goals",
-//         method: "POST",
-//         body,
-//       }),
-//       invalidatesTags: ["TargetGoals"],
-//     }),
-//   }),
-// });
-
-// export const { useGetTargetGoalQuery, useCreateTargetGoalMutation } =
-//   targetGoalApi;
 "use client";
 
 import { baseApi } from "../../../baseApi";
@@ -127,7 +64,9 @@ export const targetGoalApi = baseApi.injectEndpoints({
         method: "GET",
       }),
 
-      transformResponse: (response: GetTargetGoalResponse | TargetGoal[] | null) => {
+      transformResponse: (
+        response: GetTargetGoalResponse | TargetGoal[] | null,
+      ) => {
         if (Array.isArray(response)) return response;
         if (response && "data" in response && Array.isArray(response.data)) {
           return response.data;

@@ -1,62 +1,165 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Plus, Eye } from "lucide-react";
+import { FileText, Plus, Eye, Trash2, Pencil } from "lucide-react";
+import { useState } from "react";
 
-export default function CoachNotes({ notes }: { notes: string[] }) {
-  // Mocking dates for the notes based on the screenshot
-  const mockNotes = [
-    {
-      text: "Discussed caloric deficit during last check-in. Alex prefers morning workouts.",
-      date: "OCT 24, 2023 - 10:15 AM",
-    },
-    {
-      text: "Lower body recovery seems slower than expected. Might need to adjust volume.",
-      date: "OCT 25, 2023, 12:15 AM",
+import {
+  useAddSupplierNoteMutation,
+  useDeleteSupplierNoteMutation,
+  useGetSupplierNotesQuery,
+  useUpdateSupplierNoteMutation,
+} from "@/redux/features/api/SupplierDashboard/SupplierNote";
+import { toast } from "sonner";
+
+export default function CoachNotes({ userId }: { userId: number }) {
+  const [noteText, setNoteText] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  const { data, isLoading } = useGetSupplierNotesQuery(userId);
+
+  const [addNote, { isLoading: adding }] = useAddSupplierNoteMutation();
+  const [deleteNote] = useDeleteSupplierNoteMutation();
+  const [updateNote] = useUpdateSupplierNoteMutation();
+
+  const notes = data?.data ?? [];
+
+  //  ADD / UPDATE
+
+  const handleSubmit = async () => {
+    if (!noteText.trim()) {
+      toast.error("Note cannot be empty");
+      return;
     }
-  ];
+
+    try {
+      if (editingId) {
+        const res = await updateNote({
+          note_id: editingId,
+          note: noteText,
+          user_id: userId,
+        }).unwrap();
+
+        toast.success(res.message || "Note updated successfully");
+      } else {
+        const res = await addNote({
+          user_id: userId,
+          note: noteText,
+        }).unwrap();
+
+        toast.success(res.message || "Note added successfully");
+      }
+
+      setNoteText("");
+      setEditingId(null);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Something went wrong");
+    }
+  };
+
+  //  DELETE
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await deleteNote({ note_id: id, user_id: userId }).unwrap();
+      toast.success(res.message || "Note deleted");
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Delete failed");
+    }
+  };
+
+  // EDIT
+  const handleEdit = (note: any) => {
+    setEditingId(note.id);
+    setNoteText(note.note);
+  };
 
   return (
     <div className="space-y-4 py-6 rounded-lg bg-white">
       <div className="flex px-6 items-center gap-2 text-[#111827]">
         <FileText size={20} className="text-[#374151]" />
-        <h2 className="text-xl  font-medium text-[#111827]">Internal Coach Notes (Private)</h2>
+        <h2 className="text-xl font-medium">Internal Coach Notes (Private)</h2>
       </div>
 
       <Card className="border-none">
         <CardContent className="space-y-6">
-          {/* New Note Input */}
-          <div className="relative">
-            <textarea 
-              placeholder="Add observations, preferences, or follow-up reminders..."
-              className="w-full h-32 p-4 bg-[#0FA4A91A] border-none rounded-xl resize-none outline-none text-sm placeholder:text-[#9CA3AF] text-[#374151]"
+          {/*  Input */}
+
+          <div className="space-y-3">
+            <textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="Add observations, preferences..."
+              className="w-full h-32 p-4 bg-[#0FA4A91A] rounded-xl resize-none outline-none"
             />
-            <button className="absolute bottom-4 right-4 p-2 bg-[#0D9488] text-white rounded-lg hover:bg-[#0A7A6F] transition-colors">
-              <Plus size={20} />
-            </button>
-          </div>
 
-          {/* Previous Notes */}
-          <div className="space-y-4">
-            {mockNotes.map((note, index) => (
-              <div
-                key={index}
-                className="bg-[#0FA4A91A] p-5 rounded-xl space-y-2"
+            <div className="flex gap-3">
+              <button
+                onClick={handleSubmit}
+                disabled={!noteText.trim() || adding}
+                className="px-4 py-2 bg-[#0D9488] text-white rounded-lg text-sm font-medium hover:bg-[#0A7A6F] disabled:opacity-50"
               >
-                <p className="text-sm text-[#374151] leading-relaxed font-medium">
-                  {note.text}
-                </p>
-                <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">
-                  {note.date}
-                </p>
-              </div>
-            ))}
+                {editingId ? "Update Note" : "Add Note"}
+              </button>
+
+              {editingId && (
+                <button
+                  onClick={() => {
+                    setEditingId(null);
+                    setNoteText("");
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Visibility Disclaimer */}
+          {/*  Notes List */}
+          <div className="space-y-4">
+            {isLoading ? (
+              <p className="text-sm text-gray-500">Loading...</p>
+            ) : notes.length === 0 ? (
+              <p className="text-sm text-gray-500">No notes yet</p>
+            ) : (
+              notes.map((note) => (
+                <div
+                  key={note.id}
+                  className="bg-[#0FA4A91A] p-5 rounded-xl space-y-2"
+                >
+                  <p className="text-sm text-[#374151] font-medium">
+                    {note.note}
+                  </p>
+
+                  <p className="text-[10px] text-[#9CA3AF] uppercase">
+                    {new Date(note.created_at).toLocaleString()}
+                  </p>
+
+                  {/*  Actions */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => handleEdit(note)}
+                      className="text-blue-500"
+                    >
+                      <Pencil size={16} />
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(note.id)}
+                      className="text-red-500"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Footer */}
           <div className="flex items-center gap-2 text-[#8B5CF6] pt-2">
             <Eye size={16} />
-            <span className="text-[11px] font-medium opacity-80 uppercase tracking-tight">Clients cannot see this section. Only visible to BioVue staff.</span>
+            <span className="text-[11px] uppercase">Only visible to staff</span>
           </div>
         </CardContent>
       </Card>

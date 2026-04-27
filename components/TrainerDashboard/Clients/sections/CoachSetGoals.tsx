@@ -51,15 +51,31 @@ export default function CoachSetGoals({
   const { data: goalData, isLoading: goalLoading } = useGetTargetGoalQuery(
     clientDetails.id,
   );
+  const [goalId, setGoalId] = useState<number | null>(null);
+  const [waterTarget, setWaterTarget] = useState<string>("");
+  // useEffect(() => {
+  //   if (goalData && goalData.length > 0) {
+  //     const latestGoal = goalData[0]; // get-goal returns latest first
+  //     setTargetWeight(latestGoal.target_weight?.toString() ?? "");
+  //     setWeeklyWorkoutGoal(latestGoal.weekly_workout_goal?.toString() ?? "");
+  //     setDailyStepGoal(latestGoal.daily_step_goal?.toString() ?? "");
+  //     setSleepTarget(latestGoal.sleep_target?.toString() ?? "");
+  //     setSelectedSupplements(latestGoal.supplement_recommendation ?? []);
+  //   }
+  // }, [goalData]);
 
   useEffect(() => {
     if (goalData && goalData.length > 0) {
-      const latestGoal = goalData[0]; // get-goal returns latest first
+      const latestGoal = goalData.find((g) => g.is_active) || goalData[0];
+
+      setGoalId(latestGoal.id); 
+
       setTargetWeight(latestGoal.target_weight?.toString() ?? "");
       setWeeklyWorkoutGoal(latestGoal.weekly_workout_goal?.toString() ?? "");
       setDailyStepGoal(latestGoal.daily_step_goal?.toString() ?? "");
       setSleepTarget(latestGoal.sleep_target?.toString() ?? "");
       setSelectedSupplements(latestGoal.supplement_recommendation ?? []);
+      setWaterTarget(latestGoal.water_target?.toString() ?? "");
     }
   }, [goalData]);
 
@@ -71,6 +87,36 @@ export default function CoachSetGoals({
     }
   };
 
+  // const handleSave = async () => {
+  //   try {
+  //     const now = new Date();
+  //     const startDate = now.toISOString().split("T")[0];
+  //     const endDate = new Date(now.setDate(now.getDate() + 30))
+  //       .toISOString()
+  //       .split("T")[0];
+
+  //     const payload = {
+  //       user_id: clientDetails.id,
+  //       target_weight: parseFloat(targetWeight),
+  //       weekly_workout_goal: parseInt(weeklyWorkoutGoal),
+  //       daily_step_goal: parseInt(dailyStepGoal),
+  //       sleep_target: parseFloat(sleepTarget),
+  //       supplement_recommendation: selectedSupplements,
+  //       start_date: startDate,
+  //       end_date: endDate,
+  //     };
+
+  //     const response = await createTargetGoal(payload).unwrap();
+
+  //     if (response.success) {
+  //       toast.success(response.message || "Goal saved successfully");
+  //     } else {
+  //       toast.error(response.message || "Failed to save goal");
+  //     }
+  //   } catch (error: any) {
+  //     toast.error(error?.data?.message || "An error occurred while saving");
+  //   }
+  // };
   const handleSave = async () => {
     try {
       const now = new Date();
@@ -80,28 +126,28 @@ export default function CoachSetGoals({
         .split("T")[0];
 
       const payload = {
+        ...(goalId && { id: goalId }), // ✅ UPDATE support
+
         user_id: clientDetails.id,
-        target_weight: parseFloat(targetWeight),
-        weekly_workout_goal: parseInt(weeklyWorkoutGoal),
-        daily_step_goal: parseInt(dailyStepGoal),
-        sleep_target: parseFloat(sleepTarget),
+        target_weight: Number(targetWeight),
+        weekly_workout_goal: Number(weeklyWorkoutGoal),
+        daily_step_goal: Number(dailyStepGoal),
+        sleep_target: Number(sleepTarget),
+
+        water_target: waterTarget || null, // ✅ added
         supplement_recommendation: selectedSupplements,
+
         start_date: startDate,
         end_date: endDate,
       };
 
-      const response = await createTargetGoal(payload).unwrap();
+      const res = await createTargetGoal(payload).unwrap();
 
-      if (response.success) {
-        toast.success(response.message || "Goal saved successfully");
-      } else {
-        toast.error(response.message || "Failed to save goal");
-      }
+      toast.success(res.message || "Goal saved successfully");
     } catch (error: any) {
-      toast.error(error?.data?.message || "An error occurred while saving");
+      toast.error(error?.data?.message || "Failed to save goal");
     }
   };
-
   if (goalLoading) {
     return (
       <div className="flex items-center justify-center h-50">
@@ -109,6 +155,9 @@ export default function CoachSetGoals({
       </div>
     );
   }
+
+  const isInvalid =
+    !targetWeight || !weeklyWorkoutGoal || !dailyStepGoal || !sleepTarget;
   return (
     <Card className="border-none ">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -122,18 +171,6 @@ export default function CoachSetGoals({
                 Define benchmarks for the client&apos;s dashboard
               </p>
             </div>
-            <button
-              onClick={handleSave}
-              disabled={isLoading}
-              className="flex items-center gap-2 bg-[#0D9488] text-white p-4 cursor-pointer rounded-lg text-base font-medium hover:bg-[#0A7A6F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <Save size={16} />
-              )}
-              {isLoading ? "Saving..." : "Save Goal"}
-            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -175,7 +212,18 @@ export default function CoachSetGoals({
                 placeholder="800"
               />
             </div>
-
+            <div>
+              <label className="text-lg font-medium text-[#374151]">
+                Water target (ounces)
+              </label>
+              <input
+                type="number"
+                value={waterTarget}
+                onChange={(e) => setWaterTarget(e.target.value)}
+                className="w-full mt-5 px-4 py-3 border border-[#E5E7EB] rounded-lg"
+                placeholder="10"
+              />
+            </div>
             <div className="">
               <label className="text-lg font-medium text-[#374151]">
                 Sleep target (hours)
@@ -215,6 +263,21 @@ export default function CoachSetGoals({
                 </label>
               ))}
             </div>
+          </div>
+
+          <div className="py-4">
+            <button
+              onClick={handleSave}
+              disabled={isLoading || isInvalid}
+              className="flex items-center gap-2 bg-[#0D9488] text-white p-4 cursor-pointer rounded-lg text-base font-medium hover:bg-[#0A7A6F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Save size={16} />
+              )}
+              {isLoading ? "Saving..." : "Save Goal"}
+            </button>
           </div>
         </CardContent>
         {/* side component */}
