@@ -88,9 +88,9 @@ export default function ClientDetailsContent({
               {clientDetails.status.replace("-", " ")}
             </Badge>
           </div>
-          <p className="text-lg text-[#6B7280] font-medium">
+          {/* <p className="text-lg text-[#6B7280] font-medium">
             {clientDetails.connectedDate}
-          </p>
+          </p> */}
         </div>
         <div className="flex gap-3">
           <Link
@@ -181,7 +181,7 @@ export default function ClientDetailsContent({
       {/* Program Assignment / Projection Usage */}
       <div className="flex flex-wrap gap-4">
         {/* Projection Usage */}
-        <Card className="w-fit border-none shadow-xs bg-white">
+        {/* <Card className="w-fit border-none shadow-xs bg-white">
           <CardContent className="p-5 space-y-4">
             <p className="text-base mb-2 font-bold text-[#5F6F73] tracking-wider uppercase">
               Projection Usage
@@ -200,7 +200,7 @@ export default function ClientDetailsContent({
               </p>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Program Assignment */}
         <Card className="flex-1 min-w-75 border-none shadow-xs bg-white">

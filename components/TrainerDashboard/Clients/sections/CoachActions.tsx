@@ -14,7 +14,7 @@ export default function CoachActions() {
   const router = useRouter();
   const actions = [
     { icon: MessageSquare, label: "Send Message", action: "message" },
-    { icon: FileText, label: "Add Motivation Note", action: "motivation" },
+    // { icon: FileText, label: "Add Motivation Note", action: "motivation" },
     { icon: Calendar, label: "Schedule Check-in", action: "checkin" },
     { icon: Edit, label: "Adjust Program", action: "adjust-program" },
   ];
@@ -24,13 +24,13 @@ export default function CoachActions() {
         router.push("/trainer-dashboard/clients/adjust-program");
         break;
       case "message":
-        router.push("/send-message");
+        router.push("/trainer-dashboard/messages");
         break;
       case "motivation":
         router.push("/add-note");
         break;
       case "checkin":
-        router.push("/schedule-checkin");
+        router.push("/trainer-dashboard/calendar");
         break;
       default:
         break;
@@ -43,7 +43,7 @@ export default function CoachActions() {
         <h2 className="text-xl font-medium  uppercase">COACH ACTIONS</h2>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {actions.map((action, index) => (
           <button
             key={index}

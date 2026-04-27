@@ -152,7 +152,7 @@ export default function CoachNotes({ userId }: { userId: number }) {
           {/* Footer */}
           <div className="flex items-center gap-2 text-[#8B5CF6] pt-2">
             <Eye size={16} />
-            <span className="text-[11px] uppercase">Only visible to staff</span>
+            <span className="text-[11px] uppercase">Only visible to trainer</span>
           </div>
         </CardContent>
       </Card>
