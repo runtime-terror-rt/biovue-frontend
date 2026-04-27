@@ -296,8 +296,8 @@ export default function ClientDetailsContent({
           />
           <CoachActions />
           <ProgressTrends clientId={clientDetails.id as any} />
-          <CoachNotes notes={clientDetails.coachNotes} />
-          <VisibilityControls />
+          <CoachNotes userId={clientDetails.id} />
+          {/* <VisibilityControls /> */}
         </div>
 
         {/* Sidebar */}

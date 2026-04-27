@@ -79,7 +79,7 @@ export const supplierNoteApi = baseApi.injectEndpoints({
     >({
       query: ({ note_id, note }) => ({
         url: `/trainer-notes/${note_id}`,
-        method: "PATCH",
+        method: "POST",
         body: { note },
       }),
       invalidatesTags: (_result, _error, { user_id }) => [

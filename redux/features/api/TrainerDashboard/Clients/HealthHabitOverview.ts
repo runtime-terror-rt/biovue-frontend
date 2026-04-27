@@ -8,7 +8,7 @@ export interface DashboardMetrics {
   steps: number;
   sleep: string | null;
   stress: string | null;
-  hydration: number | null;
+  hydrration: number | null;
 }
 
 export interface DashboardMetricsResponse {

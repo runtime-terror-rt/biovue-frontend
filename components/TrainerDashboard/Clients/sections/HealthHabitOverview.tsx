@@ -11,69 +11,123 @@ export default function HealthHabitOverview({
 }: {
   clientDetails: ClientDetails;
 }) {
-  const { data } = useGetDashboardMetricsQuery(clientDetails.id);
+  // const { data } = useGetDashboardMetricsQuery(clientDetails.id);
+  const { data, isLoading } = useGetDashboardMetricsQuery(clientDetails.id);
 
-  const apiMetrics = data?.data ?? {
-    weight: null,
-    nutrition_quality: null,
-    steps: 0,
-    sleep: null,
-    stress: null,
-    hydration: null,
+  if (isLoading) {
+    return <p className="text-gray-500">Loading...</p>;
+  }
+
+  if (!data?.data) {
+    return (
+      <div className="text-center py-10 text-gray-500">No overview yet</div>
+    );
+  }
+  // const apiMetrics = data?.data ?? {
+  //   weight: null,
+  //   nutrition_quality: null,
+  //   steps: 0,
+  //   sleep: null,
+  //   stress: null,
+  //   hydration: null,
+  // };
+  const apiMetricsRaw = data?.data;
+
+  const apiMetrics = {
+    ...apiMetricsRaw,
+    hydration: apiMetricsRaw?.hydrration ?? null, // fix typo
   };
   const staticMetrics = clientDetails.healthHabitOverview;
 
+  // const metricCards = [
+  //   {
+  //     title: "Weight",
+  //     value:
+  //       apiMetrics?.weight !== null
+  //         ? `${apiMetrics.weight}`
+  //         : `${staticMetrics.weight.value} ${staticMetrics.weight.unit}`,
+  //     icon: Scale,
+  //     targetApplied: staticMetrics.weight.targetApplied,
+  //   },
+  //   {
+  //     title: "Nutrition Quality",
+  //     value:
+  //       apiMetrics?.nutrition_quality !== null
+  //         ? `${apiMetrics.nutrition_quality}%`
+  //         : `${staticMetrics.nutritionQuality.value}%`,
+  //     icon: Utensils,
+  //     targetApplied: staticMetrics.nutritionQuality.targetApplied,
+  //   },
+  //   {
+  //     title: "Activity",
+  //     value:
+  //       apiMetrics?.steps !== 0
+  //         ? `${apiMetrics.steps.toLocaleString()} steps`
+  //         : `${staticMetrics.activity.steps.toLocaleString()} steps`,
+  //     icon: Activity,
+  //   },
+  //   {
+  //     title: "Sleep",
+  //     value:
+  //       apiMetrics?.sleep !== null
+  //         ? apiMetrics.sleep
+  //         : `${staticMetrics.sleep.hours}h ${staticMetrics.sleep.minutes}m`,
+  //     icon: Moon,
+  //     targetApplied: staticMetrics.sleep.targetApplied,
+  //   },
+  //   {
+  //     title: "Stress",
+  //     value: apiMetrics?.stress ?? staticMetrics.stress,
+  //     icon: Wind,
+  //   },
+  //   {
+  //     title: "Hydration",
+  //     value:
+  //       apiMetrics?.hydration !== null
+  //         ? `${apiMetrics.hydration} Ounces`
+  //         : `${staticMetrics.hydration.value} ${staticMetrics.hydration.unit}`,
+  //     icon: Droplet,
+  //   },
+  // ];
   const metricCards = [
     {
       title: "Weight",
-      value:
-        apiMetrics?.weight !== null
-          ? `${apiMetrics.weight}`
-          : `${staticMetrics.weight.value} ${staticMetrics.weight.unit}`,
+      value: apiMetrics.weight ?? "No data",
       icon: Scale,
-      targetApplied: staticMetrics.weight.targetApplied,
     },
     {
       title: "Nutrition Quality",
       value:
-        apiMetrics?.nutrition_quality !== null
+        apiMetrics.nutrition_quality !== null
           ? `${apiMetrics.nutrition_quality}%`
-          : `${staticMetrics.nutritionQuality.value}%`,
+          : "No data",
       icon: Utensils,
-      targetApplied: staticMetrics.nutritionQuality.targetApplied,
     },
     {
       title: "Activity",
       value:
-        apiMetrics?.steps !== 0
+        apiMetrics.steps !== null
           ? `${apiMetrics.steps.toLocaleString()} steps`
-          : `${staticMetrics.activity.steps.toLocaleString()} steps`,
+          : "No data",
       icon: Activity,
     },
     {
       title: "Sleep",
-      value:
-        apiMetrics?.sleep !== null
-          ? apiMetrics.sleep
-          : `${staticMetrics.sleep.hours}h ${staticMetrics.sleep.minutes}m`,
+      value: apiMetrics.sleep ?? "No data",
       icon: Moon,
-      targetApplied: staticMetrics.sleep.targetApplied,
     },
     {
       title: "Stress",
-      value: apiMetrics?.stress ?? staticMetrics.stress,
+      value: apiMetrics.stress ?? "No data",
       icon: Wind,
     },
     {
       title: "Hydration",
       value:
-        apiMetrics?.hydration !== null
-          ? `${apiMetrics.hydration} Ounces`
-          : `${staticMetrics.hydration.value} ${staticMetrics.hydration.unit}`,
+        apiMetrics.hydration !== null ? `${apiMetrics.hydration}` : "No data",
       icon: Droplet,
     },
   ];
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-end">
