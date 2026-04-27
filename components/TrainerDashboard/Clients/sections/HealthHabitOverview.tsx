@@ -89,7 +89,7 @@ export default function HealthHabitOverview({
   //     icon: Droplet,
   //   },
   // ];
-  const metricCards = [
+  const metricCards: any[] = [
     {
       title: "Weight",
       value: apiMetrics.weight ?? "No data",
