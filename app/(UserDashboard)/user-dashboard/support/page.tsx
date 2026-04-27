@@ -263,54 +263,56 @@ const RecommendationCard = ({
 
   return (
     <div className="relative group rounded-[16px] h-full flex">
-      <div className={cn(
-        "bg-white rounded-[16px] p-6 border shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col gap-4 w-full transition-all duration-300",
-        isConnected ? "border-gray-200 opacity-90" : "border-[#3A86FF]/25"
-      )}>
-        <div className="flex items-start justify-between">
-        <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
-          <SafeImage
-            src={coach.avatar}
-            alt={coach.name}
-            width={64}
-            height={64}
-            className="object-cover w-full h-full"
-          />
-        </div>
-
-        <span
-          className={cn(
-            "text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider",
-            coach.priorityColor,
-          )}
-        >
-          {coach.priority}
-        </span>
-      </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-[#3A86FF] text-[10px] font-bold uppercase tracking-widest leading-none">
-          {coach.role}
-        </span>
-        <h3 className="text-lg font-bold text-[#1F2D2E]">{coach.name}</h3>
-      </div>
-      <div className="bg-[#F3F4F6] rounded-xl p-4 min-h-21 flex items-center">
-        <p className="text-[#5F6F73] text-[11px] italic leading-relaxed">
-          &quot;{coach.description}&quot;
-        </p>
-      </div>
-      <button
-        onClick={onView}
-        disabled={isConnected}
-        className="w-full mt-auto py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all group bg-[#6C91C2] text-white hover:bg-[#5a7da9] text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isConnected ? "Connected" : "View Profile"}
-        {!isConnected && (
-          <ArrowRight
-            size={16}
-            className="group-hover:translate-x-1 transition-transform"
-          />
+      <div
+        className={cn(
+          "bg-white rounded-[16px] p-6 border shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col gap-4 w-full transition-all duration-300",
+          isConnected ? "border-gray-200 opacity-90" : "border-[#3A86FF]/25",
         )}
-      </button>
+      >
+        <div className="flex items-start justify-between">
+          <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
+            <SafeImage
+              src={coach.avatar}
+              alt={coach.name}
+              width={64}
+              height={64}
+              className="object-cover w-full h-full"
+            />
+          </div>
+
+          <span
+            className={cn(
+              "text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider",
+              coach.priorityColor,
+            )}
+          >
+            {coach.priority}
+          </span>
+        </div>
+        <div className="flex flex-col gap-1">
+          <span className="text-[#3A86FF] text-[10px] font-bold uppercase tracking-widest leading-none">
+            {coach.role}
+          </span>
+          <h3 className="text-lg font-bold text-[#1F2D2E]">{coach.name}</h3>
+        </div>
+        <div className="bg-[#F3F4F6] rounded-xl p-4 min-h-21 flex items-center">
+          <p className="text-[#5F6F73] text-[11px] italic leading-relaxed">
+            &quot;{coach.description}&quot;
+          </p>
+        </div>
+        <button
+          onClick={onView}
+          disabled={isConnected}
+          className="w-full mt-auto py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all group bg-[#6C91C2] text-white hover:bg-[#5a7da9] text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isConnected ? "Connected" : "View Profile"}
+          {!isConnected && (
+            <ArrowRight
+              size={16}
+              className="group-hover:translate-x-1 transition-transform"
+            />
+          )}
+        </button>
       </div>
       {isConnected && (
         <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] z-10 rounded-[16px] flex items-center justify-center border border-white/50 transition-all">
@@ -384,50 +386,64 @@ const SupportTeamCard = ({
   );
 };
 
-const BrowseCard = ({ item, onView, isConnected }: { item: any; onView: () => void; isConnected?: boolean }) => {
+const BrowseCard = ({
+  item,
+  onView,
+  isConnected,
+}: {
+  item: any;
+  onView: () => void;
+  isConnected?: boolean;
+}) => {
   const [imgSrc, setImgSrc] = useState(item.avatar);
 
   return (
     <div className="relative group rounded-[16px] h-full flex min-w-[280px]">
-      <div className={cn(
-        "bg-white rounded-[16px] p-6 border shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col items-center text-center gap-4 w-full transition-all duration-300",
-        isConnected ? "border-gray-200 opacity-90" : "border-[#3A86FF]/25"
-      )}>
-        <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
-        <SafeImage
-          src={item.avatar}
-          alt={item.name}
-          width={64}
-          height={64}
-          className="object-cover w-full h-full"
-          fallback="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&h=300&auto=format&fit=crop"
-        />
-      </div>
-      <div className="flex flex-col gap-1 items-center">
-        <span className="text-[#3A86FF] text-[10px] font-bold uppercase tracking-widest">
-          {item.role}
-        </span>
-        <h3 className="text-base font-bold text-[#1F2D2E]">{item.name}</h3>
-        <div className="flex items-center gap-1 mt-0.5">
-          <Star size={14} className="text-orange-400 fill-orange-400" />
-          <span className="text-sm font-bold text-[#1F2D2E]">
-            {item.rating}
-          </span>
-        </div>
-      </div>
-      <button
-        onClick={onView}
-        disabled={isConnected}
-        className="w-full bg-[#6C91C2] text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#5a7da9] transition-all group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isConnected ? "Connected" : item.isShop ? "View Shop" : "View Profile"}
-        {!isConnected && (
-          <ArrowRight
-            size={14}
-            className="group-hover:translate-x-1 transition-transform"
-          />
+      <div
+        className={cn(
+          "bg-white rounded-[16px] p-6 border shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col items-center text-center gap-4 w-full transition-all duration-300",
+          isConnected ? "border-gray-200 opacity-90" : "border-[#3A86FF]/25",
         )}
-      </button>
+      >
+        <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
+          <SafeImage
+            src={item.avatar}
+            alt={item.name}
+            width={64}
+            height={64}
+            className="object-cover w-full h-full"
+            fallback="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&h=300&auto=format&fit=crop"
+          />
+        </div>
+        <div className="flex flex-col gap-1 items-center">
+          <span className="text-[#3A86FF] text-[10px] font-bold uppercase tracking-widest">
+            {item.role}
+          </span>
+          <h3 className="text-base font-bold text-[#1F2D2E]">{item.name}</h3>
+          <div className="flex items-center gap-1 mt-0.5">
+            <Star size={14} className="text-orange-400 fill-orange-400" />
+            <span className="text-sm font-bold text-[#1F2D2E]">
+              {item.rating}
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={onView}
+          disabled={isConnected}
+          className="w-full bg-[#6C91C2] text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#5a7da9] transition-all group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isConnected
+            ? "Connected"
+            : item.isShop
+              ? "View Shop"
+              : "View Profile"}
+          {!isConnected && (
+            <ArrowRight
+              size={14}
+              className="group-hover:translate-x-1 transition-transform"
+            />
+          )}
+        </button>
       </div>
       {isConnected && (
         <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] z-10 rounded-[16px] flex items-center justify-center border border-white/50 transition-all min-w-[280px]">
@@ -491,58 +507,116 @@ const SupportPage = () => {
   const onsite = recommendationsData?.onsite || [];
   const remote = recommendationsData?.remote || [];
   const both = recommendationsData?.both || [];
-  
-  const mapProfessional = (item: any) => ({
-    ...item,
-    id: item.professional?.id || item.id,
-    name: item.professional?.name || item.name,
-    role: (
-      item.professional_type ||
-      item.professional?.profession_type ||
-      "coach"
-    )
-      .replace(/_/g, " ")
-      .toUpperCase(),
-    avatar: getFullImageUrl(
-      item.professional?.profile?.image || item.professional?.profile_image,
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&h=300&auto=format&fit=crop",
-    ),
-    priority:
-      item.priority === "High"
-        ? "HIGH PRIORITY"
-        : item.priority === "Medium"
-          ? "MEDIUM PRIORITY"
-          : "LOW PRIORITY",
-    priorityColor:
-      item.priority === "High"
-        ? "text-[#EF4444] bg-[#FEF2F2]"
-        : item.priority === "Medium"
-          ? "text-[#F59E0B] bg-[#FFFBEB]"
-          : "text-[#6B7280] bg-[#F3F4FB]",
-    description: item.match_reason || "Based on your clinical health data.",
-    rating: item.relevance_score
-      ? (item.relevance_score / 20).toFixed(1)
-      : "4.8",
-    isShop:
-      item.professional_type === "supplement_supplier" ||
-      item.professional?.profession_type === "supplement_supplier",
-    bio:
-      item.professional?.profile?.bio ||
-      item.bio ||
-      "Helps busy professionals improve body composition, energy, and consistency through data-driven lifestyle adjustments.",
-    specialties: item.professional?.profile?.specialties?.length
-      ? sanitizeArrayField(item.professional.profile.specialties)
-      : ["Fat loss", "Strength", "Habit building", "Nutrition guidance"],
-    services: item.professional?.profile?.services?.length
-      ? sanitizeArrayField(item.professional.profile.services)
-      : [
-          "Set personalized goals",
-          "Monitor your progress",
-          "Provide weekly guidance",
-          "Adjust targets based on your data",
-        ],
-  });
 
+  // const mapProfessional = (item: any) => ({
+  //   ...item,
+  //   id: item.professional?.id || item.id,
+  //   name: item.professional?.name || item.name,
+  //   role: (
+  //     item.professional_type ||
+  //     item.professional?.profession_type ||
+  //     "coach"
+  //   )
+  //     .replace(/_/g, " ")
+  //     .toUpperCase(),
+  //   avatar: getFullImageUrl(
+  //     item.professional?.profile?.image || item.professional?.profile_image,
+  //     "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&h=300&auto=format&fit=crop",
+  //   ),
+  //   priority:
+  //     item.priority === "High"
+  //       ? "HIGH PRIORITY"
+  //       : item.priority === "Medium"
+  //         ? "MEDIUM PRIORITY"
+  //         : "LOW PRIORITY",
+  //   priorityColor:
+  //     item.priority === "High"
+  //       ? "text-[#EF4444] bg-[#FEF2F2]"
+  //       : item.priority === "Medium"
+  //         ? "text-[#F59E0B] bg-[#FFFBEB]"
+  //         : "text-[#6B7280] bg-[#F3F4FB]",
+  //   description: item.match_reason || "Based on your clinical health data.",
+  //   rating: item.relevance_score
+  //     ? (item.relevance_score / 20).toFixed(1)
+  //     : "4.8",
+  //   isShop:
+  //     item.professional_type === "supplement_supplier" ||
+  //     item.professional?.profession_type === "supplement_supplier",
+  //   bio:
+  //     item.professional?.profile?.bio ||
+  //     item.bio ||
+  //     "Helps busy professionals improve body composition, energy, and consistency through data-driven lifestyle adjustments.",
+  //   specialties: item.professional?.profile?.specialties?.length
+  //     ? sanitizeArrayField(item.professional.profile.specialties)
+  //     : ["Fat loss", "Strength", "Habit building", "Nutrition guidance"],
+  //   services: item.professional?.profile?.services?.length
+  //     ? sanitizeArrayField(item.professional.profile.services)
+  //     : [
+  //         "Set personalized goals",
+  //         "Monitor your progress",
+  //         "Provide weekly guidance",
+  //         "Adjust targets based on your data",
+  //       ],
+  // });
+  const mapProfessional = (item: any) => {
+    const profileImage =
+      item.professional?.profile?.image ||
+      item.professional?.profile_image ||
+      null;
+
+    return {
+      ...item,
+      id: item.professional?.id || item.id,
+      name: item.professional?.name || item.name,
+
+      role: (
+        item.professional_type ||
+        item.professional?.profession_type ||
+        "coach"
+      )
+        .replace(/_/g, " ")
+        .toUpperCase(),
+
+      avatar: getFullImageUrl(profileImage),
+
+      priority:
+        item.priority === "High"
+          ? "HIGH PRIORITY"
+          : item.priority === "Medium"
+            ? "MEDIUM PRIORITY"
+            : "LOW PRIORITY",
+
+      priorityColor:
+        item.priority === "High"
+          ? "text-[#EF4444] bg-[#FEF2F2]"
+          : item.priority === "Medium"
+            ? "text-[#F59E0B] bg-[#FFFBEB]"
+            : "text-[#6B7280] bg-[#F3F4FB]",
+
+      description: item.match_reason || "Based on your clinical health data.",
+
+      rating: item.relevance_score
+        ? (item.relevance_score / 20).toFixed(1)
+        : "4.8",
+
+      isShop:
+        item.professional_type === "supplement_supplier" ||
+        item.professional?.profession_type === "supplement_supplier",
+
+      bio:
+        item.professional?.profile?.bio ||
+        item.bio ||
+        "Helps busy professionals improve body composition.",
+
+      specialties: item.professional?.profile?.specialties?.length
+        ? item.professional.profile.specialties
+        : ["Fat loss", "Strength", "Habit building"],
+
+      services: item.professional?.profile?.services?.length
+        ? item.professional.profile.services
+        : ["Set personalized goals", "Monitor progress", "Weekly guidance"],
+    };
+  };
   const formattedOnsite = onsite.map(mapProfessional);
   const formattedRemote = remote.map(mapProfessional);
   const formattedBoth = both.map(mapProfessional);
@@ -570,9 +644,11 @@ const SupportPage = () => {
   const connectedIds = displaySupportTeam.map((c: any) => c.id);
 
   const displayRecommended = (
-    nearTab === "local" ? formattedOnsite :
-    nearTab === "remote" ? formattedRemote :
-    formattedBoth
+    nearTab === "local"
+      ? formattedOnsite
+      : nearTab === "remote"
+        ? formattedRemote
+        : formattedBoth
   ).slice(0, 3);
 
   const displayBrowse =
@@ -641,7 +717,9 @@ const SupportPage = () => {
     } catch (error: any) {
       console.error("Failed to connect:", error);
       const errorMessage =
-        error?.data?.message || error?.data?.error || "Failed to connect with coach";
+        error?.data?.message ||
+        error?.data?.error ||
+        "Failed to connect with coach";
       toast.error(errorMessage);
     }
   };
@@ -1299,10 +1377,22 @@ const SupportPage = () => {
                       </div>
                       <div className="flex flex-col gap-1">
                         <h3 className="text-lg font-bold text-[#1F2D2E]">
-                          No {nearTab === "local" ? "Local" : nearTab === "remote" ? "Remote" : "Hybrid"} Professionals Found
+                          No{" "}
+                          {nearTab === "local"
+                            ? "Local"
+                            : nearTab === "remote"
+                              ? "Remote"
+                              : "Hybrid"}{" "}
+                          Professionals Found
                         </h3>
                         <p className="text-[#5F6F73] text-sm max-w-xs">
-                          We couldn't find any {nearTab === "local" ? "onsite" : nearTab === "remote" ? "remote" : "both onsite and remote"} professionals tailored to your data right now.
+                          We couldn't find any{" "}
+                          {nearTab === "local"
+                            ? "onsite"
+                            : nearTab === "remote"
+                              ? "remote"
+                              : "both onsite and remote"}{" "}
+                          professionals tailored to your data right now.
                         </p>
                       </div>
                     </div>
