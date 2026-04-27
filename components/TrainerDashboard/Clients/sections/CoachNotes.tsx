@@ -5,10 +5,9 @@ import { FileText, Plus, Eye, Trash2, Pencil } from "lucide-react";
 import { useState } from "react";
 
 import {
-  useAddSupplierNoteMutation,
   useDeleteSupplierNoteMutation,
   useGetSupplierNotesQuery,
-  useUpdateSupplierNoteMutation,
+  useUpsertSupplierNoteMutation,
 } from "@/redux/features/api/SupplierDashboard/SupplierNote";
 import { toast } from "sonner";
 
@@ -18,13 +17,11 @@ export default function CoachNotes({ userId }: { userId: number }) {
 
   const { data, isLoading } = useGetSupplierNotesQuery(userId);
 
-  const [addNote, { isLoading: adding }] = useAddSupplierNoteMutation();
+  const [upsertNote, { isLoading: adding }] = useUpsertSupplierNoteMutation();
+
   const [deleteNote] = useDeleteSupplierNoteMutation();
-  const [updateNote] = useUpdateSupplierNoteMutation();
 
   const notes = data?.data ?? [];
-
-  //  ADD / UPDATE
 
   const handleSubmit = async () => {
     if (!noteText.trim()) {
@@ -33,22 +30,19 @@ export default function CoachNotes({ userId }: { userId: number }) {
     }
 
     try {
-      if (editingId) {
-        const res = await updateNote({
-          note_id: editingId,
-          note: noteText,
-          user_id: userId,
-        }).unwrap();
+      const payload = {
+        ...(editingId && { id: editingId }), // THIS enables update
+        user_id: userId,
+        note: noteText,
+      };
 
-        toast.success(res.message || "Note updated successfully");
-      } else {
-        const res = await addNote({
-          user_id: userId,
-          note: noteText,
-        }).unwrap();
+      const res = await upsertNote(payload).unwrap();
 
-        toast.success(res.message || "Note added successfully");
-      }
+      toast.success(
+        editingId
+          ? res.message || "Note updated successfully"
+          : res.message || "Note added successfully",
+      );
 
       setNoteText("");
       setEditingId(null);
@@ -56,7 +50,6 @@ export default function CoachNotes({ userId }: { userId: number }) {
       toast.error(err?.data?.message || "Something went wrong");
     }
   };
-
   //  DELETE
   const handleDelete = async (id: number) => {
     try {

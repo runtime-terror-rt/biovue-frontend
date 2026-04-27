@@ -20,9 +20,8 @@ import { Button } from "@/components/ui/button";
 import { User } from "@/redux/features/api/SupplierDashboard/AllUsers";
 import {
   useGetSupplierNotesQuery,
-  useAddSupplierNoteMutation,
-  useUpdateSupplierNoteMutation,
   useDeleteSupplierNoteMutation,
+  useUpsertSupplierNoteMutation,
 } from "@/redux/features/api/SupplierDashboard/SupplierNote";
 import {
   useGetTargetGoalQuery,
@@ -366,39 +365,39 @@ function TargetGoalsModalContent({
 
 function SupplierNotesSection({ userId }: { userId: number }) {
   const { data: notesData, isLoading } = useGetSupplierNotesQuery(userId);
-  const [addNote, { isLoading: isAdding }] = useAddSupplierNoteMutation();
-  const [updateNote, { isLoading: isUpdating }] =
-    useUpdateSupplierNoteMutation();
+
+  const [upsertNote, { isLoading: isSaving }] = useUpsertSupplierNoteMutation();
+
   const [deleteNote, { isLoading: isDeleting }] =
     useDeleteSupplierNoteMutation();
-
   const [newNoteText, setNewNoteText] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
   const [editingNoteText, setEditingNoteText] = useState("");
 
-  const handleAddNote = async () => {
-    if (!newNoteText.trim()) return;
-    try {
-      await addNote({ user_id: userId, note: newNoteText }).unwrap();
-      setNewNoteText("");
-      toast.success("Note added successfully");
-    } catch (error) {
-      toast.error("Failed to add note");
+  const handleSaveNote = async () => {
+    if (!newNoteText.trim() && !editingNoteText.trim()) {
+      toast.error("Note cannot be empty");
+      return;
     }
-  };
 
-  const handleUpdateNote = async (noteId: number) => {
-    if (!editingNoteText.trim()) return;
+    const isEdit = editingNoteId !== null;
+
+    const text = isEdit ? editingNoteText : newNoteText;
+
     try {
-      await updateNote({
-        note_id: noteId,
-        note: editingNoteText,
+      const res = await upsertNote({
+        id: isEdit ? editingNoteId : undefined, // 🔥 KEY FIX
         user_id: userId,
+        note: text,
       }).unwrap();
+
+      toast.success(res.message || (isEdit ? "Note updated" : "Note added"));
+
+      setNewNoteText("");
       setEditingNoteId(null);
-      toast.success("Note updated successfully");
-    } catch (error) {
-      toast.error("Failed to update note");
+      setEditingNoteText("");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Something went wrong");
     }
   };
 
@@ -435,16 +434,17 @@ function SupplierNotesSection({ userId }: { userId: number }) {
         />
         <div className="flex justify-end mt-4">
           <Button
-            onClick={handleAddNote}
-            disabled={isAdding || !newNoteText.trim()}
-            className="bg-[#0FA4A9] hover:bg-[#0D9488] text-white rounded-xl px-6 h-10 font-bold transition-all cursor-pointer flex items-center gap-2"
+            onClick={handleSaveNote}
+            disabled={isSaving || !newNoteText.trim()}
           >
-            {isAdding ? (
+            {isSaving ? (
               <Loader2 size={16} className="animate-spin" />
             ) : (
-              <Plus size={16} />
+              <>
+                <Plus size={16} />
+                Add Note
+              </>
             )}
-            Add Note
           </Button>
         </div>
       </div>
@@ -477,16 +477,17 @@ function SupplierNotesSection({ userId }: { userId: number }) {
                       Cancel
                     </Button>
                     <Button
-                      onClick={() => handleUpdateNote(note.id)}
-                      disabled={isUpdating}
-                      className="bg-[#3A86FF] hover:bg-[#2563EB] text-white rounded-xl px-6 h-10 font-bold transition-all flex items-center gap-2"
+                      onClick={handleSaveNote}
+                      disabled={isSaving || !editingNoteText.trim()}
                     >
-                      {isUpdating ? (
+                      {isSaving ? (
                         <Loader2 size={16} className="animate-spin" />
                       ) : (
-                        <Save size={16} />
+                        <>
+                          <Save size={16} />
+                          Save Changes
+                        </>
                       )}
-                      Save Changes
                     </Button>
                   </div>
                 </div>
