@@ -303,11 +303,28 @@ const ProjectionsPage = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50">
-              <span className="font-semibold text-gray-400">4K</span>
-              <span className="text-xs font-semibold text-gray-400">
-                Pro user
-              </span>
+            <div
+              onClick={() => setResolution("4k")}
+              className={cn(
+                "flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all",
+                resolution === "4k"
+                  ? "border-[#3A86FF] bg-[#F8FAFF]"
+                  : "border-gray-100 hover:border-gray-200",
+              )}
+            >
+              <span className="font-semibold text-[#041228]">4K</span>
+              <div
+                className={cn(
+                  "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                  resolution === "4k"
+                    ? "border-[#3A86FF] bg-[#3A86FF]"
+                    : "border-gray-300",
+                )}
+              >
+                {resolution === "4k" && (
+                  <div className="w-2 h-2 bg-white rounded-full" />
+                )}
+              </div>
             </div>
           </div>
 
