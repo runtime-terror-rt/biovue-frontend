@@ -14,6 +14,7 @@ interface Step4Props {
   showSuccess: boolean;
   setShowSuccess: (v: boolean) => void;
   onClose: () => void;
+  programId?: number | null;
 }
 
 export default function Step4ReviewProgram({
@@ -21,6 +22,7 @@ export default function Step4ReviewProgram({
   showSuccess,
   setShowSuccess,
   onClose,
+  programId,
 }: Step4Props) {
   const router = useRouter();
   const { data, isLoading } = useGetUsersQuery();
@@ -412,7 +414,7 @@ export default function Step4ReviewProgram({
 
                       try {
                         await assignProgramUsers({
-                          program_set_id: 2, // program id
+                          program_set_id: programId || 2, // use actual program id
                           user_ids: selected,
                         }).unwrap();
 

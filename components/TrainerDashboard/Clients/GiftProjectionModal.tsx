@@ -11,15 +11,15 @@ import { useGiftCreditMutation } from "@/redux/features/api/TrainerDashboard/Gif
 interface GiftProjectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  preselectedUserId?: number | null;
-  preselectedUserName?: string;
+  preselectedUserIds?: number[];
+  preselectedUserNames?: string[];
 }
 
 export default function GiftProjectionModal({
   isOpen,
   onClose,
-  preselectedUserId,
-  preselectedUserName,
+  preselectedUserIds = [],
+  preselectedUserNames = [],
 }: GiftProjectionModalProps) {
   const { data: clientsData, isLoading: isClientsLoading } = useGetConnectedClientsQuery(undefined, {
     skip: !isOpen,
@@ -38,12 +38,14 @@ export default function GiftProjectionModal({
 
   const clients = clientsData?.data || [];
   // Find full client info from query to get the email
-  const selectedClient = clients.find((c) => c.id === preselectedUserId);
+  const isBulk = preselectedUserIds.length > 1;
+  const singleUserId = preselectedUserIds.length === 1 ? preselectedUserIds[0] : null;
+  const selectedClient = singleUserId ? clients.find((c) => c.id === singleUserId) : null;
 
   const handleGiftProjections = async () => {
     const amount = Number(projectionAmount);
-    if (!preselectedUserId) {
-      toast.error("User not found.");
+    if (!preselectedUserIds || preselectedUserIds.length === 0) {
+      toast.error("No users selected.");
       return;
     }
     if (isNaN(amount) || amount <= 0) {
@@ -53,7 +55,7 @@ export default function GiftProjectionModal({
 
     try {
       await giftCredit({
-        receiver_id: preselectedUserId,
+        receiver_ids: preselectedUserIds,
         amount,
       }).unwrap();
 
@@ -86,21 +88,23 @@ export default function GiftProjectionModal({
             </span>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[#E4F0FF] text-[#0FA4A9] flex items-center justify-center font-bold text-lg shrink-0">
-                {(selectedClient?.name || preselectedUserName || "U").charAt(0).toUpperCase()}
+                {isBulk ? preselectedUserIds.length : (selectedClient?.name || preselectedUserNames[0] || "U").charAt(0).toUpperCase()}
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="text-base font-bold text-[#041228] truncate">
-                  {selectedClient?.name || preselectedUserName || "Unknown User"}
+                  {isBulk ? `${preselectedUserIds.length} Selected Users` : (selectedClient?.name || preselectedUserNames[0] || "Unknown User")}
                 </div>
-                {isClientsLoading ? (
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <Loader2 className="w-3 h-3 animate-spin text-[#0FA4A9]" />
-                    <span className="text-xs text-[#94A3B8]">Loading email...</span>
-                  </div>
-                ) : (
-                  <div className="text-sm text-[#5F6F73] truncate">
-                    {selectedClient?.email || "Email not available"}
-                  </div>
+                {!isBulk && (
+                  isClientsLoading ? (
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Loader2 className="w-3 h-3 animate-spin text-[#0FA4A9]" />
+                      <span className="text-xs text-[#94A3B8]">Loading email...</span>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-[#5F6F73] truncate">
+                      {selectedClient?.email || "Email not available"}
+                    </div>
+                  )
                 )}
               </div>
             </div>
