@@ -22,7 +22,7 @@ export default function TrainerOverviewPage() {
         <StatCards stats={data?.stats} isLoading={isLoading} />
         <Clients clients={data?.client_table} isLoading={isLoading} />
         <Actions />
-        <RecentActivity />
+        {/* <RecentActivity /> */}
       </div>
     </div>
   );
