@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ClientTableItem } from "@/redux/features/api/TrainerDashboard/trainerOverviewApi";
 import GiftProjectionModal from "./GiftProjectionModal";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 
 type ClientsTableProps = {
   limit?: number;
@@ -31,6 +33,7 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
   const router = useRouter();
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [selectedUserName, setSelectedUserName] = useState<string>("");
   const statusConfig: Record<string, { label: string, className: string }> = {
     "on-track": {
@@ -57,12 +60,45 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
 
   const visibleClients = limit ? clients.slice(0, limit) : clients;
 
+  const toggleSelectAll = () => {
+    if (selectedUserIds.length === visibleClients.length) {
+      setSelectedUserIds([]);
+    } else {
+      setSelectedUserIds(visibleClients.map((c) => c.user_id));
+    }
+  };
+
+  const toggleSelectUser = (id: number) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
   return (
     <div className=" bg-white p-5">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-bold text-[#111827]">Clients</h3>
+        {selectedUserIds.length > 0 && (
+          <Button
+            onClick={() => setIsGiftModalOpen(true)}
+            className="bg-[#0FA4A9] hover:bg-[#0D9488] text-white flex items-center gap-2"
+          >
+            <Gift size={16} />
+            Gift Selected ({selectedUserIds.length})
+          </Button>
+        )}
+      </div>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12 py-3">
+                <Checkbox
+                  checked={selectedUserIds.length === visibleClients.length && visibleClients.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                  aria-label="Select all"
+                />
+              </TableHead>
               <TableHead className="font-medium text-base md:text-lg py-3">
                 USER NAME
               </TableHead>
@@ -90,6 +126,13 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
 
               return (
                 <TableRow key={client.user_id}>
+                  <TableCell className="py-3">
+                    <Checkbox
+                      checked={selectedUserIds.includes(client.user_id)}
+                      onCheckedChange={() => toggleSelectUser(client.user_id)}
+                      aria-label={`Select ${client.user_name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium py-3 text-[#666666] text-base md:text-lg">
                     {client.user_name}
                   </TableCell>
@@ -147,8 +190,9 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
         onClose={() => {
           setIsGiftModalOpen(false);
           setSelectedUserId(null);
+          setSelectedUserIds([]);
         }}
-        preselectedUserId={selectedUserId}
+        preselectedUserIds={selectedUserIds.length > 0 ? selectedUserIds : (selectedUserId ? [selectedUserId] : [])}
       />
     </div>
   );

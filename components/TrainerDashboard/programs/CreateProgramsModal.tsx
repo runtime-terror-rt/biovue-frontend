@@ -51,6 +51,7 @@ export default function CreateProgramModal({
 }: CreateProgramModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [createdProgramId, setCreatedProgramId] = useState<number | null>(null);
   const [formData, setFormData] = useState<ProgramFormData>({
     programName: "",
     duration: "12 weeks",
@@ -166,6 +167,7 @@ export default function CreateProgramModal({
         },
       });
       setShowSuccess(false); // also reset success modal
+      setCreatedProgramId(null);
     }
   }, [isOpen]);
   const handleNext = () => {
@@ -187,6 +189,11 @@ export default function CreateProgramModal({
 
       const result = await createProgram(body).unwrap();
       console.log("Create program success:", result);
+
+      const newId = result?.data?.id || result?.id || result?.program?.id || result?.program_set?.id;
+      if (newId) {
+        setCreatedProgramId(newId);
+      }
 
       setShowSuccess(true);
     } catch (error: any) {
@@ -236,6 +243,7 @@ export default function CreateProgramModal({
               onClose={handleClose}
               showSuccess={showSuccess}
               setShowSuccess={setShowSuccess}
+              programId={createdProgramId}
             />
           )}
         </div>

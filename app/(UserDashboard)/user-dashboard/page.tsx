@@ -401,49 +401,9 @@ const UserDashboard = () => {
               );
             })}
             {!isInsightsLoading && dynamicInsights.length === 0 && (
-              <>
-                {[
-                  {
-                    title: "URGENT BIOMETRIC DATA VERIFICATION",
-                    desc: '"The recorded height (432.0cm) and weight (91.0 lbs) result in a BMI of 2.2, which is physiologically impossible. This data suggests a major entry error."',
-                    icon: <Scale size={20} className="text-[#3A86FF]" />,
-                    badge: "HIGH PRIORITY",
-                    iconBg: "bg-[#E4EFFF]",
-                  },
-                  {
-                    title: "ADDRESS ANXIETY RISK FACTORS",
-                    desc: '"Anxiety is identified as your primary health risk, which can impact sleep quality, recovery, and overall metabolic health."',
-                    icon: <HeartPulse size={20} className="text-[#3A86FF]" />,
-                    badge: "HIGH PRIORITY",
-                    iconBg: "bg-[#E4EFFF]",
-                  },
-                ].map((focus, i) => (
-                  <div
-                    key={i}
-                    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4 group hover:border-[#0FA4A9] transition-all cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div
-                        className={cn(
-                          "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
-                          focus.iconBg,
-                        )}
-                      >
-                        {focus.icon}
-                      </div>
-                      <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded-full uppercase tracking-wider">
-                        {focus.badge}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <h3 className="text-base font-bold text-[#1F2D2E]">
-                        {focus.title}
-                      </h3>
-                      <p className="text-xs text-[#5F6F73] italic">{focus.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </>
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center justify-center text-[#94A3B8] italic text-sm">
+                No new AI insights generated at this time.
+              </div>
             )}
           </div>
         </div>
@@ -458,6 +418,7 @@ const UserDashboard = () => {
         }}
         habitData={habitData}
         setHabitData={setHabitData}
+        unitSystem={summary?.unit_system || "imperial"}
       />
 
       <ChangeSourceModal

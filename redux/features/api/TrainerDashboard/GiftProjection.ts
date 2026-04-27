@@ -3,13 +3,14 @@
 import { baseApi } from "../baseApi";
 
 export interface GiftCreditRequest {
-  receiver_id: number;
+  receiver_ids: number[];
   amount: number;
 }
 
 export interface GiftCreditResponse {
   success: boolean;
   message: string;
+  total_deducted: number;
   remaining_credit: number;
 }
 

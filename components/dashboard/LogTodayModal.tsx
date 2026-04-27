@@ -30,6 +30,7 @@ interface LogTodayModalProps {
   onChangeSource: () => void;
   habitData: any;
   setHabitData: (data: any) => void;
+  unitSystem?: string;
 }
 
 const LogTodayModal = ({ 
@@ -37,7 +38,8 @@ const LogTodayModal = ({
   onClose, 
   onChangeSource, 
   habitData, 
-  setHabitData 
+  setHabitData,
+  unitSystem = "imperial"
 }: LogTodayModalProps) => {
   const currentUser = useSelector(selectCurrentUser);
   const userId = currentUser?.id || currentUser?.user_id;
@@ -57,6 +59,7 @@ const LogTodayModal = ({
     const payload = {
       user_id: userId,
       weight: Number(habitData.weight) || 0,
+      unit: unitSystem === "metric" ? "kg" : "lbs",
       daily_steps: Number(habitData.steps) || 0,
       sleep_hours: Number(habitData.sleep) || 0,
       water_glasses: Number(habitData.water) || 64, 
@@ -152,14 +155,14 @@ const LogTodayModal = ({
                 className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-[#5F6F73] text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-50"
               >
                 <option value="">Select.....</option>
-                <option value="150">150 lbs</option>
-                <option value="160">160 lbs</option>
-                <option value="170">170 lbs</option>
-                <option value="180">180 lbs</option>
-                <option value="190">190 lbs</option>
-                <option value="200">200 lbs</option>
-                <option value="210">210 lbs</option>
-                <option value="220">220 lbs</option>
+                <option value="150">150 {unitSystem === "metric" ? "kg" : "lbs"}</option>
+                <option value="160">160 {unitSystem === "metric" ? "kg" : "lbs"}</option>
+                <option value="170">170 {unitSystem === "metric" ? "kg" : "lbs"}</option>
+                <option value="180">180 {unitSystem === "metric" ? "kg" : "lbs"}</option>
+                <option value="190">190 {unitSystem === "metric" ? "kg" : "lbs"}</option>
+                <option value="200">200 {unitSystem === "metric" ? "kg" : "lbs"}</option>
+                <option value="210">210 {unitSystem === "metric" ? "kg" : "lbs"}</option>
+                <option value="220">220 {unitSystem === "metric" ? "kg" : "lbs"}</option>
               </select>
             </div>
 
