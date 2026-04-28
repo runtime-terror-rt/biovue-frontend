@@ -226,12 +226,12 @@ const OnboardingStepsPage = () => {
             const paymentRes = await processPayment({
               plan_id: formData.plan_id,
               billing: "monthly",
-              card_info: {
-                number: formData.cardNumber,
-                expiry: formData.expiryDate,
-                cvv: formData.cvc,
-                name: formData.cardName,
-              },
+              // card_info: {
+              //   number: formData.cardNumber,
+              //   expiry: formData.expiryDate,
+              //   cvv: formData.cvc,
+              //   name: formData.cardName,
+              // },
             }).unwrap();
 
             if (paymentRes.checkout_url) {
