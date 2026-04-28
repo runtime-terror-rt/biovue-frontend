@@ -176,45 +176,6 @@ const SHARED_GOALS = [
   },
 ];
 
-const LOCAL_PROFESSIONALS = [
-  {
-    id: 301,
-    name: "Rahim Uddin",
-    role: "FITNESS TRAINER",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300",
-    rating: 4.8,
-  },
-  {
-    id: 302,
-    name: "Nusrat Jahan",
-    role: "NUTRITION COACH",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=300",
-    rating: 4.9,
-  },
-];
-
-const REMOTE_PROFESSIONALS = [
-  {
-    id: 401,
-    name: "James Carter",
-    role: "ONLINE COACH",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300",
-    rating: 4.7,
-  },
-  {
-    id: 402,
-    name: "Elena Rios",
-    role: "YOGA INSTRUCTOR",
-    avatar:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300",
-    rating: 4.8,
-  },
-];
-// --- Sub-components ---
-
 const SafeImage = ({
   src,
   alt,
@@ -462,9 +423,12 @@ const BrowseCard = ({
 const SupportPage = () => {
   const user = useSelector(selectCurrentUser);
   const [nearTab, setNearTab] = useState<"local" | "remote" | "both">("local");
+  // const { data: recommendationsData, isLoading: isLoadingRecommendations } =
+  //   useGetAiRecommendedProfessionalsQuery(user?.id, { skip: !user?.id });
   const { data: recommendationsData, isLoading: isLoadingRecommendations } =
-    useGetAiRecommendedProfessionalsQuery(user?.id, { skip: !user?.id });
-
+    useGetAiRecommendedProfessionalsQuery(String(user?.id), {
+      skip: !user?.id,
+    });
   const { data: connectedData, isLoading: isLoadingConnected } =
     useGetConnectedProfessionsQuery();
 
@@ -487,9 +451,33 @@ const SupportPage = () => {
 
     if (url.startsWith("http")) return url;
 
-    const base = "https://ai.biovuedigitalwellness.com";
+    const storageBase = "https://api.biovuedigitalwellness.com/storage";
     const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
-    return `${base}${normalizedUrl}`;
+
+    return `${storageBase}${normalizedUrl}`;
+  };
+
+  const TopImagesRow = ({ items }: { items: any[] }) => {
+    if (!items || items.length === 0) return null;
+
+    return (
+      <div className="flex items-center gap-3 mt-4">
+        {items.slice(0, 3).map((it: any, idx: number) => (
+          <div
+            key={it?.id ?? idx}
+            className="w-12 h-12 rounded-full overflow-hidden bg-gray-50 border border-white shadow-sm"
+          >
+            <SafeImage
+              src={it?.avatar || getFullImageUrl(it?.professional?.profile?.image)}
+              alt={it?.name || `professional-${idx}`}
+              width={48}
+              height={48}
+              className="object-cover w-full h-full"
+            />
+          </div>
+        ))}
+      </div>
+    );
   };
 
   const sanitizeArrayField = (arr: any) => {
@@ -507,57 +495,9 @@ const SupportPage = () => {
   const onsite = recommendationsData?.onsite || [];
   const remote = recommendationsData?.remote || [];
   const both = recommendationsData?.both || [];
-
-  // const mapProfessional = (item: any) => ({
-  //   ...item,
-  //   id: item.professional?.id || item.id,
-  //   name: item.professional?.name || item.name,
-  //   role: (
-  //     item.professional_type ||
-  //     item.professional?.profession_type ||
-  //     "coach"
-  //   )
-  //     .replace(/_/g, " ")
-  //     .toUpperCase(),
-  //   avatar: getFullImageUrl(
-  //     item.professional?.profile?.image || item.professional?.profile_image,
-  //     "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&h=300&auto=format&fit=crop",
-  //   ),
-  //   priority:
-  //     item.priority === "High"
-  //       ? "HIGH PRIORITY"
-  //       : item.priority === "Medium"
-  //         ? "MEDIUM PRIORITY"
-  //         : "LOW PRIORITY",
-  //   priorityColor:
-  //     item.priority === "High"
-  //       ? "text-[#EF4444] bg-[#FEF2F2]"
-  //       : item.priority === "Medium"
-  //         ? "text-[#F59E0B] bg-[#FFFBEB]"
-  //         : "text-[#6B7280] bg-[#F3F4FB]",
-  //   description: item.match_reason || "Based on your clinical health data.",
-  //   rating: item.relevance_score
-  //     ? (item.relevance_score / 20).toFixed(1)
-  //     : "4.8",
-  //   isShop:
-  //     item.professional_type === "supplement_supplier" ||
-  //     item.professional?.profession_type === "supplement_supplier",
-  //   bio:
-  //     item.professional?.profile?.bio ||
-  //     item.bio ||
-  //     "Helps busy professionals improve body composition, energy, and consistency through data-driven lifestyle adjustments.",
-  //   specialties: item.professional?.profile?.specialties?.length
-  //     ? sanitizeArrayField(item.professional.profile.specialties)
-  //     : ["Fat loss", "Strength", "Habit building", "Nutrition guidance"],
-  //   services: item.professional?.profile?.services?.length
-  //     ? sanitizeArrayField(item.professional.profile.services)
-  //     : [
-  //         "Set personalized goals",
-  //         "Monitor your progress",
-  //         "Provide weekly guidance",
-  //         "Adjust targets based on your data",
-  //       ],
-  // });
+useEffect(() => {
+  console.log("AI DATA:", recommendationsData);
+}, [recommendationsData]);
   const mapProfessional = (item: any) => {
     const profileImage =
       item.professional?.profile?.image ||
@@ -1305,6 +1245,10 @@ const SupportPage = () => {
                       Get personalized help based on your health data
                     </p>
                   </div>
+                  {/* Top 3 professional images from AI recommendations */}
+                  <TopImagesRow
+                    items={displayRecommended && displayRecommended.length > 0 ? displayRecommended : displayBrowse}
+                  />
                 </div>
               </div>
 
