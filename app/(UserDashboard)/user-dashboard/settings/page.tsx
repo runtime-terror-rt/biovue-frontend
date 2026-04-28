@@ -919,7 +919,7 @@ const ProfileEditView = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-3">
               <label className="text-xs text-[#5F6F73] font-bold uppercase tracking-widest">
-                HEIGHT ({formData.unit_system === "metric" ? "CM" : "IN"})
+                HEIGHT ({formData.unit_system === "metric" ? "metric (cm)" : "imperial (inch)"})
               </label>
               <input
                 type="number"
@@ -932,7 +932,7 @@ const ProfileEditView = ({
             </div>
             <div className="flex flex-col gap-3">
               <label className="text-xs text-[#5F6F73] font-bold uppercase tracking-widest">
-                WEIGHT ({formData.unit_system === "metric" ? "KG" : "LBS"})
+                WEIGHT ({formData.unit_system === "metric" ? "metric (kg)" : "imperial (lbs)"})
               </label>
               <input
                 type="number"

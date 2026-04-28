@@ -56,23 +56,28 @@ const LogTodayModal = ({
       return;
     }
 
+    const formatLocalDateTime = (d = new Date()) => {
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(
+        d.getHours(),
+      )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+
     const payload = {
       user_id: userId,
       weight: Number(habitData.weight) || 0,
-      unit: unitSystem === "metric" ? "kg" : "lbs",
+      // send unit as metric/imperial
+      unit: unitSystem === "metric" ? "metric" : "imperial",
       daily_steps: Number(habitData.steps) || 0,
       sleep_hours: Number(habitData.sleep) || 0,
-      water_glasses: Number(habitData.water) || 64, 
-      log_date: new Date().toISOString().slice(0, 10),
+      water_glasses: Number(habitData.water) || 64,
+      log_date: formatLocalDateTime(),
     };
 
     try {
       // For now, we'll hit the sleep log as the primary log point if any data is provided
       // In a real scenario, we might want to split these or have a combined endpoint
-      const response = await postSleepLog({
-        ...payload,
-        log_date: new Date().toISOString().slice(0, 19).replace("T", " ")
-      }).unwrap();
+      const response = await postSleepLog(payload).unwrap();
 
       if (response.success !== false && (response.success || response.status === "success" || response.id || response.sleep_hours !== undefined || Object.keys(response).length > 0)) {
         toast.success("Daily habits logged successfully!");
@@ -155,14 +160,14 @@ const LogTodayModal = ({
                 className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-[#5F6F73] text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-50"
               >
                 <option value="">Select.....</option>
-                <option value="150">150 {unitSystem === "metric" ? "kg" : "lbs"}</option>
-                <option value="160">160 {unitSystem === "metric" ? "kg" : "lbs"}</option>
-                <option value="170">170 {unitSystem === "metric" ? "kg" : "lbs"}</option>
-                <option value="180">180 {unitSystem === "metric" ? "kg" : "lbs"}</option>
-                <option value="190">190 {unitSystem === "metric" ? "kg" : "lbs"}</option>
-                <option value="200">200 {unitSystem === "metric" ? "kg" : "lbs"}</option>
-                <option value="210">210 {unitSystem === "metric" ? "kg" : "lbs"}</option>
-                <option value="220">220 {unitSystem === "metric" ? "kg" : "lbs"}</option>
+                <option value="150">150 {unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"}</option>
+                <option value="160">160 {unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"}</option>
+                <option value="170">170 {unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"}</option>
+                <option value="180">180 {unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"}</option>
+                <option value="190">190 {unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"}</option>
+                <option value="200">200 {unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"}</option>
+                <option value="210">210 {unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"}</option>
+                <option value="220">220 {unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"}</option>
               </select>
             </div>
 
