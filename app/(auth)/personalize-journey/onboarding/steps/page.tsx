@@ -46,7 +46,7 @@ import {
 
 const OnboardingStepsPage = () => {
   const [step, setStep] = useState(1);
-  const [totalSteps] = useState(7);
+  const [totalSteps] = useState(6);
   const [agreed, setAgreed] = useState(false);
 
   // Form states (simplified for UI demonstration)
@@ -78,10 +78,10 @@ const OnboardingStepsPage = () => {
     // Step 6
     plan_id: null as number | null,
     // Step 7
-    cardNumber: "",
-    expiryDate: "",
-    cvc: "",
-    cardName: "",
+    // cardNumber: "",
+    // expiryDate: "",
+    // cvc: "",
+    // cardName: "",
   });
 
   const [createUpdateProfile, { isLoading: isSubmitting }] =
@@ -1092,17 +1092,26 @@ const OnboardingStepsPage = () => {
 
               <div className="flex justify-center flex-col md:flex-row items-center">
                 <button
-                  onClick={nextStep}
-                  disabled={!formData.plan_id}
+                  onClick={handleSubmit}
+                  disabled={!formData.plan_id || isSubmitting || isProcessingPayment}
                   className="w-full md:w-auto min-w-[320px] bg-[#0FA4A9] text-white py-4 px-10 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all shadow-lg shadow-[#0FA4A9]/20 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Continue
-                  <ArrowRight size={22} />
+                  {isSubmitting || isProcessingPayment ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight size={22} />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           )}
-          {step === 7 && (
+          {/* {step === 7 && (
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-[rgba(58,134,255,0.25)] shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-[#E8F1FF] rounded-xl flex items-center justify-center text-[#3A86FF]">
@@ -1117,9 +1126,9 @@ const OnboardingStepsPage = () => {
                 seamless transitions between plans.
               </p>
 
-              <div className="max-w-xl mx-auto w-full flex flex-col gap-6">
+              <div className="max-w-xl mx-auto w-full flex flex-col gap-6"> */}
                 {/* Credit Card Preview Card */}
-                <div className="relative h-48 w-full rounded-2xl bg-gradient-to-br from-[#1F2D2E] to-[#3A86FF] p-6 text-white shadow-xl overflow-hidden group">
+                {/* <div className="relative h-48 w-full rounded-2xl bg-gradient-to-br from-[#1F2D2E] to-[#3A86FF] p-6 text-white shadow-xl overflow-hidden group">
                   <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                     <Crown size={120} />
                   </div>
@@ -1154,9 +1163,9 @@ const OnboardingStepsPage = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> */}
                   {/* Card Name */}
-                  <div className="md:col-span-2 space-y-2">
+                  {/* <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
                       Cardholder Name
                     </label>
@@ -1172,10 +1181,10 @@ const OnboardingStepsPage = () => {
                         })
                       }
                     />
-                  </div>
+                  </div> */}
 
                   {/* Card Number */}
-                  <div className="md:col-span-2 space-y-2">
+                  {/* <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
                       Card Number
                     </label>
@@ -1192,10 +1201,10 @@ const OnboardingStepsPage = () => {
                         })
                       }
                     />
-                  </div>
+                  </div> */}
 
                   {/* Expiry */}
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
                       Expiry Date
                     </label>
@@ -1212,10 +1221,10 @@ const OnboardingStepsPage = () => {
                         setFormData({ ...formData, expiryDate: v });
                       }}
                     />
-                  </div>
+                  </div> */}
 
                   {/* CVC */}
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
                       CVC / CVV
                     </label>
@@ -1265,7 +1274,7 @@ const OnboardingStepsPage = () => {
                 </button>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>
