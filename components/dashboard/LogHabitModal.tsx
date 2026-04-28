@@ -65,23 +65,34 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
     }
 
     try {
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      const formatLocalDate = (d = new Date()) => `${d.getFullYear()}-${pad(
+        d.getMonth() + 1,
+      )}-${pad(d.getDate())}`;
+      const formatLocalDateTime = (d = new Date()) => `${d.getFullYear()}-${pad(
+        d.getMonth() + 1,
+      )}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(
+        d.getSeconds(),
+      )}`;
+
       const payload = {
         user_id: userId || 3,
         weight: Number(formData.weight),
+        // send unit as metric/imperial
+        unit: weightUnit === "kg" ? "metric" : "imperial",
         daily_steps: Number(formData.daily_steps),
         sleep_hours: Number(formData.sleep_hours),
         water_glasses: Number(formData.water_glasses),
-        log_date: new Date().toISOString().slice(0, 10), 
+        // default to date-only for non-sleep logs
+        log_date: formatLocalDate(),
       };
 
       console.log(`Sending ${habitType} Log Payload:`, payload);
 
       let response;
       if (type === "sleep") {
-        const sleepPayload = {
-          ...payload,
-          log_date: new Date().toISOString().slice(0, 19).replace("T", " ")
-        };
+        // sleep expects a timestamp (local)
+        const sleepPayload = { ...payload, log_date: formatLocalDateTime() };
         response = await postSleepLog(sleepPayload).unwrap();
       } else if (type === "activity") {
         response = await postActivityLog(payload).unwrap();
@@ -168,7 +179,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                 </button>
               </div>
 
-              <div className="bg-blue-50/30 rounded-xl p-4 border border-[#3A86FF]/10 flex items-center justify-between">
+              {/* <div className="bg-blue-50/30 rounded-xl p-4 border border-[#3A86FF]/10 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Smartphone size={18} className="text-[#0FA4A9]" />
                   <span className="text-[#1F2D2E] font-semibold text-sm">
@@ -181,7 +192,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                 >
                   Switch Source
                 </button>
-              </div>
+              </div> */}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
@@ -200,7 +211,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                             : "text-gray-400 hover:text-gray-600"
                         }`}
                       >
-                        KG
+                        Metric (kg)
                       </button>
                       <button
                         type="button"
@@ -211,17 +222,17 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                             : "text-gray-400 hover:text-gray-600"
                         }`}
                       >
-                        LBS
+                        Imperial (lbs)
                       </button>
                     </div>
                   </div>
                   <div className="relative">
-                    <input
+                      <input
                       type="number"
                       name="weight"
                       value={formData.weight}
                       onChange={handleChange}
-                      placeholder={`Enter value in ${weightUnit}...`}
+                      placeholder={`Enter value in ${weightUnit === "kg" ? "metric (kg)" : "imperial (lbs)"}...`}
                       className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
                     />
                   </div>

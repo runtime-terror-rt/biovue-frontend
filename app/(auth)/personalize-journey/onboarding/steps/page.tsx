@@ -522,12 +522,12 @@ const OnboardingStepsPage = () => {
                         setFormData({ ...formData, weight: e.target.value })
                       }
                       placeholder={
-                        unitSystem === "metric" ? "70 kg" : "170 lbs"
+                        unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"
                       }
                       className="flex-1 bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 text-gray-700 font-medium"
                     />
                     <select className="w-32 bg-[#F8FAFB] border border-gray-100 rounded-xl py-4 px-5 text-gray-500 font-medium">
-                      <option>{unitSystem === "metric" ? "kg" : "lbs"}</option>
+                      <option>{unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"}</option>
                     </select>
                   </div>
                 </div>
