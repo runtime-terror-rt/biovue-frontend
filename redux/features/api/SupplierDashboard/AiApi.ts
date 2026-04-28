@@ -13,6 +13,6 @@ export const AiApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["FindMatch"],
+  tagTypes: ["FindMatch", "Support"],
   endpoints: () => ({}),
 });
