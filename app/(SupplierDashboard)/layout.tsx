@@ -23,6 +23,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import ProfileDropdown from "@/components/dashboard/ProfileDropdown";
+import ProjectionLimitIndicator from "@/components/dashboard/ProjectionLimitIndicator";
 import { useLogoutMutation } from "@/redux/features/api/auth/authApi";
 import { logout } from "@/redux/features/slice/authSlice";
 import { useAppDispatch } from "@/redux/store/hooks";
@@ -162,6 +163,7 @@ export default function SupplierDashboardLayout({
           </div>
 
           <div className="flex items-center gap-6">
+            <ProjectionLimitIndicator />
             <NotificationBell iconSize={24} />
             <div className="flex items-center gap-3 pl-2">
               <ProfileDropdown
