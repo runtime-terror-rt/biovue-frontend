@@ -21,6 +21,7 @@ import {
   CircleCheck,
   LayoutGrid,
   Info,
+  User,
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -182,20 +183,27 @@ const SafeImage = ({
   width,
   height,
   className,
-  fallback = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&h=300&auto=format&fit=crop",
 }: {
-  src: string;
+  src?: string | null;
   alt: string;
   width?: number;
   height?: number;
   className?: string;
-  fallback?: string;
 }) => {
-  const [imgSrc, setImgSrc] = useState(src);
+  const [imgSrc, setImgSrc] = useState<string | null | undefined>(src);
 
   useEffect(() => {
     setImgSrc(src);
   }, [src]);
+
+  // If there's no valid src, render a User icon instead of a default image
+  if (!imgSrc) {
+    return (
+      <div className={cn("flex items-center justify-center bg-gray-50", className)}>
+        <User size={34} className="text-[#9BAFB3]" />
+      </div>
+    );
+  }
 
   return (
     <Image
@@ -206,7 +214,7 @@ const SafeImage = ({
       fill={!width && !height}
       unoptimized
       className={className}
-      onError={() => setImgSrc(fallback)}
+      onError={() => setImgSrc(null)}
     />
   );
 };
@@ -436,16 +444,9 @@ const SupportPage = () => {
   const [browseIndex, setBrowseIndex] = useState(0);
 
   const getFullImageUrl = (url?: any, defaultUrl?: string) => {
-    const fallback =
-      defaultUrl ||
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&h=300&auto=format&fit=crop";
+    const fallback = defaultUrl ?? null;
 
-    if (
-      !url ||
-      typeof url !== "string" ||
-      url === "null" ||
-      url === "undefined"
-    ) {
+    if (!url || typeof url !== "string" || url === "null" || url === "undefined") {
       return fallback;
     }
 
@@ -574,10 +575,7 @@ useEffect(() => {
     id: item.professional_info?.id || item.id,
     name: item.professional_info?.name || item.name,
     role: "COACH",
-    avatar: getFullImageUrl(
-      item.professional_info?.profile_image || item.image_url,
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=300&h=300&auto=format&fit=crop",
-    ),
+    avatar: getFullImageUrl(item.professional_info?.profile_image || item.image_url),
     status: "Active",
   }));
 
