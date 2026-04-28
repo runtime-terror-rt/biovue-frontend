@@ -317,7 +317,6 @@ const SupportTeamCard = ({
               width={56}
               height={56}
               className="object-cover"
-              fallback="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=300&h=300&auto=format&fit=crop"
             />
           </div>
           <div className="flex flex-col">
@@ -381,7 +380,6 @@ const BrowseCard = ({
             width={64}
             height={64}
             className="object-cover w-full h-full"
-            fallback="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&h=300&auto=format&fit=crop"
           />
         </div>
         <div className="flex flex-col gap-1 items-center">
