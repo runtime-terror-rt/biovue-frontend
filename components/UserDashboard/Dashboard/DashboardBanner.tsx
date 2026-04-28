@@ -15,10 +15,10 @@ const DashboardBanner = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [activeDot, setActiveDot] = useState(0);
 
-  // Only show banner for Free Trial users or users without a plan
-  const isFreeTrial =
+  // Only show banner for users on a free plan (no plan_id or plan name contains "free")
+  const isFreePlan =
     !currentUser?.plan_id ||
-    currentUser?.plan_name?.toLowerCase().includes("free trial");
+    currentUser?.plan_name?.toLowerCase().includes("free");
 
   // Filter ads for Free Dashboard placement
   const ads = adsData?.filter(ad => ad.placement.includes("Home Screen Top") || ad.placement.includes("Free Dashboard")) || [];
@@ -46,7 +46,7 @@ const DashboardBanner = () => {
 
   return (
     <AnimatePresence>
-      {isVisible && isFreeTrial && (ads.length > 0 || !adsData) && (
+      {isVisible && isFreePlan && (ads.length > 0 || !adsData) && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
