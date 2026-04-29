@@ -122,8 +122,8 @@ export default function AddEditBannerModal({
     fd.append("ads_title", formData.ads_title);
     fd.append("ads_type", formData.ads_type);
     if (formData.image) {
-      if (formData.image.size > 2 * 1024 * 1024) {
-        toast.error("Image size exceeds 2MB limit. Please choose a smaller file.");
+      if (formData.image.size > 10 * 1024 * 1024) {
+        toast.error("Image size exceeds 10MB limit. Please choose a smaller file.");
         return;
       }
       fd.append("image", formData.image, formData.image.name);
