@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { selectCurrentUser, updateUser } from "@/redux/features/slice/authSlice";
+import { selectCurrentUser, selectCurrentToken, updateUser } from "@/redux/features/slice/authSlice";
 import {
   useGetSubscriptionPlansQuery,
   useGetPaymentSummaryQuery,
   useCancelSubscriptionMutation,
+  useProcessPaymentMutation,
 } from "@/redux/features/api/paymentApi";
+import handlePlanSelection from "@/lib/planSelection";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -33,6 +35,9 @@ const SubscriptionManagement = ({
 }: SubscriptionManagementProps) => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const token = useSelector(selectCurrentToken);
+  const [processPayment] = useProcessPaymentMutation();
+  const [loadingPlanId, setLoadingPlanId] = useState<number | null>(null);
   const currentUser = useSelector(selectCurrentUser);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly",
@@ -241,10 +246,16 @@ const SubscriptionManagement = ({
             return (
               <div
                 key={plan.id}
-                onClick={() => {
-                  if (!isActive) {
-                    router.push("/pricing");
-                  }
+                onClick={async () => {
+                  if (isActive) return;
+                  await handlePlanSelection({
+                    plan,
+                    token,
+                    router,
+                    processPayment,
+                    setLoadingPlanId,
+                    billing: plan.billing_cycle || "monthly",
+                  });
                 }}
                 className={cn(
                   "rounded-[16px] p-6 border transition-all duration-300",

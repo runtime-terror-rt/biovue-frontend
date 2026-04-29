@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { selectCurrentUser, updateUser } from "@/redux/features/slice/authSlice";
+import { selectCurrentUser, selectCurrentToken, updateUser } from "@/redux/features/slice/authSlice";
 
 import {
   useGetSubscriptionPlansQuery,
   useGetPaymentSummaryQuery,
   useCancelSubscriptionMutation,
+  useProcessPaymentMutation,
 } from "@/redux/features/api/paymentApi";
 import Swal from "sweetalert2";
 import {
@@ -1222,6 +1223,9 @@ const SubscriptionView = ({
   router: any;
 }) => {
   const dispatch = useDispatch();
+  const token = useSelector(selectCurrentToken);
+  const [processPayment] = useProcessPaymentMutation();
+  const [loadingPlanId, setLoadingPlanId] = useState<number | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly",
   );
@@ -1447,9 +1451,62 @@ const SubscriptionView = ({
             return (
               <div
                 key={plan.id}
-                onClick={() => {
-                  if (!isActive) {
-                    router.push("/pricing");
+                onClick={async () => {
+                  if (isActive) return;
+
+                  // Enterprise or custom / zero-priced professional -> open contact mailto
+                  if (
+                    plan.name?.toLowerCase().includes("enterprise") ||
+                    (plan.plan_type === "professional" &&
+                      (plan.price === "0.00" || plan.price === 0))
+                  ) {
+                    window.location.href = `mailto:BioVueSupport@gmail.com?subject=Plan%20Inquiry%20-%20${encodeURIComponent(
+                      plan.name || "",
+                    )}`;
+                    return;
+                  }
+
+                  // Free trial / zero price handling
+                  if (
+                    plan.price === "0.00" ||
+                    plan.price === 0 ||
+                    (plan.name || "").toLowerCase().includes("free trial")
+                  ) {
+                    if (token) {
+                      router.push("/user-dashboard");
+                    } else {
+                      router.push("/login");
+                    }
+                    return;
+                  }
+
+                  // If not authenticated (unlikely on settings), redirect to register with plan
+                  if (!token) {
+                    router.push(`/register?plan_id=${plan.id}`);
+                    return;
+                  }
+
+                  // Otherwise, initiate payment and redirect to checkout (same as pricing page)
+                  try {
+                    setLoadingPlanId(plan.id);
+                    const response = await processPayment({
+                      plan_id: plan.id,
+                      billing: plan.billing_cycle || "monthly",
+                    }).unwrap();
+
+                    if (response.success && response.checkout_url) {
+                      window.location.href = response.checkout_url;
+                    } else {
+                      toast.error("Failed to initiate payment. Please try again.");
+                    }
+                  } catch (error: any) {
+                    console.error("Payment error:", error);
+                    toast.error(
+                      error?.data?.message ||
+                        "An error occurred while processing payment.",
+                    );
+                  } finally {
+                    setLoadingPlanId(null);
                   }
                 }}
                 className={cn(
