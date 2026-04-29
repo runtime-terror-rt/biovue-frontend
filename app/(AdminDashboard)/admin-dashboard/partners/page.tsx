@@ -331,7 +331,7 @@ export default function PartnersManagementPage() {
                   </div>
                   <div className="text-xs text-gray-500">
                     <p className="font-medium text-gray-700">Upload Image</p>
-                    <p>PNG, JPG up to 2MB</p>
+                    <p>PNG, JPG</p>
                   </div>
                 </div>
               </div>
