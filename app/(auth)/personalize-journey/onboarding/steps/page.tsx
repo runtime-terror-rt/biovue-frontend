@@ -1327,7 +1327,7 @@ import {
   CreditCard,
   Lock,
 } from "lucide-react";
-import { isInvitedAndAccepted } from "@/lib/inviteHelpers";
+import { isInvitedAndAccepted, shouldBypassPayment } from "@/lib/inviteHelpers";
 
 const OnboardingStepsPage = () => {
   const [step, setStep] = useState(1);
@@ -1506,8 +1506,8 @@ const OnboardingStepsPage = () => {
         }
 
         // Check if user is invited and accepted - if so, bypass payment
-        const bypassPayment = isInvitedAndAccepted(user);
-
+        // const bypassPayment = isInvitedAndAccepted(user);
+        const bypassPayment = shouldBypassPayment(user);
         // If a plan is selected, process payment (unless user is invited+accepted)
         if (formData.plan_id && !bypassPayment) {
           try {
@@ -1555,11 +1555,12 @@ const OnboardingStepsPage = () => {
 
   const nextStep = () => {
     if (step < totalSteps) {
-      // Skip Step 6 (plan selection) for invited+accepted users
-      const bypassPayment = isInvitedAndAccepted(user);
+      // Skip Step 6 (plan selection) for invited+accepted non-professional users
+      // Professionals ALWAYS see Step 6 and payment
+      const bypassStep6 = shouldBypassPayment(user);
       const nextStepNum = step + 1;
 
-      if (bypassPayment && nextStepNum === 6) {
+      if (bypassStep6 && nextStepNum === 6) {
         // Jump from Step 5 directly to submit (treat as Step 6 complete)
         handleSubmit();
       } else {
@@ -2321,7 +2322,8 @@ const OnboardingStepsPage = () => {
             </div>
           )}{" "}
           {/* {step === 6 && ( */}
-          {step === 6 && !isInvitedAndAccepted(user) && (
+          {/* {step === 6 && !isInvitedAndAccepted(user) && ( */}
+          {step === 6 && !shouldBypassPayment(user) && (
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-[rgba(58,134,255,0.25)] shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-[#E8F1FF] rounded-xl flex items-center justify-center text-[#3A86FF]">
