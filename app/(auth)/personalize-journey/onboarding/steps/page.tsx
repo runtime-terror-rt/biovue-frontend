@@ -43,7 +43,6 @@
 //   Lock,
 // } from "lucide-react";
 
-
 // const OnboardingStepsPage = () => {
 //   const [step, setStep] = useState(1);
 //   const [totalSteps] = useState(6);
@@ -1283,7 +1282,6 @@
 
 // export default OnboardingStepsPage;
 
-
 "use client";
 
 import React, { useState } from "react";
@@ -1330,7 +1328,6 @@ import {
   Lock,
 } from "lucide-react";
 import { isInvitedAndAccepted } from "@/lib/inviteHelpers";
-
 
 const OnboardingStepsPage = () => {
   const [step, setStep] = useState(1);
@@ -1552,8 +1549,23 @@ const OnboardingStepsPage = () => {
     }
   };
 
+  // const nextStep = () => {
+  //   if (step < totalSteps) setStep(step + 1);
+  // };
+
   const nextStep = () => {
-    if (step < totalSteps) setStep(step + 1);
+    if (step < totalSteps) {
+      // Skip Step 6 (plan selection) for invited+accepted users
+      const bypassPayment = isInvitedAndAccepted(user);
+      const nextStepNum = step + 1;
+
+      if (bypassPayment && nextStepNum === 6) {
+        // Jump from Step 5 directly to submit (treat as Step 6 complete)
+        handleSubmit();
+      } else {
+        setStep(nextStepNum);
+      }
+    }
   };
 
   const prevStep = () => {
@@ -1819,12 +1831,18 @@ const OnboardingStepsPage = () => {
                         setFormData({ ...formData, weight: e.target.value })
                       }
                       placeholder={
-                        unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"
+                        unitSystem === "metric"
+                          ? "metric (kg)"
+                          : "imperial (lbs)"
                       }
                       className="flex-1 bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 text-gray-700 font-medium"
                     />
                     <select className="w-32 bg-[#F8FAFB] border border-gray-100 rounded-xl py-4 px-5 text-gray-500 font-medium">
-                      <option>{unitSystem === "metric" ? "metric (kg)" : "imperial (lbs)"}</option>
+                      <option>
+                        {unitSystem === "metric"
+                          ? "metric (kg)"
+                          : "imperial (lbs)"}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -2302,7 +2320,8 @@ const OnboardingStepsPage = () => {
               </div>
             </div>
           )}{" "}
-          {step === 6 && (
+          {/* {step === 6 && ( */}
+          {step === 6 && !isInvitedAndAccepted(user) && (
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-[rgba(58,134,255,0.25)] shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-[#E8F1FF] rounded-xl flex items-center justify-center text-[#3A86FF]">
@@ -2390,7 +2409,9 @@ const OnboardingStepsPage = () => {
               <div className="flex justify-center flex-col md:flex-row items-center">
                 <button
                   onClick={handleSubmit}
-                  disabled={!formData.plan_id || isSubmitting || isProcessingPayment}
+                  disabled={
+                    !formData.plan_id || isSubmitting || isProcessingPayment
+                  }
                   className="w-full md:w-auto min-w-[320px] bg-[#0FA4A9] text-white py-4 px-10 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all shadow-lg shadow-[#0FA4A9]/20 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isSubmitting || isProcessingPayment ? (
@@ -2424,8 +2445,8 @@ const OnboardingStepsPage = () => {
               </p>
 
               <div className="max-w-xl mx-auto w-full flex flex-col gap-6"> */}
-                {/* Credit Card Preview Card */}
-                {/* <div className="relative h-48 w-full rounded-2xl bg-gradient-to-br from-[#1F2D2E] to-[#3A86FF] p-6 text-white shadow-xl overflow-hidden group">
+          {/* Credit Card Preview Card */}
+          {/* <div className="relative h-48 w-full rounded-2xl bg-gradient-to-br from-[#1F2D2E] to-[#3A86FF] p-6 text-white shadow-xl overflow-hidden group">
                   <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                     <Crown size={120} />
                   </div>
@@ -2461,8 +2482,8 @@ const OnboardingStepsPage = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> */}
-                  {/* Card Name */}
-                  {/* <div className="md:col-span-2 space-y-2">
+          {/* Card Name */}
+          {/* <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
                       Cardholder Name
                     </label>
@@ -2479,9 +2500,8 @@ const OnboardingStepsPage = () => {
                       }
                     />
                   </div> */}
-
-                  {/* Card Number */}
-                  {/* <div className="md:col-span-2 space-y-2">
+          {/* Card Number */}
+          {/* <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
                       Card Number
                     </label>
@@ -2499,9 +2519,8 @@ const OnboardingStepsPage = () => {
                       }
                     />
                   </div> */}
-
-                  {/* Expiry */}
-                  {/* <div className="space-y-2">
+          {/* Expiry */}
+          {/* <div className="space-y-2">
                     <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
                       Expiry Date
                     </label>
@@ -2519,9 +2538,8 @@ const OnboardingStepsPage = () => {
                       }}
                     />
                   </div> */}
-
-                  {/* CVC */}
-                  {/* <div className="space-y-2">
+          {/* CVC */}
+          {/* <div className="space-y-2">
                     <label className="text-xs font-bold text-[#5F6F73] uppercase tracking-wider ml-1">
                       CVC / CVV
                     </label>
