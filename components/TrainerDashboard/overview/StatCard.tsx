@@ -49,7 +49,7 @@ export default function StatCards({ stats, isLoading }: StatCardsProps) {
       router.push("/trainer-dashboard/clients-need-attention");
     }
     if (key === "active_clients") {
-      router.push("/trainer-dashboard/active-clients");
+      router.push("/trainer-dashboard/clients");
     }
     if (key === "pending_messages") {
       router.push("/trainer-dashboard/messages");

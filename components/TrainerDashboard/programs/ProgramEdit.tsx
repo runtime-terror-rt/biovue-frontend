@@ -231,20 +231,12 @@ export default function ProgramEdit({ program }: ProgramEditProps) {
                 >
                   Program Name
                 </Label>
-                <select
+                <Input
                   value={formData.name}
-                  onChange={(e) => handleSelectChange("name", e.target.value)}
-                  className="mt-2 w-full h-11 rounded-xl border border-gray-200 text-gray-500 text-sm px-3"
-                >
-                  <option value="">
-                    {fetchingNames ? "Loading..." : "Select program name"}
-                  </option>
-                  {programNames.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(e) => handleInputChange(e)}
+                  name="name"
+                  className="mt-2"
+                />
               </div>
 
               {/* Duration + Primary Goal */}

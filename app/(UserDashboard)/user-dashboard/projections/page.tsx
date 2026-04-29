@@ -30,14 +30,14 @@ import { useGetLatestProjectionQuery } from "@/redux/features/api/userDashboard/
 import { useSaveCurrentProjectionMutation } from "@/redux/features/api/userDashboard/Projection/SaveCurrentProjection";
 import { useSaveFutureGoalMutation } from "@/redux/features/api/userDashboard/Projection/SaveFutureGoal";
 import { useGetFutureGoalProjectionQuery } from "@/redux/features/api/userDashboard/Projection/GetFutureGoal";
-import { 
+import {
   useCombinedProjectionMutation,
   CombinedProjectionResponse,
-  IndividualProjection 
+  IndividualProjection,
 } from "@/redux/features/api/userDashboard/Projection/CombinedProjection";
-import { 
-  useUpdateAiCurrentInsightsMutation, 
-  useUpdateAiFutureInsightsMutation 
+import {
+  useUpdateAiCurrentInsightsMutation,
+  useUpdateAiFutureInsightsMutation,
 } from "@/redux/features/api/userDashboard/Projection/AIInsightsAPI";
 import { useRouter } from "next/navigation";
 import ProjectionGallery from "@/components/dashboard/ProjectionGallery";
@@ -56,17 +56,16 @@ const ProjectionsPage = () => {
   const [combinedProjectionData, setCombinedProjectionData] =
     useState<CombinedProjectionResponse | null>(null);
 
-
-  
-
   const user = useAppSelector(selectCurrentUser);
   const router = useRouter();
 
   const [combinedProjection, { isLoading: isCombinedLoading }] =
     useCombinedProjectionMutation();
 
-  const [updateCurrentInsights, { isLoading: isUpdatingCurrent }] = useUpdateAiCurrentInsightsMutation();
-  const [updateFutureInsights, { isLoading: isUpdatingFuture }] = useUpdateAiFutureInsightsMutation();
+  const [updateCurrentInsights, { isLoading: isUpdatingCurrent }] =
+    useUpdateAiCurrentInsightsMutation();
+  const [updateFutureInsights, { isLoading: isUpdatingFuture }] =
+    useUpdateAiFutureInsightsMutation();
 
   const [saveCurrentProjection, { isLoading: isSaveLoading }] =
     useSaveCurrentProjectionMutation();
@@ -146,16 +145,19 @@ const ProjectionsPage = () => {
       router.push(path);
       return;
     }
-    
+
     try {
       await Promise.all([
         updateCurrentInsights({ user_id: user.id.toString() }).unwrap(),
-        updateFutureInsights({ user_id: user.id.toString(), timeframe: timeHorizon }).unwrap()
+        updateFutureInsights({
+          user_id: user.id.toString(),
+          timeframe: timeHorizon,
+        }).unwrap(),
       ]);
     } catch (e) {
       console.error("Failed to update insights prior to navigation", e);
     }
-    
+
     router.push(path);
   };
 
@@ -247,7 +249,6 @@ const ProjectionsPage = () => {
             )}
           </div>
         </div>
-
 
         {/* Render Settings */}
         <div className="bg-white rounded-xl p-6 border border-[#3A86FF]/25 shadow-sm space-y-6">
@@ -407,20 +408,16 @@ const ProjectionsPage = () => {
             Note: For more accurate projections, please upload a photo in a swim
             suit.
           </p>
+          <span className="text-[10px] text-gray-400 mt-2 leading-relaxed bg-[#F8FAFF] py-2 px-4 rounded-lg border border-gray-100">Supported formats: JPG, JPEG, PNG, WEBP</span>
+          <span className="text-[10px] text-gray-400 mt-2 leading-relaxed bg-[#F8FAFF] py-2 px-4 rounded-lg border border-gray-100">Maximum file size: 5 MB</span>
         </div>
 
         <button
           onClick={handleGenerate}
-          disabled={
-            isCombinedLoading ||
-            isSaveLoading ||
-            isSaveFutureLoading
-          }
+          disabled={isCombinedLoading || isSaveLoading || isSaveFutureLoading}
           className="w-full bg-[#0FA4A9] text-white py-5 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-[#0d8d91] transition-all group cursor-pointer shadow-lg shadow-[#0FA4A9]/20 disabled:opacity-50"
         >
-          {isCombinedLoading ||
-          isSaveLoading ||
-          isSaveFutureLoading
+          {isCombinedLoading || isSaveLoading || isSaveFutureLoading
             ? "Generating..."
             : "Generate Projection"}
           <ArrowRight
@@ -460,9 +457,14 @@ const ProjectionsPage = () => {
 
     const data = combinedProjectionData.data;
 
-    const renderProjectionCard = (projection: IndividualProjection, isFuture: boolean) => {
-      const expectedChanges: string[] = Array.isArray(projection?.expected_changes) 
-        ? projection.expected_changes 
+    const renderProjectionCard = (
+      projection: IndividualProjection,
+      isFuture: boolean,
+    ) => {
+      const expectedChanges: string[] = Array.isArray(
+        projection?.expected_changes,
+      )
+        ? projection.expected_changes
         : [];
 
       let goalTitle = `Achieving your goal in ${data.timeframe}`;
@@ -470,7 +472,9 @@ const ProjectionsPage = () => {
         goalTitle = `Achieving your goal: Reach muscular physique in ${data.timeframe}`; // Fallback
         if (user?.profile?.weight && projection?.est_weight) {
           const currentWeight = parseFloat(user.profile.weight);
-          const futureWeightStr = projection.est_weight.toLowerCase().replace(/[^0-9.]/g, '');
+          const futureWeightStr = projection.est_weight
+            .toLowerCase()
+            .replace(/[^0-9.]/g, "");
           const futureWeight = parseFloat(futureWeightStr);
           if (!isNaN(currentWeight) && !isNaN(futureWeight)) {
             const diff = currentWeight - futureWeight;
@@ -489,13 +493,18 @@ const ProjectionsPage = () => {
         <div className="bg-white rounded-[24px] border border-[#3A86FF]/10 shadow-sm overflow-hidden flex flex-col">
           <div className="p-8 text-center space-y-6 flex-1">
             <h3 className="text-[#8B5CF6] font-bold text-lg min-h-[56px] flex items-center justify-center">
-              {(projection as any).label || (isFuture ? goalTitle : `If you continue your current lifestyle without changes for ${data.timeframe}`)}
+              {(projection as any).label ||
+                (isFuture
+                  ? goalTitle
+                  : `If you continue your current lifestyle without changes for ${data.timeframe}`)}
             </h3>
             <div className="w-full rounded-2xl overflow-hidden bg-gray-50 shadow-inner border border-gray-100">
-              {((projection as any).image || projection.projection_url) ? (
+              {(projection as any).image || projection.projection_url ? (
                 <img
                   key={(projection as any).image || projection.projection_url}
-                  src={getFullProjectionUrl((projection as any).image || projection.projection_url)}
+                  src={getFullProjectionUrl(
+                    (projection as any).image || projection.projection_url,
+                  )}
                   alt="Projection Result"
                   className="w-full h-auto object-contain"
                 />
@@ -601,12 +610,16 @@ const ProjectionsPage = () => {
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-          <button 
+          <button
             disabled={isUpdatingCurrent || isUpdatingFuture}
-            onClick={() => handleNavigateWithInsights("/user-dashboard/insights")}
+            onClick={() =>
+              handleNavigateWithInsights("/user-dashboard/insights")
+            }
             className="bg-[#0FA4A9] text-white px-8 py-4 rounded-xl font-bold flex items-center gap-2 hover:bg-[#0d8d91] transition-all cursor-pointer w-full md:w-auto shadow-lg shadow-[#0FA4A9]/20 disabled:opacity-50"
           >
-            {(isUpdatingCurrent || isUpdatingFuture) ? "Generating Insights..." : "View insights based on this projection"}
+            {isUpdatingCurrent || isUpdatingFuture
+              ? "Generating Insights..."
+              : "View insights based on this projection"}
             <ArrowRight size={20} />
           </button>
           <button
@@ -615,7 +628,9 @@ const ProjectionsPage = () => {
             className="bg-white border border-gray-200 text-[#041228] px-8 py-4 rounded-xl font-bold flex items-center gap-2 hover:bg-gray-50 transition-all cursor-pointer w-full md:w-auto disabled:opacity-50"
           >
             <ArrowLeft size={20} />
-            {(isUpdatingCurrent || isUpdatingFuture) ? "Saving..." : "Return to Dashboard"}
+            {isUpdatingCurrent || isUpdatingFuture
+              ? "Saving..."
+              : "Return to Dashboard"}
           </button>
         </div>
       </div>
@@ -643,12 +658,12 @@ const ProjectionsPage = () => {
               <span className="font-bold uppercase tracking-wider">
                 Disclaimer:
               </span>{" "}
-              Information and projections provided by BioVue Digital Wellness are
-              for informational and illustrative purposes only, reflect relative
-              changes rather than exact outcomes, and do not constitute medical
-              advice. BioVue Digital Wellness is not liable for decisions or
-              outcomes based on this information; users should consult a qualified
-              medical professional for medical guidance.
+              Information and projections provided by BioVue Digital Wellness
+              are for informational and illustrative purposes only, reflect
+              relative changes rather than exact outcomes, and do not constitute
+              medical advice. BioVue Digital Wellness is not liable for
+              decisions or outcomes based on this information; users should
+              consult a qualified medical professional for medical guidance.
             </p>
           </div>
         )}
