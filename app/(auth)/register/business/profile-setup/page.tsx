@@ -38,10 +38,10 @@ const ProfileSetup = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image size should be less than 2MB");
-        return;
-      }
+      // if (file.size > 2 * 1024 * 1024) {
+      //   toast.error("Image size should be less than 2MB");
+      //   return;
+      // }
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -165,7 +165,7 @@ const ProfileSetup = () => {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[#1F2D2E] font-medium text-[15px]">Upload a new profile image</span>
-                  <span className="text-[#98A2B3] text-xs font-semibold mt-1">JPG, PNG (Max 2MB)</span>
+                  <span className="text-[#98A2B3] text-xs font-semibold mt-1">JPG, PNG</span>
                 </div>
               </div>
             </div>

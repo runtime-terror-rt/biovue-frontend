@@ -825,7 +825,7 @@ const ProfileEditView = ({
         <div className="text-center">
           <h3 className="text-lg font-bold text-[#1F2D2E]">Profile Picture</h3>
           <p className="text-xs text-[#5F6F73] font-medium mt-1">
-            PNG, JPG or JPEG. Max 2MB.
+            PNG, JPG or JPEG.
           </p>
         </div>
       </div>
