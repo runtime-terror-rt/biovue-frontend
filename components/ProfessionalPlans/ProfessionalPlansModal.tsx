@@ -1,17 +1,30 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { mockPlans } from "@/components/AdminDashboard/subscription-plans/MockData";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { selectCurrentToken } from "@/redux/features/slice/authSlice";
+import { useProcessPaymentMutation } from "@/redux/features/api/paymentApi";
+import handlePlanSelection from "@/lib/planSelection";
 
 export default function ProfessionalPlansModal({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
+  const token = useSelector(selectCurrentToken);
+  const [processPayment] = useProcessPaymentMutation();
+  const [loadingPlanId, setLoadingPlanId] = useState<number | null>(null);
 
   const plans = mockPlans.filter((p) => p.type === "Professional");
 
-  const handleSelect = (planId: string) => {
-    // Route to the public pricing/checkout flow which handles payments.
-    router.push(`/pricing?plan_id=${planId}&type=professional`);
+  const handleSelect = async (plan: any) => {
+    await handlePlanSelection({
+      plan,
+      token,
+      router,
+      processPayment,
+      setLoadingPlanId,
+      billing: plan.billingCycle?.toLowerCase() === "annual" ? "annual" : "monthly",
+    });
   };
 
   return (
@@ -45,7 +58,7 @@ export default function ProfessionalPlansModal({ onClose }: { onClose?: () => vo
               </ul>
               <div className="flex justify-end">
                 <button
-                  onClick={() => handleSelect(plan.id)}
+                  onClick={() => handleSelect(plan)}
                   className="bg-[#0FA4A9] text-white px-4 py-2 rounded-lg text-sm"
                 >
                   Select

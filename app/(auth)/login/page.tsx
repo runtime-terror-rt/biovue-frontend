@@ -215,6 +215,14 @@ const LoginPage = () => {
         );
 
         const userData = res?.data?.user;
+        const isInvitedAccepted = (() => {
+          const invited = userData?.is_invited;
+          const invitationStatus = userData?.invitation_status;
+          const invitedBool =
+            invited === true || invited === "true" || invited === 1 || invited === "1";
+          const status = (invitationStatus || "").toString().toLowerCase();
+          return invitedBool && status === "accepted";
+        })();
         const userRole = userData?.role;
         const userType = userData?.user_type;
         const professionType = userData?.profession_type;
@@ -232,28 +240,31 @@ const LoginPage = () => {
         ) {
           const userId = userData?.id || userData?.user_id;
 
-          if (professionType === "trainer_coach") {
+            if (professionType === "trainer_coach") {
             updateTrainerUserRecommendations({ trainer_id: userId });
             if (isProfileCompleted === "Your profile is complete.") {
-              // If no plan, show plans modal before letting them continue
-              if (!userData?.plan_id) router.push("/trainer-dashboard?showPlans=1");
-              else router.push("/trainer-dashboard/overview");
+                // If no plan, show plans modal before letting them continue
+                if (!userData?.plan_id && !isInvitedAccepted)
+                  router.push("/trainer-dashboard?showPlans=1");
+                else router.push("/trainer-dashboard/overview");
             } else {
               router.push("/trainer-profile");
             }
           } else if (professionType === "supplement_supplier") {
             updateSupplierUserRecommendations({ supplier_id: userId });
             if (isProfileCompleted === "Your profile is complete.") {
-              if (!userData?.plan_id) router.push("/supplier-dashboard?showPlans=1");
-              else router.push("/supplier-dashboard");
+                if (!userData?.plan_id && !isInvitedAccepted)
+                  router.push("/supplier-dashboard?showPlans=1");
+                else router.push("/supplier-dashboard");
             } else {
               router.push("/register/business/profile-setup");
             }
           } else if (professionType === "nutritionist") {
             updateNutritionistUserRecommendations({ nutritionist_id: userId });
             // Nutritionists should also choose a professional plan before using the dashboard
-            if (!userData?.plan_id) router.push("/nutritionist-dashboard?showPlans=1");
-            else router.push("/nutritionist-dashboard/overview");
+                if (!userData?.plan_id && !isInvitedAccepted)
+                  router.push("/nutritionist-dashboard?showPlans=1");
+                else router.push("/nutritionist-dashboard/overview");
           } else {
             router.push("/personalize-journey/onboarding");
           }
