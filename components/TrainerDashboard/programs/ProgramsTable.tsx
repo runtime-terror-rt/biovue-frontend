@@ -58,9 +58,7 @@ export default function ProgramsTable({ programs }: ProgramsTableProps) {
             <th className="px-6 py-4 text-left text-base font-semibold text-[#111827] uppercase">
               Intensity
             </th>
-            <th className="px-6 py-4 text-left text-base font-semibold text-[#111827] uppercase">
-              Clients
-            </th>
+            
 
             <th className="px-6 py-4 text-left text-base font-semibold text-[#111827] uppercase">
               Updated
@@ -92,9 +90,7 @@ export default function ProgramsTable({ programs }: ProgramsTableProps) {
                   {program.target_intensity}
                 </span>
               </td>
-              <td className="px-6 py-4 text-sm font-medium text-[#111827]">
-                0 CLIENTS
-              </td>
+             
               <td className="px-6 py-4 text-sm font-medium text-[#111827]">
                 {new Date(program.updated_at).toLocaleDateString()}
               </td>
