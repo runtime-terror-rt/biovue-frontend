@@ -82,7 +82,8 @@ const ProfileSetup = () => {
       const res = await createUpdateProfile(data).unwrap();
       if (res?.success) {
         toast.success(res?.message || "Profile updated successfully!");
-        router.push("/supplier-dashboard");
+        // After business profile setup, go to plan selection as final signup step
+        router.push("/register/business/choose-plan");
       }
     } catch (err: any) {
       toast.error(err?.data?.message || "Failed to update profile. Please try again.");
@@ -90,7 +91,7 @@ const ProfileSetup = () => {
   };
 
   return (
-    <div className="flex flex-col items-center w-full max-w-[800px] mx-auto py-4 px-4">
+    <div className="flex flex-col items-center w-full max-w-200 mx-auto py-4 px-4">
       {/* Logo at the top */}
       <div className="mb-6">
         <Image

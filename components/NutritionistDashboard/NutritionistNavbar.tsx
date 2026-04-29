@@ -2,6 +2,8 @@
 
 import NotificationBell from "../dashboard/NotificationBell";
 import ProfileDropdown from "../dashboard/ProfileDropdown";
+import ProfessionalPlansModal from "@/components/ProfessionalPlans/ProfessionalPlansModal";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Crown } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -11,6 +13,8 @@ import ProjectionLimitIndicator from "../dashboard/ProjectionLimitIndicator";
 export default function NutritionistNavbar() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const searchParams = useSearchParams();
+  const showPlans = !!searchParams?.get("showPlans");
 
   useEffect(() => {
     setMounted(true);
@@ -57,6 +61,7 @@ export default function NutritionistNavbar() {
           </button>
         </Link>
       </div>
+      {showPlans && <ProfessionalPlansModal onClose={() => window.history.replaceState({}, "", window.location.pathname)} />}
     </header>
   );
 }

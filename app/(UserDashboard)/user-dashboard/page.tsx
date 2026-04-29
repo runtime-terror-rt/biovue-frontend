@@ -68,6 +68,8 @@ const UserDashboard = () => {
   const rawData = healthReport?.data;
   const summary = rawData?.summary;
   const healthOverview = rawData?.health_overview;
+  const weightCurrent = healthOverview?.weight?.current;
+  const nutrition = healthOverview?.nutrition;
   const chartData = chartResponse?.charts;
   const dynamicInsights = (insightsData?.insights || insightsData?.data) || [];
 
@@ -153,7 +155,7 @@ const UserDashboard = () => {
               </span>
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-bold text-[#1F2D2E]">
-                  {summary?.days_active || 0}
+                  {summary?.logs_summary?.activity_days || 0}
                 </span>
               </div>
               <span className="text-[#2DD4BF] text-[10px] font-medium flex items-center gap-1 mt-1">
@@ -204,8 +206,9 @@ const UserDashboard = () => {
           {[
             {
               label: "Current Weight",
-              value: healthOverview?.weight?.current || "N/A",
-              unit: summary?.unit_system === "imperial" ? "lbs" : "kg",
+              // backend returns weight as a string including unit (e.g. "160 lbs") — show as-is
+              value: weightCurrent || "N/A",
+              unit: "",
               status: healthOverview?.weight?.status || "N/A",
               desc: `Target: ${healthOverview?.weight?.coach_target || "N/A"}`,
               color: "text-[#3A86FF]",
@@ -220,10 +223,18 @@ const UserDashboard = () => {
             },
             {
               label: "Nutrition",
-              value: healthOverview?.nutrition?.protein_servings || 0,
-              unit: "protein serv.",
-              status: healthOverview?.nutrition?.last_meal_balance || "N/A",
-              desc: healthOverview?.nutrition?.note || "N/A",
+              // show total calories as primary value and include breakdown in description
+              value: (nutrition?.total_calories) ?? 0,
+              unit: "kcal",
+              status: nutrition?.last_meal_balance || "N/A",
+              desc: (() => {
+                const n = nutrition;
+                if (!n) return "N/A";
+                const p = typeof n.total_protein === "number" ? `${n.total_protein.toFixed(2)}g` : "0g";
+                const c = typeof n.total_carbs === "number" ? `${n.total_carbs.toFixed(2)}g` : "0g";
+                const f = typeof n.total_fat === "number" ? `${n.total_fat.toFixed(2)}g` : "0g";
+                return `Protein: ${p} • Carbs: ${c} • Fat: ${f}`;
+              })(),
               color: "text-[#2DD4BF]",
             },
             {
@@ -355,7 +366,7 @@ const UserDashboard = () => {
               <div className="col-span-2 flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-[#0FA4A9]" />
               </div>
-            ) : dynamicInsights.slice(0, 2).map((insight: any, i: number) => {
+            ) : dynamicInsights.slice(0, 2).map((insight: { category?: string; priority?: string; insight?: string; why_this_matters?: string }, i: number) => {
               const cat = insight.category?.toLowerCase() || "";
               const categoryIcon = cat.includes("nutrition") ? <Zap size={20} className="text-[#1F2D2E]" />
                 : cat.includes("cardio") || cat.includes("heart") ? <HeartPulse size={20} className="text-[#1F2D2E]" />
