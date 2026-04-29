@@ -235,20 +235,25 @@ const LoginPage = () => {
           if (professionType === "trainer_coach") {
             updateTrainerUserRecommendations({ trainer_id: userId });
             if (isProfileCompleted === "Your profile is complete.") {
-              router.push("/trainer-dashboard/overview");
+              // If no plan, show plans modal before letting them continue
+              if (!userData?.plan_id) router.push("/trainer-dashboard?showPlans=1");
+              else router.push("/trainer-dashboard/overview");
             } else {
               router.push("/trainer-profile");
             }
           } else if (professionType === "supplement_supplier") {
             updateSupplierUserRecommendations({ supplier_id: userId });
             if (isProfileCompleted === "Your profile is complete.") {
-              router.push("/supplier-dashboard");
+              if (!userData?.plan_id) router.push("/supplier-dashboard?showPlans=1");
+              else router.push("/supplier-dashboard");
             } else {
               router.push("/register/business/profile-setup");
             }
           } else if (professionType === "nutritionist") {
             updateNutritionistUserRecommendations({ nutritionist_id: userId });
-            router.push("/nutritionist-dashboard/overview");
+            // Nutritionists should also choose a professional plan before using the dashboard
+            if (!userData?.plan_id) router.push("/nutritionist-dashboard?showPlans=1");
+            else router.push("/nutritionist-dashboard/overview");
           } else {
             router.push("/personalize-journey/onboarding");
           }

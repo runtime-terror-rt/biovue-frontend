@@ -23,6 +23,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import ProfileDropdown from "@/components/dashboard/ProfileDropdown";
+import ProfessionalPlansModal from "@/components/ProfessionalPlans/ProfessionalPlansModal";
+import { useSearchParams } from "next/navigation";
 import ProjectionLimitIndicator from "@/components/dashboard/ProjectionLimitIndicator";
 import { useLogoutMutation } from "@/redux/features/api/auth/authApi";
 import { logout } from "@/redux/features/slice/authSlice";
@@ -57,6 +59,9 @@ export default function SupplierDashboardLayout({
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  const searchParams = useSearchParams();
+  const showPlans = !!searchParams?.get("showPlans");
 
   const getPageTitle = () => {
     if (!mounted) return "Dashboard";
@@ -182,6 +187,13 @@ export default function SupplierDashboardLayout({
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-8">{children}</main>
+        {showPlans && (
+          <ProfessionalPlansModal onClose={() => {
+            // remove query param by pushing same path without param
+            const path = window.location.pathname;
+            window.history.replaceState({}, "", path);
+          }} />
+        )}
       </div>
     </div>
     </ProtectedRoute>

@@ -2,9 +2,11 @@ import { baseApi } from "../../baseApi";
 
 export interface Summary {
   wellness_score: number;
-  days_active: string;
-  data_logged_entries: number;
-  unit_system: "metric" | "imperial";
+  logs_summary?: {
+    activity_days?: string;
+  };
+  data_logged_entries?: number;
+  unit_system?: "metric" | "imperial";
 }
 
 export interface Weight {
@@ -20,9 +22,15 @@ export interface BMI {
 }
 
 export interface Nutrition {
-  last_meal_balance: string;
-  protein_servings: number;
-  note: string;
+  // New shape: totals provided by backend
+  total_calories?: number;
+  total_protein?: number;
+  total_carbs?: number;
+  total_fat?: number;
+  // backwards-compatible/optional fields
+  last_meal_balance?: string;
+  protein_servings?: number;
+  note?: string;
 }
 
 export interface DailySteps {
