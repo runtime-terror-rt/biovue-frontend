@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -44,11 +44,17 @@ const MENU_ITEMS = [
   { icon: Settings, label: "Settings", href: "/supplier-dashboard/settings" },
 ];
 
-export default function SupplierDashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function SupplierDashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute allowedRoles={["professional"]} allowedProfessions={["supplement_supplier"]}>
+      <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading dashboard...</div>}>
+        <SupplierDashboardContent>{children}</SupplierDashboardContent>
+      </Suspense>
+    </ProtectedRoute>
+  );
+}
+
+function SupplierDashboardContent({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = React.useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
@@ -88,7 +94,6 @@ export default function SupplierDashboardLayout({
   };
 
   return (
-    <ProtectedRoute allowedRoles={["professional"]} allowedProfessions={["supplement_supplier"]}>
     <div className="flex h-screen bg-[#F4FBFA] overflow-hidden">
       {/* Sidebar */}
       <aside
@@ -196,6 +201,5 @@ export default function SupplierDashboardLayout({
         )}
       </div>
     </div>
-    </ProtectedRoute>
   );
 }
