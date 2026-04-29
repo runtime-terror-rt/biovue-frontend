@@ -612,10 +612,10 @@ export default function TrainerProfile() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("Image size should be less than 10MB");
-        return;
-      }
+      // if (file.size > 10 * 1024 * 1024) {
+      //   toast.error("Image size should be less than 10MB");
+      //   return;
+      // }
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
