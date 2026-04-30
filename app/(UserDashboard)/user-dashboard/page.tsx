@@ -229,7 +229,7 @@ const UserDashboard = () => {
               status: nutrition?.last_meal_balance || "N/A",
               desc: (() => {
                 const n = nutrition;
-                if (!n) return "N/A";
+                if (!n) return "Macro Nutrients";
                 const p = typeof n.total_protein === "number" ? `${n.total_protein.toFixed(2)}g` : "0g";
                 const c = typeof n.total_carbs === "number" ? `${n.total_carbs.toFixed(2)}g` : "0g";
                 const f = typeof n.total_fat === "number" ? `${n.total_fat.toFixed(2)}g` : "0g";

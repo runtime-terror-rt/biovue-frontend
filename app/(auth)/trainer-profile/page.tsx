@@ -700,7 +700,7 @@ export default function TrainerProfile() {
       const res = await createUpdateProfile(data).unwrap();
       if (res?.success) {
         toast.success(res?.message || "Profile created successfully!");
-        router.push("/trainer-dashboard?showPlans=1");
+        router.push("/register/business/choose-plan");
       }
     } catch (err: any) {
       console.error("[v0] Profile submission error:", err);

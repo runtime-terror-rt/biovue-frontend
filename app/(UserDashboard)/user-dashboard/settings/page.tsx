@@ -1538,8 +1538,7 @@ const SubscriptionView = ({
                         {plan.name}
                       </h4>
                       <div className="flex flex-col gap-1 mt-1">
-                        {plan.features
-                          .slice(0, 2)
+                        {plan.features?.slice(0, 2)
                           .map((feature: string, i: number) => (
                             <span
                               key={i}

@@ -64,7 +64,7 @@ export async function handlePlanSelection({
   // Otherwise initiate payment
   try {
     setLoadingPlanId?.(plan.id);
-    const response = await processPayment({ plan_id: plan.id, billing: billingToSend });
+    const response = await processPayment({ plan_id: plan.id, billing: billingToSend }).unwrap();
 
     if (response?.success && response?.checkout_url) {
       window.location.href = response.checkout_url;
