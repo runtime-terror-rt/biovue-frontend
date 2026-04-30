@@ -704,7 +704,7 @@ const LoginPage = () => {
             if (isProfileCompleted === "Your profile is complete.") {
                 // If no plan, show plans modal before letting them continue
                 if (!userData?.plan_id && !invitedAndAccepted)
-                  router.push("/trainer-dashboard?showPlans=1");
+                  router.push("/register/business/choose-plan");
                 else router.push("/trainer-dashboard/overview");
             } else {
               router.push("/trainer-profile");
@@ -713,7 +713,7 @@ const LoginPage = () => {
             updateSupplierUserRecommendations({ supplier_id: userId });
             if (isProfileCompleted === "Your profile is complete.") {
                 if (!userData?.plan_id && !invitedAndAccepted)
-                  router.push("/supplier-dashboard?showPlans=1");
+                  router.push("/register/business/choose-plan");
                 else router.push("/supplier-dashboard");
             } else {
               router.push("/register/business/profile-setup");
@@ -722,7 +722,7 @@ const LoginPage = () => {
             updateNutritionistUserRecommendations({ nutritionist_id: userId });
             // Nutritionists should also choose a professional plan before using the dashboard
                 if (!userData?.plan_id && !invitedAndAccepted)
-                  router.push("/nutritionist-dashboard?showPlans=1");
+                  router.push("/register/business/choose-plan");
                 else router.push("/nutritionist-dashboard/overview");
           } else {
             router.push("/personalize-journey/onboarding");

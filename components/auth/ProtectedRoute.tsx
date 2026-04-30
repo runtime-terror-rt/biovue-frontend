@@ -23,7 +23,7 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
       return;
     }
 
-    const { role, profession_type } = user;
+    const { role, profession_type, plan_id } = user;
 
     // Check if the user's role is allowed
     const isRoleAllowed = allowedRoles.includes(role);
@@ -32,6 +32,13 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
     const isProfessionAllowed = allowedProfessions 
       ? allowedProfessions.includes(profession_type ?? null)
       : true;
+
+    // FOR PROFESSIONALS: Ensure they have a plan_id before allowing access to dashboard
+    const isProfessionalUser = role === "professional" || user.user_type === "professional";
+    if (isProfessionalUser && !plan_id && isRoleAllowed && isProfessionAllowed) {
+      router.replace("/register/business/choose-plan");
+      return;
+    }
 
     if (isRoleAllowed && isProfessionAllowed) {
       setIsAuthorized(true);

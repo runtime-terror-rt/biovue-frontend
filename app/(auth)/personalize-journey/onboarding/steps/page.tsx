@@ -1053,7 +1053,7 @@
 //                         </div>
 //                       </div>
 //                       <ul className="space-y-2">
-//                         {plan.features.slice(0, 4).map((feature, i) => (
+//                         {plan.features?.slice(0, 4).map((feature, i) => (
 //                           <li
 //                             key={i}
 //                             className="flex items-start gap-2 text-[13px] text-gray-500"
@@ -2372,7 +2372,7 @@ const OnboardingStepsPage = () => {
                         </div>
                       </div>
                       <ul className="space-y-2">
-                        {plan.features.slice(0, 4).map((feature, i) => (
+                        {plan.features?.slice(0, 4).map((feature, i) => (
                           <li
                             key={i}
                             className="flex items-start gap-2 text-[13px] text-gray-500"
