@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 
-type ProcessPaymentFn = (args: any) => Promise<any>;
+type ProcessPaymentFn = (args: any) => { unwrap: () => Promise<any> };
 
 export async function handlePlanSelection({
   plan,
