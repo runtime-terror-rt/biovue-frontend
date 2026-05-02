@@ -19,6 +19,7 @@ import { Download } from "lucide-react";
 import { downloadProductsXlsx } from "@/redux/features/api/SupplierDashboard/Product/DownloadCSV";
 import { useAppSelector } from "@/redux/store/hooks";
 import { selectCurrentToken } from "@/redux/features/slice/authSlice";
+import { useMemo } from "react";
 
 const getSafeImageSrc = (src: string | null | undefined) => {
   if (!src) return "/images/placeholder-product.png";
@@ -46,6 +47,7 @@ export default function MyProductsPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const token = useAppSelector(selectCurrentToken);
 
   const handleExport = async () => {
@@ -62,10 +64,17 @@ export default function MyProductsPage() {
     }
   };
 
-  const products = [...(data?.data ?? [])].sort(
-    (a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  );
+  const products = useMemo(() => {
+    const sorted = [...(data?.data ?? [])].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+    
+    if (statusFilter === "all") return sorted;
+    return sorted.filter(
+      (product) => product.status.toLowerCase() === statusFilter.toLowerCase()
+    );
+  }, [data, statusFilter]);
 
   const handleDelete = async (product: Product) => {
     const confirmed = confirm(
@@ -111,10 +120,13 @@ export default function MyProductsPage() {
 
         <div className="flex items-center gap-4">
           <div className="relative group min-w-35">
-            <select className="w-full bg-white border border-[#E4EFFF] rounded-xl py-3.5 px-6 appearance-none cursor-pointer text-[16px] font-normal leading-6 text-[#041228] focus:outline-none shadow-sm pr-12">
-              <option>All Status</option>
-              <option>Active</option>
-              <option>Draft</option>
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full bg-white border border-[#E4EFFF] rounded-xl py-3.5 px-6 appearance-none cursor-pointer text-[16px] font-normal leading-6 text-[#041228] focus:outline-none shadow-sm pr-12">
+              <option value="all">All Status</option>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
             </select>
             <ChevronDown
               className="absolute right-4 top-1/2 -translate-y-1/2 text-[#041228] pointer-events-none"

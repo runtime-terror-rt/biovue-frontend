@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import {
   Message,
@@ -59,13 +59,17 @@ export default function ChatArea({
       {/* Header */}
       <div className="flex items-center justify-between px-8 py-5 border-b border-[#F8FBFA]">
         <div className="flex items-center gap-4">
-          <div className="relative w-12 h-12">
-            <Image
-              src={clientAvatar || "/images/user.png"}
-              alt={clientName}
-              fill
-              className="rounded-xl object-cover border border-[#E4EFFF]"
-            />
+          <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-[#E4EFFF] bg-[#E4F0FF] flex items-center justify-center">
+            {clientAvatar ? (
+              <Image
+                src={clientAvatar}
+                alt={clientName}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <UserIcon className="w-6 h-6 text-[#3A86FF]" strokeWidth={1.5} />
+            )}
           </div>
           <div>
             <h3 className="text-[16px] font-bold text-[#041228]">
