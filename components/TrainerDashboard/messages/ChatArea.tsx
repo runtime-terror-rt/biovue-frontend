@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send} from "lucide-react";
+import { Send, User as UserIcon } from "lucide-react";
 
 import Image from "next/image";
 import {
@@ -9,6 +9,7 @@ import {
   useGetMessagesByUserIdQuery,
   useSendMessageMutation,
 } from "@/redux/features/api/userDashboard/messagesApi";
+import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 
 interface ChatAreaProps {
   clientId: string;
@@ -29,9 +30,16 @@ export default function ChatArea({
     skip: !clientId,
   });
 
+  const { data: profileData } = useGetProfileQuery(clientId, {
+    skip: !clientId,
+  });
+
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Get user image from profile API
+  const userImageUrl = profileData?.data?.profile_image || profileData?.data?.image_url || null;
 
   // Auto scroll on messages update
   useEffect(() => {
@@ -131,13 +139,17 @@ export default function ChatArea({
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
         <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10">
-            <Image
-              src={clientAvatar || "/images/user.png"}
-              alt={clientName}
-              fill
-              className="rounded-full object-cover border border-[#E5E7EB]"
-            />
+          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#E5E7EB] bg-[#F3F4F6] flex items-center justify-center">
+            {userImageUrl ? (
+              <Image
+                src={userImageUrl}
+                alt={clientName}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <UserIcon className="w-5 h-5 text-[#6B7280]" strokeWidth={1.5} />
+            )}
           </div>
           <div>
             <h3 className="text-sm font-semibold text-[#111827]">
