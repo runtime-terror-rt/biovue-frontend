@@ -315,13 +315,21 @@ export default function SupplementMatchModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="relative p-8 bg-linear-to-br from-[#0FA4A9] to-[#0D9488] text-white">
+        <div className="relative p-8 bg-linear-to-br from-[#0FA4A9] to-[#0D9488] text-white flex-shrink-0">
           <button
             onClick={onClose}
-            className="absolute right-6 top-6 text-white/80 hover:text-white transition-colors cursor-pointer"
+            className="absolute right-6 top-6 text-white/80 hover:text-white transition-colors cursor-pointer z-10 p-2 hover:bg-white/10 rounded-lg"
+            aria-label="Close modal"
           >
             <X size={24} />
           </button>
@@ -353,7 +361,7 @@ export default function SupplementMatchModal({
         </div>
 
         {/* Content */}
-        <div className="p-8">
+        <div className="p-8 flex-1 overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2 text-[#0FA4A9]">
               <Sparkles size={20} fill="currentColor" />
@@ -419,7 +427,7 @@ export default function SupplementMatchModal({
               </Button>
             )}
 
-          <div className="space-y-4 max-h-100 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-4">
             {isMatchLoading || (isMatching && !matchData?.matched_products) ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
                 <Loader2 className="w-12 h-12 text-[#0FA4A9] animate-spin" />
@@ -519,7 +527,7 @@ export default function SupplementMatchModal({
         </div>
 
         {/* Footer */}
-        <div className="p-8 pt-0 flex justify-end">
+        <div className="p-8 pt-0 flex justify-end flex-shrink-0 border-t border-[#F8FBFA]">
           <Button
             onClick={onClose}
             variant="outline"
