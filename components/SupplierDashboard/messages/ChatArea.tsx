@@ -34,6 +34,9 @@ export default function ChatArea({
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Get user image from API data
+  const userImageUrl = messagesData?.[0]?.receiver?.image_url || clientAvatar || null;
+
   // Auto scroll on messages update
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,9 +63,9 @@ export default function ChatArea({
       <div className="flex items-center justify-between px-8 py-5 border-b border-[#F8FBFA]">
         <div className="flex items-center gap-4">
           <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-[#E4EFFF] bg-[#E4F0FF] flex items-center justify-center">
-            {clientAvatar ? (
+            {userImageUrl ? (
               <Image
-                src={clientAvatar}
+                src={userImageUrl}
                 alt={clientName}
                 fill
                 className="object-cover"
