@@ -8,6 +8,7 @@ import {
   useGetMessagesByUserIdQuery,
   useSendMessageMutation,
 } from "@/redux/features/api/userDashboard/messagesApi";
+import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 
 interface ChatAreaProps {
   clientId: string;
@@ -30,12 +31,16 @@ export default function ChatArea({
     skip: !clientId,
   });
 
+  const { data: profileData } = useGetProfileQuery(clientId, {
+    skip: !clientId,
+  });
+
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Get user image from API data
-  const userImageUrl = messagesData?.[0]?.receiver?.image_url || clientAvatar || null;
+  // Get user image from profile API
+  const userImageUrl = profileData?.data?.profile_image || profileData?.data?.image_url || null;
 
   // Auto scroll on messages update
   useEffect(() => {
