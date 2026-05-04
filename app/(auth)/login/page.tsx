@@ -503,7 +503,7 @@ import { isInvitedAndAccepted } from "@/lib/inviteHelpers";
 const ROLES = [
   { value: "individual", label: "Individual User", icon: User, color: "#3A86FF" },
   { value: "trainer_coach", label: "Trainer / Coach", icon: Dumbbell, color: "#0FA4A9" },
-  { value: "nutritionist", label: "Nutritionist", icon: Apple, color: "#22C55E" },
+  // { value: "nutritionist", label: "Nutritionist", icon: Apple, color: "#22C55E" },
   { value: "supplement_supplier", label: "Supplement Supplier", icon: ShoppingBag, color: "#F59E0B" },
   { value: "admin", label: "Admin", icon: ShieldCheck, color: "#8B5CF6" },
 ];

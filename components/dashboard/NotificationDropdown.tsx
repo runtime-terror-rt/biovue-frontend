@@ -147,7 +147,7 @@ export default function NotificationDropdown({ isOpen, onClose, onMarkAllAsRead,
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-100 bg-[#F9FAFB] flex justify-center">
+            {/* <div className="p-4 border-t border-gray-100 bg-[#F9FAFB] flex justify-center">
               <Link
                 href="/user-dashboard/notifications"
                 onClick={onClose}
@@ -155,7 +155,7 @@ export default function NotificationDropdown({ isOpen, onClose, onMarkAllAsRead,
               >
                 View notification history
               </Link>
-            </div>
+            </div> */}
           </motion.div>
         </>
       )}

@@ -258,9 +258,9 @@ const IndividualRegister = () => {
             />
             <label htmlFor="terms" className="text-[15px] text-[#041228] font-bold">
               I agree to the{" "}
-              <span className="text-[#3A86FF] cursor-pointer hover:underline">
-                Terms &amp; Privacy Policy
-              </span>
+              <Link href="/privacy" className="text-[#3A86FF] cursor-pointer hover:underline">
+                Privacy & Policy
+              </Link>
             </label>
           </div>
 

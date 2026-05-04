@@ -58,10 +58,14 @@ const BusinessRegister = () => {
     e.preventDefault();
 
     try {
-      const token = await getRecaptchaToken(executeRecaptcha, "business_register", {
-        siteKey,
-        useEnterprise,
-      });
+      const token = await getRecaptchaToken(
+        executeRecaptcha,
+        "business_register",
+        {
+          siteKey,
+          useEnterprise,
+        },
+      );
 
       const payload = {
         name: formData.name,
@@ -82,11 +86,12 @@ const BusinessRegister = () => {
         toast.success(
           res?.message || "Registration successful! Please verify your OTP.",
         );
-          router.push(`/register-otp-verify?email=${formData.email}`);
+        router.push(`/register-otp-verify?email=${formData.email}`);
       }
     } catch (err: unknown) {
       const isScriptUnavailableError =
-        err instanceof Error && err.message === "RECAPTCHA_SCRIPT_NOT_AVAILABLE";
+        err instanceof Error &&
+        err.message === "RECAPTCHA_SCRIPT_NOT_AVAILABLE";
       if (isScriptUnavailableError) {
         toast.error(
           "Security service is unavailable right now. Please refresh the page or contact support.",
@@ -97,7 +102,9 @@ const BusinessRegister = () => {
       const isRecaptchaReadyError =
         err instanceof Error && err.message === "RECAPTCHA_NOT_READY";
       if (isRecaptchaReadyError) {
-        toast.error("Security verification is still loading. Please wait a few seconds and try again.");
+        toast.error(
+          "Security verification is still loading. Please wait a few seconds and try again.",
+        );
         return;
       }
 
@@ -266,10 +273,8 @@ const BusinessRegister = () => {
                 className="w-full bg-[#F5F5F5] border-none rounded-xl py-3 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-[#3A86FF]/10 text-[#98A2B3] font-medium appearance-none cursor-pointer"
               >
                 <option value="trainer_coach">trainer_coach</option>
-                <option value="nutritionist">nutritionist</option>
-                <option value="supplement_supplier">
-                  supplement_supplier
-                </option>
+                {/* <option value="nutritionist">nutritionist</option> */}
+                <option value="supplement_supplier">supplement_supplier</option>
               </select>
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#98A2B3] pointer-events-none">
                 <ChevronDown size={22} />
@@ -336,9 +341,9 @@ const BusinessRegister = () => {
               className="text-[15px] text-[#041228] font-bold"
             >
               I agree to the{" "}
-              <span className="text-[#3A86FF] cursor-pointer hover:underline">
-                Terms & Privacy Policy
-              </span>
+              <Link href="/privacy" className="text-[#3A86FF] cursor-pointer hover:underline">
+                Privacy & Policy
+              </Link>
             </label>
           </div>
 
