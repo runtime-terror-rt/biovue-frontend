@@ -10,14 +10,28 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const DEFAULT_SETTINGS = {
+  coach_messages: 1,
+  client_messages: 1,
+  goal_updates: 1,
+  check_in_reminder_alerts: 1,
+  ai_insights: 1,
+  subscription_updates: 1,
+  missed_checkin_alerts: 1,
+  program_milestone_updates: 1,
+  weekly_summary_email: 1,
+  auto_remind_missed_checkins: 1,
+  default_reminder_time: "08:00 AM",
+};
+
 export default function NotificationSettings() {
   const {
     data: notificationSettingsData,
     isLoading: isLoadingSettings,
+    refetch: refetchSettings,
   } = useGetNotificationSettingsQuery();
 
-  const [updateNotificationSettings] =
-    useUpdateNotificationSettingsMutation();
+  const [updateNotificationSettings] = useUpdateNotificationSettingsMutation();
 
   const [localSettings, setLocalSettings] = useState<any>(null);
 
@@ -25,45 +39,47 @@ export default function NotificationSettings() {
   useEffect(() => {
     if (notificationSettingsData?.data) {
       setLocalSettings(notificationSettingsData.data);
+    } else if (!isLoadingSettings && !notificationSettingsData?.data) {
+      // Fallback to defaults if no data exists yet
+      setLocalSettings(DEFAULT_SETTINGS);
     }
-  }, [notificationSettingsData]);
+  }, [notificationSettingsData, isLoadingSettings]);
 
   // ✅ Toggle handler (fixed)
   const handleToggle = async (key: string) => {
-    if (!localSettings) return;
-
-    const currentValue = localSettings[key];
+    // Use current localSettings or fallback to defaults
+    const currentSettings = localSettings || DEFAULT_SETTINGS;
+    const currentValue = currentSettings[key] ?? 0;
     const newValue = currentValue === 1 ? 0 : 1;
 
     // Optimistic update
     setLocalSettings((prev: any) => ({
-      ...prev,
+      ...(prev || DEFAULT_SETTINGS),
       [key]: newValue,
     }));
 
     try {
       console.log("Updating:", key, newValue);
 
-      // Send the entire configuration (minus potentially restrictive timestamps/IDs if handled dynamically, but typically fine to send back what we received)
-      const payload: any = { ...localSettings, [key]: newValue };
-      
-      // Clean up fields that might cause backend validation issues if it's a strict schema
-      delete payload.id;
-      delete payload.user_id;
-      delete payload.created_at;
-      delete payload.updated_at;
+      // Send only the changed key as the payload (Standard for this API)
+      const payload = { [key]: newValue };
 
       await updateNotificationSettings(payload).unwrap();
-
+      
       toast.success("Notification settings updated");
-    } catch (error) {
+      
+      // Optionally refetch to ensure everything is in sync
+      refetchSettings();
+    } catch (error: any) {
+      console.error("Failed to update settings:", error);
+      
       // Revert if failed
       setLocalSettings((prev: any) => ({
-        ...prev,
+        ...(prev || DEFAULT_SETTINGS),
         [key]: currentValue,
       }));
 
-      toast.error("Failed to update notification settings");
+      toast.error(error?.data?.message || "Failed to update notification settings");
     }
   };
 
@@ -71,7 +87,7 @@ export default function NotificationSettings() {
     {
       label: "Client Messages",
       sub: "Instant alerts when your clients write to you",
-      key: "coach_messages",
+      key: "client_messages", // Fixed: was coach_messages
     },
     {
       label: "Goal Updates",
@@ -139,7 +155,7 @@ export default function NotificationSettings() {
         {/* Items */}
         <div className="px-8 py-4 divide-y divide-[#F1F5F9]">
           {notificationItems.map((item) => {
-            const isActive = !!localSettings?.[item.key];
+            const isActive = localSettings?.[item.key] === 1;
 
             return (
               <div
@@ -186,4 +202,4 @@ export default function NotificationSettings() {
       </div>
     </SettingsSection>
   );
-}
+}

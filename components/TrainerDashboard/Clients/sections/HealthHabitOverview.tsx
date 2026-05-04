@@ -99,7 +99,7 @@ export default function HealthHabitOverview({
       title: "Nutrition Quality",
       value:
         apiMetrics.nutrition_quality !== null
-          ? `${apiMetrics.nutrition_quality}%`
+          ? `${apiMetrics.nutrition_quality}`
           : "No data",
       icon: Utensils,
     },

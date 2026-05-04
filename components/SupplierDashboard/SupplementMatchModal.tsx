@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   X,
   Sparkles,
@@ -90,6 +90,8 @@ export default function SupplementMatchModal({
 }: SupplementMatchModalProps) {
   const currentUser = useSelector(selectCurrentUser);
   const supplier_id = currentUser?.id;
+  const [sendingProductId, setSendingProductId] = useState<string | null>(null);
+  const [sendingAll, setSendingAll] = useState(false);
 
   const [
     triggerGet,
@@ -194,6 +196,8 @@ export default function SupplementMatchModal({
       return;
     }
 
+    setSendingProductId(supp.product_id);
+
     const fullMessage = prepareMessageForChatApi(
       buildSupplementMessage(supp, matchData, {
         includeOverallSummary: true,
@@ -222,6 +226,7 @@ export default function SupplementMatchModal({
       }).unwrap();
 
       toast.success(`Suggestion sent to ${user.name}`);
+      setSendingProductId(null);
     } catch (error) {
       console.error(error);
       const status =
@@ -236,10 +241,12 @@ export default function SupplementMatchModal({
             message: compactMessage,
           }).unwrap();
           toast.success(`Suggestion sent to ${user.name} (short format)`);
+          setSendingProductId(null);
           return;
         } catch (e2) {
           console.error(e2);
           sendErrorToast(e2, "Failed to send suggestion.");
+          setSendingProductId(null);
         }
       } else {
         // Fallback for ANY OTHER status code (e.g. 422 Payload Too Large) just in case
@@ -250,8 +257,10 @@ export default function SupplementMatchModal({
             message: compactMessage,
           }).unwrap();
           toast.success(`Suggestion sent to ${user.name} (short format)`);
+          setSendingProductId(null);
         } catch (e3) {
           sendErrorToast(e3, "Failed to send suggestion.");
+          setSendingProductId(null);
         }
       }
     }
@@ -259,6 +268,8 @@ export default function SupplementMatchModal({
 
   const handleSuggestAll = async () => {
     if (!matchData?.matched_products?.length || !user || !supplier_id) return;
+
+    setSendingAll(true);
 
     try {
       const allSupps = matchData.matched_products;
@@ -294,6 +305,7 @@ export default function SupplementMatchModal({
       }).unwrap();
 
       toast.success(`All suggestions sent to ${user.name}`);
+      setSendingAll(false);
     } catch (error) {
       console.error(error);
 
@@ -308,8 +320,10 @@ export default function SupplementMatchModal({
           message: `Hi ${user.name} 👋, I've analysed your profile and found ${matchData?.matched_products?.length} match(es) for you:\n\n${minimalSummary}\n\nPlease check my specific suggestions or the AI matching section for details.`,
         }).unwrap();
         toast.success(`Brief match summary sent to ${user.name}`);
+        setSendingAll(false);
       } catch (errFallback) {
         sendErrorToast(errFallback, "Failed to send all suggestions.");
+        setSendingAll(false);
       }
     }
   };
@@ -414,14 +428,14 @@ export default function SupplementMatchModal({
             matchData.matched_products.length > 2 && (
               <Button
                 onClick={handleSuggestAll}
-                disabled={isSending}
+                disabled={sendingAll}
                 className="w-full mb-6 bg-[#0FA4A9]/10 hover:bg-[#0FA4A9] text-[#0FA4A9] hover:text-white border border-[#0FA4A9]/20 rounded-2xl py-6 h-auto font-bold flex items-center justify-center gap-3 transition-all cursor-pointer group"
               >
                 <Send
                   size={18}
                   className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"
                 />
-                {isSending
+                {sendingAll
                   ? "Sending All..."
                   : `Send All ${matchData.matched_products.length} Suggestions at Once`}
               </Button>
@@ -481,11 +495,11 @@ export default function SupplementMatchModal({
                       </span>
                     </div>
                     <Button
-                      disabled={isSending}
+                      disabled={sendingProductId === supp.product_id}
                       onClick={() => handleSuggestToUser(supp)}
                       className="bg-[#0FA4A9] hover:bg-[#0D9488] text-white rounded-xl px-6 h-9 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                     >
-                      {isSending ? (
+                      {sendingProductId === supp.product_id ? (
                         <Loader2 size={16} className="animate-spin" />
                       ) : (
                         <Send size={16} />
