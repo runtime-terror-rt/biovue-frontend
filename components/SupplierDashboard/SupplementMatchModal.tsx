@@ -90,7 +90,7 @@ export default function SupplementMatchModal({
 }: SupplementMatchModalProps) {
   const currentUser = useSelector(selectCurrentUser);
   const supplier_id = currentUser?.id;
-  const [sendingProductId, setSendingProductId] = useState<string | null>(null);
+  const [sendingProductId, setSendingProductId] = useState<number | null>(null);
   const [sendingAll, setSendingAll] = useState(false);
 
   const [
