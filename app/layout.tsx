@@ -33,7 +33,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Bio Vue - Digital Wellness",
   description:
-    "Bio Vue is a digital wellness platform that helps you understand and manage your online presence. It provides insights into your digital footprint, allowing you to make informed decisions about your online activities and maintain a healthy digital lifestyle",
+    "BioVue Digital Wellness uses advanced AI to show you what you’ll look like when you reach your goals, before you start. We are a health and wellness app designed to turn goals into commitments by making your vision tangible. Our mission is to help people stay motivated and inspired by showing them images of their future self, so they can clearly see the results they’re working toward from day one.",
 };
 
 export default function RootLayout({
@@ -47,9 +47,7 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} ${roboto.variable} ${inter.variable} ${poppins.variable} antialiased`}
       >
-        <Providers>
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
