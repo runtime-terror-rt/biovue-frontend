@@ -96,7 +96,7 @@ export default function ClientTable({ users }: ClientTableProps) {
       setIsModalOpen(true);
     } catch (error) {
       console.error("Match finding failed:", error);
-      toast.error("Failed to find matches. Please try again.");
+      toast.error("Failed to es. Please try again.");
     } finally {
       setMatchingUserId(null);
     }
@@ -232,7 +232,7 @@ export default function ClientTable({ users }: ClientTableProps) {
                   </TableCell>
                   <TableCell className="px-10 py-6 text-center">
                     <Button
-                      disabled={isMatching || matchingUserId === user.id}
+                      disabled={matchingUserId === user.id}
                       onClick={() => handleFindMatch(user)}
                       className="bg-white hover:bg-[#0FA4A9] text-[#0FA4A9] hover:text-white border-2 border-[#0FA4A9]/20 hover:border-[#0FA4A9] rounded-2xl px-6 py-2 h-auto text-sm font-bold flex items-center gap-2 mx-auto transition-all group active:scale-95 cursor-pointer shadow-sm hover:shadow-md disabled:opacity-50"
                     >
