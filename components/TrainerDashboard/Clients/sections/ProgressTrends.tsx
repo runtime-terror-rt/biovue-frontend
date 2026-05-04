@@ -173,8 +173,9 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
                   </AreaChart>
                 </ResponsiveContainer>
               )}
-              <div className="text-center mt-2">
-                <span className="text-[10px] font-bold text-[#111827]">weight (lbs)</span>
+              <div className="flex justify-center items-center gap-2 ">
+                <div className="w-2.5 h-2.5 bg-[#C8F2C8] rounded-sm"></div>
+                <span className="text-[10px] font-bold text-[#111827]">Weight(lbs)</span>
               </div>
             </div>
           </CardContent>
