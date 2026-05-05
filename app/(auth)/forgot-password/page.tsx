@@ -30,7 +30,7 @@ const ForgotPasswordPage = () => {
       const res = await forgotPassword({ email, "g-recaptcha-response": token }).unwrap();
       if (res?.success || res?.status === "success") {
         toast.success(res?.message || "Password reset link sent to your email!");
-        router.push(`/reset-password?email=${email}`);
+        router.push(`/reset-password-otp-verify?email=${email}`);
       }
     } catch (err: any) {
       const isScriptUnavailableError =
