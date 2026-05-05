@@ -21,7 +21,6 @@ import { getRecaptchaToken } from "@/lib/recaptcha";
 
 /**
  * BusinessRegister Component
- * Redesigned for a compact, zero-scroll experience with a 2-column grid layout.
  */
 const BusinessRegister = () => {
   const { executeRecaptcha } = useGoogleReCaptcha();
