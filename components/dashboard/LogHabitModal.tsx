@@ -59,8 +59,17 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
       return;
     }
 
-    if (!formData.weight || !formData.daily_steps || !formData.sleep_hours || !formData.water_glasses) {
-      toast.error("Please fill in all fields.");
+    // Validate mandatory fields based on log type
+    if (type === "sleep" && !formData.sleep_hours) {
+      toast.error("Please enter sleep hours.");
+      return;
+    }
+    if (type === "activity" && !formData.daily_steps) {
+      toast.error("Please enter daily steps.");
+      return;
+    }
+    if (type === "hydration" && !formData.water_glasses) {
+      toast.error("Please enter water glasses/ounces.");
       return;
     }
 
@@ -200,6 +209,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                     <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider flex items-center gap-2">
                       <Scale size={14} className="text-[#3A86FF]" />
                       Weight
+                      {habitType.toLowerCase() === "weight" && <span className="text-red-500">*</span>}
                     </label>
                     <div className="flex bg-gray-100/80 rounded-lg p-1 border border-gray-200">
                       <button
@@ -243,6 +253,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                   <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
                     <Footprints size={14} className="text-[#3A86FF]" />
                     Daily Steps
+                    {habitType.toLowerCase() === "activity" && <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="number"
@@ -259,6 +270,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                   <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
                     <Bed size={14} className="text-[#3A86FF]" />
                     Sleep Hours
+                    {habitType.toLowerCase() === "sleep" && <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="number"
@@ -276,6 +288,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                   <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
                     <Droplets size={14} className="text-[#3A86FF]" />
                     Water Ounces
+                    {habitType.toLowerCase() === "hydration" && <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="number"
