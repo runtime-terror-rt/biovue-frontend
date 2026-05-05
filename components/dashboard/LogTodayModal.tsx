@@ -56,6 +56,20 @@ const LogTodayModal = ({
       return;
     }
 
+    // Validate mandatory fields
+    if (!habitData.sleep) {
+      toast.error("Please enter sleep hours.");
+      return;
+    }
+    if (!habitData.steps) {
+      toast.error("Please enter daily steps.");
+      return;
+    }
+    if (!habitData.water) {
+      toast.error("Please enter water consumption.");
+      return;
+    }
+
     const formatLocalDateTime = (d = new Date()) => {
       const pad = (n: number) => n.toString().padStart(2, "0");
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(
@@ -232,6 +246,7 @@ const LogTodayModal = ({
             <div className="flex flex-col gap-3 p-4 rounded-[16px] border border-[#3A86FF]/25 bg-white shadow-sm">
               <label className="flex items-center gap-2 text-[#1F2D2E] font-semibold text-sm">
                 <Footprints size={16} className="text-[#3A86FF]" /> Daily Steps
+                <span className="text-red-500">*</span>
               </label>
               <input 
                 type="number" 
@@ -271,6 +286,7 @@ const LogTodayModal = ({
             <div className="flex flex-col gap-3 p-4 rounded-[16px] border border-[#3A86FF]/25 bg-white shadow-sm">
               <label className="flex items-center gap-2 text-[#1F2D2E] font-semibold text-sm">
                 <Moon size={16} className="text-[#3A86FF]" /> Sleep Hours Per Night
+                <span className="text-red-500">*</span>
               </label>
               <input 
                 type="number" 
@@ -338,6 +354,7 @@ const LogTodayModal = ({
             {/* Water */}
             <div className="flex flex-col gap-3 p-4 rounded-[16px] border border-[#3A86FF]/25 bg-white shadow-sm">
               <label className="flex items-center gap-2 text-[#1F2D2E] font-semibold text-sm">
+                <span className="text-red-500">*</span>
                 <Droplets size={16} className="text-[#3A86FF]" /> Water Consumption Per Day
               </label>
               <select 
