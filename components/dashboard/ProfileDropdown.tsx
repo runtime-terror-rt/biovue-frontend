@@ -30,6 +30,11 @@ export default function ProfileDropdown({ roleLabel, settingsHref }: ProfileDrop
   const profileImage = profile?.image;
   const fullName = profileResponse?.data?.name || user?.name || "Professional";
 
+  // Add cache-busting parameter to image URL to force refresh when profile is updated
+  const imageSrcWithCacheBust = profileImage 
+    ? `${profileImage}?t=${profile?.updated_at || Date.now()}` 
+    : null;
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -60,13 +65,15 @@ export default function ProfileDropdown({ roleLabel, settingsHref }: ProfileDrop
       >
         <div className="relative">
           <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm group-hover:shadow-md transition-shadow bg-gray-50 flex items-center justify-center">
-            {profileImage ? (
+            {imageSrcWithCacheBust ? (
               <Image
-                src={profileImage}
+                key={imageSrcWithCacheBust}
+                src={imageSrcWithCacheBust}
                 alt="User Profile"
                 width={40}
                 height={40}
                 className="object-cover w-full h-full"
+                unoptimized
               />
             ) : (
               <User size={20} className="text-[#94A3B8]" />

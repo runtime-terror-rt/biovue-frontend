@@ -19,11 +19,17 @@ export default function ProfilePreferences() {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  const getImageUrl = (imagePath: string | null) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith("http") || imagePath.startsWith("/")) return imagePath;
+    return `${process.env.NEXT_PUBLIC_API_BASE_URL}/${imagePath}`;
+  };
+
   useEffect(() => {
     if (profileData?.data) {
       setName(profileData.data.name || "");
       if (profileData.data.profile?.image) {
-        setImagePreview(profileData.data.profile.image);
+        setImagePreview(getImageUrl(profileData.data.profile.image));
       }
     }
   }, [profileData]);
@@ -104,10 +110,12 @@ export default function ProfilePreferences() {
             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-[2rem] overflow-hidden border-4 border-white ring-1 ring-gray-100 shadow-lg bg-gray-50 flex items-center justify-center transition-transform hover:scale-[1.02]">
               {imagePreview ? (
                 <Image
-                  src={imagePreview}
+                  key={imagePreview}
+                  src={imagePreview || "/images/avatar.png"}
                   alt={name || "Nutritionist"}
                   width={112}
                   height={112}
+                  unoptimized
                   className="object-cover w-full h-full"
                 />
               ) : (

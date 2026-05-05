@@ -33,6 +33,11 @@ export default function Avatar({
     xl: 28
   };
 
+  // Add cache-busting parameter to image URL to force refresh
+  const imageSrcWithCacheBust = src && src.trim() !== "" 
+    ? `${src}?t=${Date.now()}` 
+    : null;
+
   return (
     <div className={cn(
       "relative rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center bg-gray-50",
@@ -40,9 +45,10 @@ export default function Avatar({
       border && "border border-gray-100 shadow-sm",
       className
     )}>
-      {src && src.trim() !== "" ? (
+      {imageSrcWithCacheBust ? (
         <Image
-          src={src}
+          key={imageSrcWithCacheBust}
+          src={imageSrcWithCacheBust}
           alt={name || "User Avatar"}
           fill
           className="object-cover"
