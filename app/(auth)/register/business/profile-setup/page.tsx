@@ -138,6 +138,7 @@ const ProfileSetup = () => {
                   <div className="w-24 h-24 rounded-full bg-[#E4EFFF] flex items-center justify-center text-white text-2xl font-bold shadow-sm group-hover:bg-[#D9E6FF] transition-opacity overflow-hidden">
                     {imagePreview ? (
                       <Image 
+                        key={imagePreview}
                         src={imagePreview} 
                         alt="Profile Preview" 
                         fill 

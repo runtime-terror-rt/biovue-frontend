@@ -479,7 +479,7 @@ export default function SettingsPage() {
                 <div className="relative group cursor-pointer">
                   <div className="w-32 h-32 rounded-full bg-[#3A86FF] flex items-center justify-center text-white text-4xl font-bold shadow-sm group-hover:bg-blue-600 transition-colors overflow-hidden">
                     {imagePreview ? (
-                      <img src={imagePreview} className="w-full h-full object-cover" alt="Profile" />
+                      <img src={`${imagePreview}?t=${Date.now()}`} className="w-full h-full object-cover" alt="Profile" />
                     ) : (
                       <User size={48} className="text-white" />
                     )}

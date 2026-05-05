@@ -36,6 +36,12 @@ export default function ProfilePreferences() {
   const [newSpecialty, setNewSpecialty] = useState("");
   const [newService, setNewService] = useState("");
 
+  const getImageUrl = (imagePath: string | null) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith("http") || imagePath.startsWith("/")) return imagePath;
+    return `${process.env.NEXT_PUBLIC_API_BASE_URL}/${imagePath}`;
+  };
+
   useEffect(() => {
     if (currentUser || profileResponse) {
       const pData = profileResponse?.data?.profile;
@@ -62,7 +68,7 @@ export default function ProfilePreferences() {
       }
 
       if (pData?.image) {
-        setImagePreview(pData.image);
+        setImagePreview(getImageUrl(pData.image));
       }
     }
   }, [currentUser, profileResponse]);
@@ -173,9 +179,11 @@ export default function ProfilePreferences() {
               <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-[#F1F5F9] bg-gray-50 flex items-center justify-center relative">
                 {imagePreview ? (
                   <Image
-                    src={imagePreview}
+                    key={imagePreview}
+                    src={imagePreview || "/images/avatar.png"}
                     alt={formData.name || "Trainer"}
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 ) : (
