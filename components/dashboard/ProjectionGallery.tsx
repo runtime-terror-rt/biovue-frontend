@@ -29,27 +29,18 @@ const getFullUrl = (url?: string) => {
   return url.replace(/([^:]\/)\/+/g, "$1");
 };
 
-const formatDate = (dateString: string) => {
-  try {
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(dateString));
-  } catch {
-    return "N/A";
-  }
-};
-
 const formatDateShort = (dateString: string) => {
+  if (!dateString) return "N/A";
   try {
+    // The API returns a date string like "2026-05-06".
+    // Using UTC ensures the date doesn't shift due to local timezone offsets.
+    const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "2-digit",
       year: "numeric",
-    }).format(new Date(dateString));
+      timeZone: "UTC",
+    }).format(date);
   } catch {
     return "N/A";
   }
@@ -139,7 +130,7 @@ export default function ProjectionGallery() {
                       {idx + 1}
                     </td>
                     <td className="px-6 py-4 text-sm text-[#5F6F73]">
-                      {proj.created_at ? formatDate(proj.created_at) : "N/A"}
+                      {proj.created_at ? formatDateShort(proj.created_at) : "N/A"}
                     </td>
                     <td className="px-6 py-4 text-sm text-[#5F6F73]">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F8FAFF] border border-[#3A86FF]/20 text-[#3A86FF] font-semibold text-xs">

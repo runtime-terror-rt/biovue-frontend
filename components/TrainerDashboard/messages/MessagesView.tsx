@@ -4,6 +4,7 @@ import { Suspense, useState, useMemo } from "react";
 import ChatArea from "./ChatArea";
 import ClientsListSidebar from "./ClientListSidebar";
 import { useGetConversationsQuery } from "@/redux/features/api/userDashboard/messagesApi";
+import { User as UserIcon } from "lucide-react";
 
 export default function MessagesView() {
   const [selectedClientId, setSelectedClientId] = useState("1");
@@ -28,7 +29,7 @@ export default function MessagesView() {
     return {
       id: contactUser.id.toString(),
       name: contactUser.name,
-      avatar: contactUser.image_url || "/images/user.png"
+      avatar: contactUser.image_url || null
     };
   }, [conversationsData, selectedClientId]);
 
@@ -52,7 +53,7 @@ export default function MessagesView() {
           <ChatArea
             clientId={selectedClient.id}
             clientName={selectedClient.name}
-            clientAvatar={selectedClient.avatar}
+            clientAvatar={selectedClient.avatar || undefined}
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -63,3 +64,4 @@ export default function MessagesView() {
     </div>
   );
 }
+

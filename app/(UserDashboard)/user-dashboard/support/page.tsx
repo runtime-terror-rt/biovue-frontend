@@ -501,6 +501,10 @@ useEffect(() => {
     const profileImage =
       item.professional?.profile?.image ||
       item.professional?.profile_image ||
+      item.professional?.image_url ||
+      item.professional?.image ||
+      item.image_url ||
+      item.profile_image ||
       null;
 
     return {
@@ -572,8 +576,20 @@ useEffect(() => {
   ).map((item: any) => ({
     id: item.professional_info?.id || item.id,
     name: item.professional_info?.name || item.name,
-    role: "COACH",
-    avatar: getFullImageUrl(item.professional_info?.profile_image || item.image_url),
+    role: (
+      item.professional_info?.profession_type ||
+      item.professional_type ||
+      "COACH"
+    )
+      .replace(/_/g, " ")
+      .toUpperCase(),
+    avatar: getFullImageUrl(
+      item.professional_info?.profile_image ||
+        item.professional_info?.image_url ||
+        item.professional_info?.profile?.image ||
+        item.image_url ||
+        item.image,
+    ),
     status: "Active",
   }));
 
