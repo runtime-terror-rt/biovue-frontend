@@ -2,15 +2,15 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  X, 
-  Smartphone, 
-  Bed, 
-  Footprints, 
+import {
+  X,
+  Smartphone,
+  Bed,
+  Footprints,
   Droplets,
   Frown,
   Scale,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
@@ -26,14 +26,21 @@ interface LogHabitModalProps {
   habitType: string;
 }
 
-export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitModalProps) {
+export default function LogHabitModal({
+  isOpen,
+  onClose,
+  habitType,
+}: LogHabitModalProps) {
   const [source, setSource] = useState<"device" | "manual">("device");
   const currentUser = useSelector(selectCurrentUser);
   const userId = currentUser?.id || currentUser?.user_id;
 
-  const [postSleepLog, { isLoading: isSleepPosting }] = usePostSleepLogMutation();
-  const [postActivityLog, { isLoading: isActivityPosting }] = usePostActivityLogMutation();
-  const [postHydrationLog, { isLoading: isHydrationPosting }] = usePostHydrationLogMutation();
+  const [postSleepLog, { isLoading: isSleepPosting }] =
+    usePostSleepLogMutation();
+  const [postActivityLog, { isLoading: isActivityPosting }] =
+    usePostActivityLogMutation();
+  const [postHydrationLog, { isLoading: isHydrationPosting }] =
+    usePostHydrationLogMutation();
 
   const isPosting = isSleepPosting || isActivityPosting || isHydrationPosting;
 
@@ -43,7 +50,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
     sleep_hours: "",
     water_glasses: "",
   });
-  const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
+  const [weightUnit, setWeightUnit] = useState<"lbs" | "kg">("lbs");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -52,7 +59,7 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
 
   const handleSubmit = async () => {
     const type = habitType.toLowerCase();
-    
+
     if (type !== "sleep" && type !== "activity" && type !== "hydration") {
       toast.info(`${habitType} logging not fully implemented yet.`);
       onClose();
@@ -75,14 +82,14 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
 
     try {
       const pad = (n: number) => n.toString().padStart(2, "0");
-      const formatLocalDate = (d = new Date()) => `${d.getFullYear()}-${pad(
-        d.getMonth() + 1,
-      )}-${pad(d.getDate())}`;
-      const formatLocalDateTime = (d = new Date()) => `${d.getFullYear()}-${pad(
-        d.getMonth() + 1,
-      )}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(
-        d.getSeconds(),
-      )}`;
+      const formatLocalDate = (d = new Date()) =>
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const formatLocalDateTime = (d = new Date()) =>
+        `${d.getFullYear()}-${pad(
+          d.getMonth() + 1,
+        )}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(
+          d.getSeconds(),
+        )}`;
 
       const payload = {
         user_id: userId || 3,
@@ -109,7 +116,14 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
         response = await postHydrationLog(payload).unwrap();
       }
 
-      if (response.success !== false && (response.success || response.status === "success" || response.id || response.sleep_hours !== undefined || Object.keys(response).length > 0)) {
+      if (
+        response.success !== false &&
+        (response.success ||
+          response.status === "success" ||
+          response.id ||
+          response.sleep_hours !== undefined ||
+          Object.keys(response).length > 0)
+      ) {
         toast.success(`${habitType} data logged successfully!`);
         onClose();
       } else {
@@ -117,23 +131,27 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
       }
     } catch (err: any) {
       console.error(`Error logging ${type}:`, err);
-      
+
       const errorData = err.data || {};
       const errorMessage = (errorData.message || "").toLowerCase();
       const exception = (errorData.exception || "").toLowerCase();
-      
+
       if (
         err.status === 409 || // Conflict
         err.status === 500 || // Internal Server Error (UniqueConstraintViolation)
-        exception.includes("uniqueconstraintviolationexception") || 
-        errorMessage.includes("duplicate entry") || 
+        exception.includes("uniqueconstraintviolationexception") ||
+        errorMessage.includes("duplicate entry") ||
         errorMessage.includes("already logged")
       ) {
         toast.error("You have already logged data for today.");
       } else if (err.status === 400) {
-        toast.error(errorData.message || "Invalid data. Please check your inputs.");
+        toast.error(
+          errorData.message || "Invalid data. Please check your inputs.",
+        );
       } else {
-        toast.error(`An error occurred while logging ${type} data. Please try again.`);
+        toast.error(
+          `An error occurred while logging ${type} data. Please try again.`,
+        );
       }
     }
   };
@@ -179,6 +197,30 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                   <h2 className="text-[22px] font-bold text-[#3A86FF]">
                     Logging: {habitType}
                   </h2>
+                  <div className="flex bg-gray-100/80 rounded-lg p-1 border border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setWeightUnit("lbs")}
+                        className={`px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                          weightUnit === "lbs"
+                            ? "bg-white text-[#3A86FF] shadow-sm"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        Imperial (lbs)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWeightUnit("kg")}
+                        className={`px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                          weightUnit === "kg"
+                            ? "bg-white text-[#3A86FF] shadow-sm"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        Metric (kg)
+                      </button>
+                    </div>
                 </div>
                 <button
                   onClick={onClose}
@@ -209,20 +251,11 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                     <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider flex items-center gap-2">
                       <Scale size={14} className="text-[#3A86FF]" />
                       Weight
-                      {habitType.toLowerCase() === "weight" && <span className="text-red-500">*</span>}
+                      {habitType.toLowerCase() === "weight" && (
+                        <span className="text-red-500">*</span>
+                      )}
                     </label>
-                    <div className="flex bg-gray-100/80 rounded-lg p-1 border border-gray-200">
-                      <button
-                        type="button"
-                        onClick={() => setWeightUnit("kg")}
-                        className={`px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
-                          weightUnit === "kg"
-                            ? "bg-white text-[#3A86FF] shadow-sm"
-                            : "text-gray-400 hover:text-gray-600"
-                        }`}
-                      >
-                        Metric (kg)
-                      </button>
+                    {/* <div className="flex bg-gray-100/80 rounded-lg p-1 border border-gray-200">
                       <button
                         type="button"
                         onClick={() => setWeightUnit("lbs")}
@@ -234,10 +267,21 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                       >
                         Imperial (lbs)
                       </button>
-                    </div>
+                      <button
+                        type="button"
+                        onClick={() => setWeightUnit("kg")}
+                        className={`px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                          weightUnit === "kg"
+                            ? "bg-white text-[#3A86FF] shadow-sm"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        Metric (kg)
+                      </button>
+                    </div> */}
                   </div>
                   <div className="relative">
-                      <input
+                    <input
                       type="number"
                       name="weight"
                       value={formData.weight}
@@ -253,7 +297,9 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                   <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
                     <Footprints size={14} className="text-[#3A86FF]" />
                     Daily Steps
-                    {habitType.toLowerCase() === "activity" && <span className="text-red-500">*</span>}
+                    {habitType.toLowerCase() === "activity" && (
+                      <span className="text-red-500">*</span>
+                    )}
                   </label>
                   <input
                     type="number"
@@ -270,7 +316,9 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                   <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
                     <Bed size={14} className="text-[#3A86FF]" />
                     Sleep Hours
-                    {habitType.toLowerCase() === "sleep" && <span className="text-red-500">*</span>}
+                    {habitType.toLowerCase() === "sleep" && (
+                      <span className="text-red-500">*</span>
+                    )}
                   </label>
                   <input
                     type="number"
@@ -288,7 +336,9 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                   <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
                     <Droplets size={14} className="text-[#3A86FF]" />
                     Water Ounces
-                    {habitType.toLowerCase() === "hydration" && <span className="text-red-500">*</span>}
+                    {habitType.toLowerCase() === "hydration" && (
+                      <span className="text-red-500">*</span>
+                    )}
                   </label>
                   <input
                     type="number"
@@ -306,7 +356,11 @@ export default function LogHabitModal({ isOpen, onClose, habitType }: LogHabitMo
                 disabled={isPosting}
                 className="w-full bg-[#0FA4A9] text-white py-4 rounded-xl font-bold text-[17px] hover:bg-opacity-90 disabled:bg-opacity-50 transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20 flex items-center justify-center gap-2"
               >
-                {isPosting ? <Loader2 className="animate-spin" size={20} /> : `Save Today's ${habitType}`}
+                {isPosting ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  `Save Today's ${habitType}`
+                )}
               </button>
             </motion.div>
           </div>
