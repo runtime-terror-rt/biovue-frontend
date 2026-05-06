@@ -38,8 +38,8 @@ export default function ChatArea({
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Get user image from profile API
-  const userImageUrl = profileData?.data?.profile_image || profileData?.data?.image_url || null;
+  // Get user image from profile API with props as fallback
+  const userImageUrl = profileData?.data?.profile_image || profileData?.data?.image_url || clientAvatar || null;
 
   // Auto scroll on messages update
   useEffect(() => {

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { User as UserIcon } from "lucide-react";
 import { PreHireUser } from "./MessageData";
 
 interface Props {
@@ -15,17 +16,12 @@ export default function PreHireInquiries({ users, onSelect }: Props) {
         <div
           key={item.id}
           onClick={() => onSelect(item.id)}
-          className="bg-white rounded-2xl p-5 shadow-sm border border-[#E5E7EB] hover:border-[#0D9488] transition-all"
+          className="bg-white rounded-2xl p-5 shadow-sm border border-[#E5E7EB] hover:border-[#0D9488] transition-all cursor-pointer"
         >
           <div className="flex justify-between items-start mb-3">
             <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12">
-                <Image
-                  src="/images/user.png"
-                  alt={item.name}
-                  fill
-                  className="rounded-full object-cover"
-                />
+              <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#E5E7EB] bg-gray-50 flex items-center justify-center">
+                <UserIcon className="w-6 h-6 text-gray-400" strokeWidth={1.5} />
               </div>
               <div>
                 <h3 className="font-medium text-[#111827]">{item.name}</h3>
@@ -48,3 +44,4 @@ export default function PreHireInquiries({ users, onSelect }: Props) {
     </div>
   );
 }
+

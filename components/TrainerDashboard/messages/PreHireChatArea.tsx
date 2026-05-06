@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Send, Trash2 } from "lucide-react";
+import { AlertTriangle, Send, Trash2, User as UserIcon } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 
@@ -62,19 +62,14 @@ export default function PreHireChatArea({
         </button>
       </div>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pr-6">
         <div className="flex items-center gap-3 px-6 py-4 border-b border-[#E5E7EB]">
-          <div className="relative w-10 h-10">
-            <Image
-              src="/images/user.png"
-              alt={name}
-              fill
-              className="rounded-full"
-            />
+          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#E5E7EB] bg-gray-50 flex items-center justify-center">
+            <UserIcon className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
           </div>
           <h3 className="font-medium">{name}</h3>
         </div>
-        <Trash2 className="cursor-pointer hover:opacity-80" />
+        <Trash2 className="cursor-pointer hover:opacity-80 text-gray-400" />
       </div>
 
       {/* Messages */}
@@ -92,7 +87,7 @@ export default function PreHireChatArea({
             >
               <div
                 className={`max-w-[70%] rounded-xl px-4 py-3 text-sm ${
-                  isCoach ? "bg-[#22C55E59]" : "bg-white"
+                  isCoach ? "bg-[#22C55E59]" : "bg-white border border-[#E5E7EB]"
                 }`}
               >
                 {msg.text}
@@ -109,12 +104,12 @@ export default function PreHireChatArea({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
-            className="w-full bg-white rounded-xl pl-5 pr-14 py-4 text-sm"
+            className="w-full bg-white rounded-xl pl-5 pr-14 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#0D9488]"
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           />
           <button
             onClick={sendMessage}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#0D9488]"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#0D9488] hover:bg-[#0D948814] p-2 rounded-lg transition-all"
           >
             <Send className="w-5 h-5" />
           </button>
@@ -123,3 +118,4 @@ export default function PreHireChatArea({
     </div>
   );
 }
+
