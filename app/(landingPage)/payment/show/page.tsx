@@ -5,14 +5,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle2, ArrowRight, Home, LayoutDashboard, Loader2, Receipt } from "lucide-react";
 import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
+import { useGetCurrentUserQuery } from "@/redux/features/api/auth/authApi";
 import { cn } from "@/lib/utils";
 import { useDispatch, useSelector } from "react-redux";
 import { baseApi } from "@/redux/features/api/baseApi";
 import { useEffect } from "react";
-import { selectCurrentUser } from "@/redux/features/slice/authSlice";
+import { selectCurrentUser, updateUser } from "@/redux/features/slice/authSlice";
 
 const PaymentSuccessPage = () => {
   const { data, isLoading, isError } = useGetPaymentSummaryQuery();
+  const { data: userData } = useGetCurrentUserQuery(undefined, {
+    skip: !data?.success,
+  });
   const dispatch = useDispatch();
   const currentUser = useSelector(selectCurrentUser);
 
@@ -22,6 +26,13 @@ const PaymentSuccessPage = () => {
       dispatch(baseApi.util.invalidateTags(["Projection", "Profile"]));
     }
   }, [data, dispatch]);
+
+  useEffect(() => {
+    if (userData?.success && userData?.data) {
+      console.log("Updating user state with fresh data...");
+      dispatch(updateUser(userData.data));
+    }
+  }, [userData, dispatch]);
 
   console.log(data,"showpricing data ")
 
