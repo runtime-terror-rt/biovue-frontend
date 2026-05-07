@@ -142,7 +142,7 @@ export default function SendReminderModal({ isOpen, onClose }: Props) {
           </div>
 
           {/* Delivery Method */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium text-[#64748B] mb-3 uppercase tracking-wide">
               Delivery Method
             </label>
@@ -195,7 +195,7 @@ export default function SendReminderModal({ isOpen, onClose }: Props) {
                 </span>
               </label>
             </div>
-          </div>
+          </div> */}
 
           {/* Actions */}
           <div className="grid grid-cols-2 gap-4 pt-4">

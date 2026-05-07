@@ -63,8 +63,7 @@ export default function AssignedProgramsPage() {
                   <Badge className="bg-[#E4EFFF] text-[#3A86FF] hover:bg-[#E4EFFF] border-none px-3 font-medium">
                     ACTIVE
                   </Badge>
-                  <span className="text-[11px] text-[#9AAEB2] font-medium flex items-center gap-1">
-                    Assigned on:
+                  <span className="text-[11px] text-[#9AAEB2] font-medium flex items-center gap-1">Assigned on:
                     <Calendar size={12} />
                     {new Date(program.assigned_date).toLocaleDateString(
                       "en-US",

@@ -79,7 +79,7 @@ export default function MotivationModal({
       const sendPromises = selectedUserIds.map((id) =>
         sendMessage({
           receiver_id: Number(id),
-          message: `[MOTIVATION] ${message}`,
+          message: `Today's Motivation: ${message}`,
         }).unwrap(),
       );
 
@@ -102,7 +102,7 @@ export default function MotivationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-      <div className="w-full max-w-2xl bg-white rounded-[40px] shadow-2xl p-0 relative animate-in zoom-in-95 duration-300 flex flex-col max-h-[95vh]">
+      <div className="w-full max-w-xl bg-white rounded-[40px] shadow-2xl p-0 relative animate-in zoom-in-95 duration-300 flex flex-col max-h-[70vh]">
         {/* Header Section */}
         <div className="p-8 pb-6 flex justify-between items-start">
           <div className="flex gap-4">

@@ -44,6 +44,7 @@ export const baseApi = createApi({
     "HealthHabitOverview",
     "Habit",
     "Supplier",
+    "Reminders",
     "SupplierDashboard",
     "ChangePassword",
     "Projection",
