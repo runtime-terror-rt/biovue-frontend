@@ -62,7 +62,7 @@ const SchedulePage = () => {
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
 
   const schedules = schedulesData?.data || [];
-  const reminders = remindersData?.data || [];
+  const reminders = (remindersData?.data || []).slice(-5).reverse();
 
   const getReminderIcon = (type: string) => {
     switch (type.toLowerCase()) {
@@ -206,7 +206,7 @@ const SchedulePage = () => {
           <div className="flex items-center gap-2">
             <Bell className="w-6 h-6 text-[#0FA4A9]" />
             <h3 className="text-xl font-bold text-[#1F2D2E]">
-              Active Reminders
+              Last 5 Reminders
             </h3>
           </div>
 
@@ -250,21 +250,7 @@ const SchedulePage = () => {
             </div>
           )}
 
-          {/* Quick Stats or Info Card */}
-          {/* <Card className="bg-[#1F2D2E] border-none text-white overflow-hidden relative">
-            <div className="absolute -right-4 -bottom-4 opacity-10">
-              <AlertCircle size={100} />
-            </div>
-            <CardContent className="p-6 space-y-4">
-              <h4 className="font-bold text-lg">Tip For You:</h4>
-              <p className="text-sm text-gray-300 leading-relaxed">
-                Regular check-ins with your trainer help adjust your program for
-                better results. Don't forget to log your habits daily!
-              </p>
-        
-
-            </CardContent>
-          </Card> */}
+          
         </div>
       </div>
 
