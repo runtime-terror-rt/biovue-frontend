@@ -1,13 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
-import { useGetMySchedulesQuery, Schedule } from "@/redux/features/api/userDashboard/GetMySchedules";
-import { useGetRemindersQuery, Reminder } from "@/redux/features/api/TrainerDashboard/Calendar/GetReminder";
+import { useState } from "react";
+import {
+  useGetMySchedulesQuery,
+  Schedule,
+} from "@/redux/features/api/userDashboard/GetMySchedules";
+import {
+  useGetRemindersQuery,
+  Reminder,
+} from "@/redux/features/api/TrainerDashboard/Calendar/GetReminder";
 import {
   Calendar,
   Clock,
   Bell,
-  AlertCircle,
   Loader2,
   Quote,
   Activity,
@@ -15,9 +20,9 @@ import {
   CalendarDays,
   X,
   Eye,
-  CalendarCheck
+  CalendarCheck,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import {
@@ -55,11 +60,17 @@ const formatDate = (
 };
 
 const SchedulePage = () => {
-  const { data: schedulesData, isLoading: isSchedulesLoading } = useGetMySchedulesQuery();
-  const { data: remindersData, isLoading: isRemindersLoading } = useGetRemindersQuery();
+  const { data: schedulesData, isLoading: isSchedulesLoading } =
+    useGetMySchedulesQuery();
+  const { data: remindersData, isLoading: isRemindersLoading } =
+    useGetRemindersQuery();
 
-  const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
-  const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
+  const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(
+    null,
+  );
+  const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(
+    null,
+  );
 
   const schedules = schedulesData?.data || [];
   const reminders = (remindersData?.data || []).slice(-5).reverse();
@@ -157,16 +168,29 @@ const SchedulePage = () => {
               <Table>
                 <TableHeader className="bg-[#F8FBFA]">
                   <TableRow className="border-b border-gray-50 hover:bg-transparent">
-                    <TableHead className="font-bold text-[#1F2D2E] h-14">Date</TableHead>
-                    <TableHead className="font-bold text-[#1F2D2E] h-14">Time</TableHead>
-                    <TableHead className="font-bold text-[#1F2D2E] h-14">Status</TableHead>
-                    <TableHead className="font-bold text-[#1F2D2E] h-14">Scheduled By</TableHead>
-                    <TableHead className="font-bold text-[#1F2D2E] h-14 text-right">Actions</TableHead>
+                    <TableHead className="font-bold text-[#1F2D2E] h-14">
+                      Date
+                    </TableHead>
+                    <TableHead className="font-bold text-[#1F2D2E] h-14">
+                      Time
+                    </TableHead>
+                    <TableHead className="font-bold text-[#1F2D2E] h-14">
+                      Status
+                    </TableHead>
+                    <TableHead className="font-bold text-[#1F2D2E] h-14">
+                      Scheduled By
+                    </TableHead>
+                    <TableHead className="font-bold text-[#1F2D2E] h-14 text-right">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {schedules.map((schedule) => (
-                    <TableRow key={schedule.id} className="border-b border-gray-50 hover:bg-[#F8FBFA]/50 transition-colors">
+                    <TableRow
+                      key={schedule.id}
+                      className="border-b border-gray-50 hover:bg-[#F8FBFA]/50 transition-colors"
+                    >
                       <TableCell className="py-4 font-medium text-[#1F2D2E]">
                         {formatDate(schedule.schedule_date, "MMM d")}
                       </TableCell>
@@ -181,7 +205,6 @@ const SchedulePage = () => {
                       </TableCell>
                       <TableCell className="py-4 text-[#5F6F73] font-medium">
                         <div className="flex items-center gap-2">
-                        
                           {schedule.trainer.name}
                         </div>
                       </TableCell>
@@ -249,14 +272,12 @@ const SchedulePage = () => {
               ))}
             </div>
           )}
-
-          
         </div>
       </div>
 
       {/* Reminder Details Modal */}
       {selectedReminder && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-lg bg-white rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-[#F8FBFA]/50">
               <div className="flex items-center gap-3">
@@ -286,7 +307,7 @@ const SchedulePage = () => {
                   Message from Trainer
                 </label>
                 <p className="text-lg font-medium text-[#1F2D2E] leading-relaxed italic">
-                  "{selectedReminder.message}"
+                  {selectedReminder.message}
                 </p>
               </div>
 
@@ -331,7 +352,7 @@ const SchedulePage = () => {
 
       {/* Schedule Details Modal */}
       {selectedSchedule && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-lg bg-white rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-[#F8FBFA]/50">
               <div className="flex items-center gap-3">
@@ -339,7 +360,9 @@ const SchedulePage = () => {
                   <CalendarCheck className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-[#1F2D2E]">Schedule Details</h3>
+                  <h3 className="text-lg font-bold text-[#1F2D2E]">
+                    Schedule Details
+                  </h3>
                   <p className="text-xs text-[#9AAEB2] font-bold uppercase tracking-widest">
                     {selectedSchedule.check_in_type}
                   </p>
@@ -356,13 +379,17 @@ const SchedulePage = () => {
             <div className="p-8 space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-[#9AAEB2] uppercase tracking-[0.2em]">Date</label>
+                  <label className="text-[10px] font-black text-[#9AAEB2] uppercase tracking-[0.2em]">
+                    Date
+                  </label>
                   <p className="text-base font-bold text-[#1F2D2E]">
                     {formatDate(selectedSchedule.schedule_date, "EEEE, MMM d")}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-[#9AAEB2] uppercase tracking-[0.2em]">Time</label>
+                  <label className="text-[10px] font-black text-[#9AAEB2] uppercase tracking-[0.2em]">
+                    Time
+                  </label>
                   <p className="text-base font-bold text-[#1F2D2E]">
                     {selectedSchedule.schedule_time}
                   </p>
@@ -371,11 +398,15 @@ const SchedulePage = () => {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-[#9AAEB2] uppercase tracking-[0.2em]">Status</label>
+                  <label className="text-[10px] font-black text-[#9AAEB2] uppercase tracking-[0.2em]">
+                    Status
+                  </label>
                   <div>{getStatusBadge(selectedSchedule.status)}</div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-[#9AAEB2] uppercase tracking-[0.2em]">Trainer</label>
+                  <label className="text-[10px] font-black text-[#9AAEB2] uppercase tracking-[0.2em]">
+                    Trainer
+                  </label>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-100">
                       {selectedSchedule.trainer.profile?.image ? (
@@ -398,9 +429,11 @@ const SchedulePage = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-[#9AAEB2] uppercase tracking-[0.2em]">Check-in Type</label>
+                <label className="text-[10px] font-black text-[#9AAEB2] uppercase tracking-[0.2em]">
+                  Check-in Type
+                </label>
                 <p className="text-sm font-medium text-[#5F6F73] capitalize">
-                  {selectedSchedule.check_in_type.replace(/_/g, ' ')}
+                  {selectedSchedule.check_in_type.replace(/_/g, " ")}
                 </p>
               </div>
 

@@ -12,7 +12,8 @@ interface Props {
 }
 
 export default function SendReminderModal({ isOpen, onClose }: Props) {
-  const { data: overviewData, isLoading: isClientsLoading } = useGetTrainerOverviewQuery();
+  const { data: overviewData, isLoading: isClientsLoading } =
+    useGetTrainerOverviewQuery();
   const clients = overviewData?.client_table || [];
 
   const [reminderType, setReminderType] = useState<
@@ -140,62 +141,6 @@ export default function SendReminderModal({ isOpen, onClose }: Props) {
               className="w-full h-40 bg-white border border-[#CCFBF1] rounded-2xl p-5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0D9488]/20 resize-none transition-all placeholder:text-[#94A3B8]"
             />
           </div>
-
-          {/* Delivery Method */}
-          {/* <div>
-            <label className="block text-sm font-medium text-[#64748B] mb-3 uppercase tracking-wide">
-              Delivery Method
-            </label>
-            <div className="flex gap-8">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div
-                  className={`w-6 h-6 rounded-md border-2 transition-all flex items-center justify-center ${deliveryMethod.inApp ? "bg-[#0D9488] border-[#0D9488]" : "border-[#CCFBF1] bg-[#F1F5F9]"}`}
-                >
-                  {deliveryMethod.inApp && (
-                    <X size={14} className="text-white rotate-45" />
-                  )}
-                  <input
-                    type="checkbox"
-                    className="hidden"
-                    checked={deliveryMethod.inApp}
-                    onChange={(e) =>
-                      setDeliveryMethod({
-                        ...deliveryMethod,
-                        inApp: e.target.checked,
-                      })
-                    }
-                  />
-                </div>
-                <span className="text-sm font-medium text-[#1E293B] group-hover:text-[#0D9488] transition-colors">
-                  In-app Message
-                </span>
-              </label>
-
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div
-                  className={`w-6 h-6 rounded-md border-2 transition-all flex items-center justify-center ${deliveryMethod.push ? "bg-[#0D9488] border-[#0D9488]" : "border-[#CCFBF1] bg-[#F1F5F9]"}`}
-                >
-                  {deliveryMethod.push && (
-                    <X size={14} className="text-white rotate-45" />
-                  )}
-                  <input
-                    type="checkbox"
-                    className="hidden"
-                    checked={deliveryMethod.push}
-                    onChange={(e) =>
-                      setDeliveryMethod({
-                        ...deliveryMethod,
-                        push: e.target.checked,
-                      })
-                    }
-                  />
-                </div>
-                <span className="text-sm font-medium text-[#1E293B] group-hover:text-[#0D9488] transition-colors">
-                  Push Notification
-                </span>
-              </label>
-            </div>
-          </div> */}
 
           {/* Actions */}
           <div className="grid grid-cols-2 gap-4 pt-4">
