@@ -25,6 +25,7 @@ import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { useGetHealthReportQuery } from "@/redux/features/api/userDashboard/dashboard/health-report";
 import { useGetAiCurrentInsightsQuery } from "@/redux/features/api/userDashboard/Projection/AIInsightsAPI";
 import { useGetUserOverviewChartQuery } from "@/redux/features/api/userDashboard/dashboardApi";
+import TrainerMotivation from "@/components/UserDashboard/Dashboard/TrainerMotivation";
 
 // --- Main Page ---
 const UserDashboard = () => {
@@ -89,6 +90,9 @@ const UserDashboard = () => {
             Complete your setup to unlock future features
           </p>
         </div>
+
+        {/* Motivational Message from Trainer */}
+        <TrainerMotivation />
 
         {/* AI Projections Banner */}
         <div className="relative overflow-hidden bg-white border-[1.5px] border-[#3A86FF] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 min-h-45">

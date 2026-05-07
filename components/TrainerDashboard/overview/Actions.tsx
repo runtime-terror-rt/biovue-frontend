@@ -6,6 +6,9 @@ import { BarChart3, Send, Calendar } from "lucide-react";
 import { ActionCard } from "./data";
 import Link from "next/link";
 
+import { useState } from "react";
+import MotivationalMessageModal from "./MotivationalMessageModal";
+
 export const actionCards: ActionCard[] = [
   {
     icon: <BarChart3 className="w-6 h-6" />,
@@ -18,8 +21,8 @@ export const actionCards: ActionCard[] = [
     icon: <Send className="w-6 h-6" />,
     title: "Send motivation",
     description: "Send encouragement or reminders",
-    linkText: "GO TO MESSAGES",
-    href: "/trainer-dashboard/messages",
+    linkText: "OPEN MODAL",
+    href: "#",
   },
   {
     icon: <Calendar className="w-6 h-6" />,
@@ -29,7 +32,17 @@ export const actionCards: ActionCard[] = [
     href: "/trainer-dashboard/calendar",
   },
 ];
+
 export default function Actions() {
+  const [isMotivationalModalOpen, setIsMotivationalModalOpen] = useState(false);
+
+  const handleActionClick = (e: React.MouseEvent, action: ActionCard) => {
+    if (action.title === "Send motivation") {
+      e.preventDefault();
+      setIsMotivationalModalOpen(true);
+    }
+  };
+
   return (
     <div className="">
       <h3 className="text-lg font-medium text-foreground mb-4">
@@ -48,7 +61,10 @@ export default function Actions() {
               <p className="text-sm text-muted-foreground mb-4">
                 {action.description}
               </p>
-              <Link href={action.href}>
+              <Link
+                href={action.href}
+                onClick={(e) => handleActionClick(e, action)}
+              >
                 <Button
                   variant="link"
                   className="text-[#0D9488] cursor-pointer p-0 h-auto font-semibold"
@@ -60,6 +76,11 @@ export default function Actions() {
           </Card>
         ))}
       </div>
+
+      <MotivationalMessageModal
+        isOpen={isMotivationalModalOpen}
+        onClose={() => setIsMotivationalModalOpen(false)}
+      />
     </div>
   );
 }

@@ -51,7 +51,7 @@ export default function MessagesPage() {
         <div className="relative flex items-center gap-3">
           {viewMode === "active" && (
             <button
-              onClick={() => selectedClient && setOpenMotivation(true)}
+              onClick={() => setOpenMotivation(true)}
               className="bg-[#0D9488] flex items-center cursor-pointer rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity text-white gap-2 font-medium"
             >
               <Send className="w-5 h-5 rotate-[-10deg]" />
@@ -147,16 +147,12 @@ export default function MessagesPage() {
           </div>
         )}
       </div>
-      {selectedClient && (
-        <MotivationModal
-          open={openMotivation}
-          onClose={() => setOpenMotivation(false)}
-          clientName={selectedClient.name}
-          onSend={(message) => {
-            console.log("Send to:", selectedClient.name, message);
-          }}
-        />
-      )}
+
+      <MotivationModal
+        open={openMotivation}
+        onClose={() => setOpenMotivation(false)}
+        initialSelectedClientId={selectedClientId}
+      />
     </div>
   );
 }
