@@ -251,21 +251,20 @@ const SchedulePage = () => {
           )}
 
           {/* Quick Stats or Info Card */}
-          <Card className="bg-[#1F2D2E] border-none text-white overflow-hidden relative">
+          {/* <Card className="bg-[#1F2D2E] border-none text-white overflow-hidden relative">
             <div className="absolute -right-4 -bottom-4 opacity-10">
               <AlertCircle size={100} />
             </div>
             <CardContent className="p-6 space-y-4">
-              <h4 className="font-bold text-lg">Daily Tip</h4>
+              <h4 className="font-bold text-lg">Tip For You:</h4>
               <p className="text-sm text-gray-300 leading-relaxed">
                 Regular check-ins with your trainer help adjust your program for
                 better results. Don't forget to log your habits daily!
               </p>
-              <button className="text-xs font-bold text-[#0FA4A9] hover:underline uppercase tracking-widest">
-                Learn More
-              </button>
+        
+
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </div>
 
