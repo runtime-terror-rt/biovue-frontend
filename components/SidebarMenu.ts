@@ -51,11 +51,17 @@ export const SIDEBAR_MENU: SidebarMenu = {
       icon: ImageDownIcon,
       href: "/user-dashboard/projection-galary",
     },
+    {
+      label: "Assigned Programs",
+      icon: FileText,
+      href: "/user-dashboard/assigned-programs",
+    },
     { label: "Insights", icon: Brain, href: "/user-dashboard/insights" },
     { label: "Habits", icon: Repeat, href: "/user-dashboard/habits" },
     { label: "Support", icon: HeartHandshake, href: "/user-dashboard/support" },
     { label: "Message", icon: Mail, href: "/user-dashboard/messages" },
     { label: "Settings", icon: Settings, href: "/user-dashboard/settings" },
+    
   ],
 
   trainer: [
