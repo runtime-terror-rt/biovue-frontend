@@ -6,13 +6,13 @@ import {
   Plan,
   useUpdatePlanMutation,
 } from "@/redux/features/api/adminDashboard/plan";
+import { toast } from "sonner";
 
 interface EditPlanModalProps {
   isOpen: boolean;
   plan: Plan | null;
   onClose: () => void;
   onSuccess: () => void;
-  onError: (message: string) => void;
 }
 
 interface FormData {
@@ -56,7 +56,6 @@ export default function EditPlanModal({
   plan,
   onClose,
   onSuccess,
-  onError,
 }: EditPlanModalProps) {
   const [updatePlan, { isLoading }] = useUpdatePlanMutation();
   const [formData, setFormData] = useState<FormData | null>(null);
@@ -90,11 +89,12 @@ export default function EditPlanModal({
         price: formData.price.toString(),
         features: formData.features.split("\n").filter((f) => f.trim() !== ""),
       }).unwrap();
+      toast.success("Plan updated successfully!");
       onSuccess();
       onClose();
     } catch (error) {
       console.error("Failed to update plan:", error);
-      onError("Failed to update plan. Please try again.");
+      toast.error("Failed to update plan. Please try again.");
     }
   };
 
@@ -197,11 +197,11 @@ export default function EditPlanModal({
                 </label>
                 <input
                   type="number"
-                  value={formData.projection_limit || 0}
+                  value={formData.projection_limit || ""}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      projection_limit: parseInt(e.target.value),
+                      projection_limit: e.target.value ? parseInt(e.target.value) : null,
                     })
                   }
                   className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F39F6]/20 focus:border-[#4F39F6] transition-all"
@@ -241,7 +241,7 @@ export default function EditPlanModal({
                 />
               </div>
 
-              {/* <div className="pt-4 flex items-center gap-4">
+              <div className="pt-4 flex items-center gap-4">
                 <span
                   className={`text-sm font-medium transition-colors ${formData.status ? "text-[#059669]" : "text-[#6B7280]"}`}
                 >
@@ -251,7 +251,7 @@ export default function EditPlanModal({
                   checked={formData.status}
                   onChange={(val) => setFormData({ ...formData, status: val })}
                 />
-              </div> */}
+              </div>
             </div>
           ) : (
             /* PROFESSIONAL PLAN DESIGN */
@@ -363,27 +363,18 @@ export default function EditPlanModal({
                     </div>
                   </div>
 
-                  {/* <div>
-                    <label className="block text-sm font-medium text-[#4B5563] mb-1.5">
-                      Projection Limit
-                    </label>
-                    <input
-                      type="number"
-                      
-                      className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F39F6]/20 focus:border-[#4F39F6] transition-all"
-                    />
-                  </div> */}
+
                   <div>
                     <label className="block text-sm font-medium text-[#4B5563] mb-1.5">
                       Projection Limit
                     </label>
                     <input
                       type="number"
-                      value={formData.projection_limit || 0}
+                      value={formData.projection_limit || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          projection_limit: parseInt(e.target.value),
+                          projection_limit: e.target.value ? parseInt(e.target.value) : null,
                         })
                       }
                       className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F39F6]/20 focus:border-[#4F39F6] transition-all"
