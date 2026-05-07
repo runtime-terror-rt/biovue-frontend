@@ -6,13 +6,15 @@ import Image from "next/image";
 import { CheckCircle2, ArrowRight, Home, LayoutDashboard, Loader2, Receipt } from "lucide-react";
 import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
 import { cn } from "@/lib/utils";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { baseApi } from "@/redux/features/api/baseApi";
 import { useEffect } from "react";
+import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 
 const PaymentSuccessPage = () => {
   const { data, isLoading, isError } = useGetPaymentSummaryQuery();
   const dispatch = useDispatch();
+  const currentUser = useSelector(selectCurrentUser);
 
   useEffect(() => {
     if (data?.success) {
@@ -52,7 +54,25 @@ const PaymentSuccessPage = () => {
     );
   }
 
-  const { latest_payment, user } = data;
+  const { latest_payment, user: summaryUser } = data;
+
+  const getDashboardUrl = () => {
+    if (!currentUser) return "/user-dashboard";
+
+    const { role, profession_type } = currentUser;
+
+    if (role === "admin") return "/admin-dashboard/overview";
+
+    if (role === "professional" || role === "trainer_coach" || role === "supplement_supplier" || role === "nutritionist") {
+      if (profession_type === "trainer_coach") return "/trainer-dashboard/overview";
+      if (profession_type === "supplement_supplier") return "/supplier-dashboard";
+      if (profession_type === "nutritionist") return "/nutritionist-dashboard/overview";
+    }
+
+    if (role === "individual") return "/user-dashboard";
+
+    return "/user-dashboard";
+  };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-sans py-10">
@@ -75,7 +95,7 @@ const PaymentSuccessPage = () => {
           
           <h1 className="text-4xl md:text-5xl font-bold text-[#1F2D2E] mb-3">Subscription Confirmed!</h1>
           <p className="text-[#5F6F73] text-lg">
-            Thank you, <span className="text-[#1F2D2E] font-semibold">{user?.name || 'Customer'}</span>. Your {latest_payment?.plan?.name || 'Subscription'} plan is now active.
+            Thank you, <span className="text-[#1F2D2E] font-semibold">{summaryUser?.name || currentUser?.name || 'Customer'}</span>. Your {latest_payment?.plan?.name || 'Subscription'} plan is now active.
           </p>
         </div>
 
@@ -121,7 +141,7 @@ const PaymentSuccessPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link 
-              href="/user-dashboard" 
+              href={getDashboardUrl()} 
               className="flex items-center justify-center gap-2 bg-primary text-white py-4 rounded-2xl font-bold  transition-all group"
             >
               <LayoutDashboard size={20} className="group-hover:scale-110 transition-transform" />
