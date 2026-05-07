@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { useCreatePlanMutation } from "@/redux/features/api/adminDashboard/plan";
+import { toast } from "sonner";
 
 interface AddPlanModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  onError: (message: string) => void;
 }
 
 interface FormData {
@@ -20,6 +20,7 @@ interface FormData {
   features: string;
   duration: number;
   member_limit: number | null;
+  projection_limit: number | null;
 }
 
 function Toggle({
@@ -50,7 +51,6 @@ export default function AddPlanModal({
   isOpen,
   onClose,
   onSuccess,
-  onError,
 }: AddPlanModalProps) {
   const [createPlan, { isLoading }] = useCreatePlanMutation();
   const [formData, setFormData] = useState<FormData>({
@@ -62,6 +62,7 @@ export default function AddPlanModal({
     features: "",
     duration: 30,
     member_limit: null,
+    projection_limit: null,
   });
 
   if (!isOpen) return null;
@@ -74,6 +75,7 @@ export default function AddPlanModal({
         price: formData.price.toString(),
         features: formData.features.split("\n").filter((f) => f.trim() !== ""),
       }).unwrap();
+      toast.success("Plan created successfully!");
       onSuccess();
       onClose();
       // Reset form
@@ -86,10 +88,11 @@ export default function AddPlanModal({
         features: "",
         duration: 30,
         member_limit: null,
+        projection_limit: null,
       });
     } catch (error) {
       console.error("Failed to create plan:", error);
-      onError("Failed to create plan. Please try again.");
+      toast.error("Failed to create plan. Please try again.");
     }
   };
 
@@ -191,13 +194,13 @@ export default function AddPlanModal({
                   <input
                     type="number"
                     placeholder="i.e 10"
-                    // value={formData.member_limit || 0}
-                    // onChange={(e) =>
-                    //   setFormData({
-                    //     ...formData,
-                    //     member_limit: parseInt(e.target.value),
-                    //   })
-                    // }
+                    value={formData.projection_limit || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        projection_limit: e.target.value ? parseInt(e.target.value) : null,
+                      })
+                    }
                     className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F39F6]/20 focus:border-[#4F39F6] transition-all"
                   />
                 </div>
@@ -383,13 +386,13 @@ export default function AddPlanModal({
                     <input
                       type="number"
                       placeholder="i.e 10"
-                      // value={formData.member_limit || 0}
-                      // onChange={(e) =>
-                      //   setFormData({
-                      //     ...formData,
-                      //     member_limit: parseInt(e.target.value),
-                      //   })
-                      // }
+                      value={formData.projection_limit || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          projection_limit: e.target.value ? parseInt(e.target.value) : null,
+                        })
+                      }
                       className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F39F6]/20 focus:border-[#4F39F6] transition-all"
                     />
                   </div>

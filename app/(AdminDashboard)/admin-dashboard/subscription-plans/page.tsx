@@ -12,7 +12,6 @@ import {
 import SubscriptionPlansTable from "@/components/AdminDashboard/subscription-plans/SubscriptionTables";
 import AddPlanModal from "@/components/AdminDashboard/subscription-plans/AddPlanModal";
 import EditPlanModal from "@/components/AdminDashboard/subscription-plans/EditPlanModal";
-import Toast from "@/components/AdminDashboard/subscription-plans/Toast";
 import DashboardHeading from "@/components/common/DashboardHeading";
 
 function SubscriptionPlansContent() {
@@ -27,13 +26,7 @@ function SubscriptionPlansContent() {
   const [deletePlan] = useDeletePlanMutation();
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
-
-  const [toast, setToast] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
 
   /* ---------------- FILTER LOGIC ---------------- */
 
@@ -55,14 +48,11 @@ function SubscriptionPlansContent() {
   const handleAddPlanSuccess = () => {
     refetch();
     setShowAddModal(false);
-    setToast({ message: "Plan added successfully!", type: "success" });
   };
 
   const handleEditPlanSuccess = () => {
     refetch();
-    setShowEditModal(false);
     setSelectedPlan(null);
-    setToast({ message: "Plan updated successfully!", type: "success" });
   };
 
   const handleDeletePlan = async (id: number) => {
@@ -136,7 +126,6 @@ function SubscriptionPlansContent() {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSuccess={handleAddPlanSuccess}
-        onError={(msg) => setToast({ message: msg, type: "error" })}
       />
 
       <EditPlanModal
@@ -144,16 +133,9 @@ function SubscriptionPlansContent() {
         plan={selectedPlan}
         onClose={() => setSelectedPlan(null)}
         onSuccess={handleEditPlanSuccess}
-        onError={(msg) => setToast({ message: msg, type: "error" })}
       />
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+
     </div>
   );
 }
