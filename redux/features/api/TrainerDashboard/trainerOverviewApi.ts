@@ -21,6 +21,7 @@ export interface ClientTableItem {
   status: string;
   activity: string;
   user_id: number;
+  connected_at: string;
 }
 
 export interface TodayAction {

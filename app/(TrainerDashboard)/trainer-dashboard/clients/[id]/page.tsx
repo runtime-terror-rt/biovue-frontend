@@ -143,6 +143,7 @@ export default function ClientDetailsPage({
     projectionUsed: apiClient.projection_used || "-",
     status: mappedStatus,
     activity: apiClient.activity || "Recent",
+    connectedDate: apiClient.connected_at || "N/A",
   };
 
   return <ClientDetailsContent clientDetails={clientDetails as any} />;

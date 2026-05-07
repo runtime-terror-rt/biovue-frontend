@@ -35,7 +35,7 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [selectedUserName, setSelectedUserName] = useState<string>("");
-  const statusConfig: Record<string, { label: string, className: string }> = {
+  const statusConfig: Record<string, { label: string; className: string }> = {
     "on-track": {
       label: "On track",
       className: "bg-[#22C55E1A] text-[#22C55E] hover:bg-green-50",
@@ -54,7 +54,8 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
     const s = status.toLowerCase().replace(/\s+/g, "-");
     if (statusConfig[s]) return s;
     if (s === "on-track") return "on-track";
-    if (s === "needs-attention" || s === "need-attention") return "need-attention";
+    if (s === "needs-attention" || s === "need-attention")
+      return "need-attention";
     return "inactive";
   };
 
@@ -70,7 +71,7 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
 
   const toggleSelectUser = (id: number) => {
     setSelectedUserIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
@@ -94,7 +95,10 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
             <TableRow>
               <TableHead className="w-12 py-3">
                 <Checkbox
-                  checked={selectedUserIds.length === visibleClients.length && visibleClients.length > 0}
+                  checked={
+                    selectedUserIds.length === visibleClients.length &&
+                    visibleClients.length > 0
+                  }
                   onCheckedChange={toggleSelectAll}
                   aria-label="Select all"
                 />
@@ -133,8 +137,16 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
                       aria-label={`Select ${client.user_name}`}
                     />
                   </TableCell>
-                  <TableCell className="font-medium py-3 text-[#666666] text-base md:text-lg">
-                    {client.user_name}
+                  <TableCell className="py-3">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-[#666666] text-base md:text-lg">
+                        {client.user_name}
+                      </span>
+
+                      <span className="text-sm text-[#9CA3AF]">
+                        {client.connected_at || "N/A"}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell className="text-[#666666] py-3 text-base md:text-lg">
                     {client.goal || "Not specified"}
@@ -143,9 +155,7 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
                     {client.projection_used || "-"}
                   </TableCell>
                   <TableCell className="text-[#666666] py-3 text-base md:text-lg">
-                    <Badge className={config.className}>
-                      {config.label}
-                    </Badge>
+                    <Badge className={config.className}>{config.label}</Badge>
                   </TableCell>
                   <TableCell className="text-[#666666] py-3 text-base md:text-lg">
                     {client.activity || "Recent"}
@@ -157,10 +167,17 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
                           <MoreVertical size={20} />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl border-[#E4EFFF] shadow-md bg-white">
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-48 p-2 rounded-xl border-[#E4EFFF] shadow-md bg-white"
+                      >
                         <DropdownMenuItem
                           className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-[#F8FBFA] text-sm text-[#041228] font-medium transition-colors"
-                          onClick={() => router.push(`/trainer-dashboard/clients/${client.user_id}`)}
+                          onClick={() =>
+                            router.push(
+                              `/trainer-dashboard/clients/${client.user_id}`,
+                            )
+                          }
                         >
                           <Eye size={16} className="text-[#0FA4A9]" />
                           View Details
@@ -184,7 +201,7 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
           </TableBody>
         </Table>
       </div>
-      
+
       <GiftProjectionModal
         isOpen={isGiftModalOpen}
         onClose={() => {
@@ -192,7 +209,13 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
           setSelectedUserId(null);
           setSelectedUserIds([]);
         }}
-        preselectedUserIds={selectedUserIds.length > 0 ? selectedUserIds : (selectedUserId ? [selectedUserId] : [])}
+        preselectedUserIds={
+          selectedUserIds.length > 0
+            ? selectedUserIds
+            : selectedUserId
+              ? [selectedUserId]
+              : []
+        }
       />
     </div>
   );
