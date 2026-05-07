@@ -73,7 +73,7 @@ const SchedulePage = () => {
   );
 
   const schedules = schedulesData?.data || [];
-  const reminders = (remindersData?.data || []).slice(-5).reverse();
+  const reminders = (remindersData?.data || []).slice(0, 5);
 
   const getReminderIcon = (type: string) => {
     switch (type.toLowerCase()) {
