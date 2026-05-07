@@ -67,7 +67,7 @@ export default function MotivationalMessageModal({
       const sendPromises = selectedUserIds.map(id => 
         sendMessage({
           receiver_id: id,
-          message: `[MOTIVATION] ${message}`,
+          message: `Today's Motivation: ${message}`,
         }).unwrap()
       );
 
