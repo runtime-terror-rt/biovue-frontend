@@ -26,6 +26,7 @@ import VisibilityControls from "./sections/ProgressSettings";
 
 import { ClientDetails } from "../overview/data";
 
+
 export default function ClientDetailsContent({
   clientDetails,
 }: {
@@ -88,9 +89,9 @@ export default function ClientDetailsContent({
               {clientDetails.status.replace("-", " ")}
             </Badge>
           </div>
-          {/* <p className="text-lg text-[#6B7280] font-medium">
-            {clientDetails.connectedDate}
-          </p> */}
+          <p className="text-lg text-[#6B7280] font-medium">
+            Connected Since: {clientDetails.connectedDate}
+          </p>
         </div>
         <div className="flex gap-3">
           <Link
