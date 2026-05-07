@@ -34,10 +34,12 @@ export default function UserDashboardLayout({
     if (path.includes("/user-dashboard/insights")) return "Insights";
     if (path.includes("/user-dashboard/habits")) return "Habits";
     if (path.includes("/user-dashboard/support")) return "Support";
+     if (path.includes("/user-dashboard/schedule")) return "Schedule & Reminders";
     if (path.includes("/user-dashboard/messages")) return "Message";
     if (path.includes("/user-dashboard/settings")) return "Settings";
     if (path.includes("/user-dashboard/upgrade")) return "Upgrade";
     if (path.includes("/user-dashboard/notifications")) return "Notifications";
+   
     
     return "Dashboard";
   };

@@ -58,6 +58,7 @@ export const SIDEBAR_MENU: SidebarMenu = {
     },
     { label: "Insights", icon: Brain, href: "/user-dashboard/insights" },
     { label: "Habits", icon: Repeat, href: "/user-dashboard/habits" },
+    { label: "Schedule & Reminders", icon: Calendar, href: "/user-dashboard/schedule" },
     { label: "Support", icon: HeartHandshake, href: "/user-dashboard/support" },
     { label: "Message", icon: Mail, href: "/user-dashboard/messages" },
     { label: "Settings", icon: Settings, href: "/user-dashboard/settings" },

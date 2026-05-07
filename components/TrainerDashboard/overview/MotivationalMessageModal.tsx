@@ -84,7 +84,7 @@ export default function MotivationalMessageModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
         <div className="px-6 py-5 border-b border-[#F8FBFA] flex justify-between items-center bg-[#F8FBFA]/50 shrink-0">
           <div>
@@ -177,7 +177,7 @@ export default function MotivationalMessageModal({
               placeholder="Type your encouragement here... e.g. Keep up the great work with your nutrition this week! You're making amazing progress."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="min-h-[120px] bg-white border-[#E2E8F0] rounded-xl p-4 text-sm focus:ring-[#0FA4A9]/20 focus:border-[#0FA4A9] transition-all resize-none"
+              className="min-h-30 bg-white border-[#E2E8F0] rounded-xl p-4 text-sm focus:ring-[#0FA4A9]/20 focus:border-[#0FA4A9] transition-all resize-none"
             />
           </div>
         </div>
