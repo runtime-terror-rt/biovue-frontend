@@ -14,7 +14,7 @@ import { selectCurrentUser, updateUser } from "@/redux/features/slice/authSlice"
 
 const PaymentSuccessPage = () => {
   const { data, isLoading, isError } = useGetPaymentSummaryQuery();
-  const { data: userData } = useGetCurrentUserQuery(undefined, {
+  const { data: userData, isLoading: isUserLoading } = useGetCurrentUserQuery(undefined, {
     skip: !data?.success,
   });
   const dispatch = useDispatch();
@@ -28,19 +28,23 @@ const PaymentSuccessPage = () => {
   }, [data, dispatch]);
 
   useEffect(() => {
-    if (userData?.success && userData?.data) {
-      console.log("Updating user state with fresh data...");
-      dispatch(updateUser(userData.data));
+    if (userData?.success) {
+      // Handle nested user data if it exists
+      const freshUser = userData.data?.user || userData.data;
+      if (freshUser) {
+        console.log("Updating user state with fresh data:", freshUser);
+        dispatch(updateUser(freshUser));
+      }
     }
   }, [userData, dispatch]);
 
-  console.log(data,"showpricing data ")
-
-  if (isLoading) {
+  if (isLoading || isUserLoading) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center justify-center p-6">
         <Loader2 className="w-12 h-12 text-[#0FA4A9] animate-spin mb-4" />
-        <p className="text-[#5F6F73] font-medium animate-pulse">Confirming your transaction...</p>
+        <p className="text-[#5F6F73] font-medium animate-pulse">
+          {isLoading ? "Confirming your transaction..." : "Syncing your account..."}
+        </p>
       </div>
     );
   }
