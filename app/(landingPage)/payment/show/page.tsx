@@ -3,20 +3,26 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { CheckCircle2, ArrowRight, Home, LayoutDashboard, Loader2, Receipt } from "lucide-react";
+import { Home, LayoutDashboard, Loader2, Receipt } from "lucide-react";
 import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
 import { useGetCurrentUserQuery } from "@/redux/features/api/auth/authApi";
 import { cn } from "@/lib/utils";
 import { useDispatch, useSelector } from "react-redux";
 import { baseApi } from "@/redux/features/api/baseApi";
 import { useEffect } from "react";
-import { selectCurrentUser, updateUser } from "@/redux/features/slice/authSlice";
+import {
+  selectCurrentUser,
+  updateUser,
+} from "@/redux/features/slice/authSlice";
 
 const PaymentSuccessPage = () => {
   const { data, isLoading, isError } = useGetPaymentSummaryQuery();
-  const { data: userData, isLoading: isUserLoading } = useGetCurrentUserQuery(undefined, {
-    skip: !data?.success,
-  });
+  const { data: userData, isLoading: isUserLoading } = useGetCurrentUserQuery(
+    undefined,
+    {
+      skip: !data?.success,
+    },
+  );
   const dispatch = useDispatch();
   const currentUser = useSelector(selectCurrentUser);
 
@@ -28,22 +34,32 @@ const PaymentSuccessPage = () => {
   }, [data, dispatch]);
 
   useEffect(() => {
-    if (userData?.success) {
+    if (userData?.success && data?.success) {
       // Handle nested user data if it exists
       const freshUser = userData.data?.user || userData.data;
       if (freshUser) {
-        console.log("Updating user state with fresh data:", freshUser);
-        dispatch(updateUser(freshUser));
+        // Enrich user data with plan information from payment summary
+        // This prevents the "redirect loop" if /user/me is slightly behind
+        const enrichedUser = {
+          ...freshUser,
+          plan_id: freshUser.plan_id || data.latest_payment?.plan?.id,
+          plan_name: freshUser.plan_name || data.latest_payment?.plan?.name,
+        };
+
+        console.log("Updating user state with enriched data:", enrichedUser);
+        dispatch(updateUser(enrichedUser));
       }
     }
-  }, [userData, dispatch]);
+  }, [userData, data, dispatch]);
 
   if (isLoading || isUserLoading) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center justify-center p-6">
         <Loader2 className="w-12 h-12 text-[#0FA4A9] animate-spin mb-4" />
         <p className="text-[#5F6F73] font-medium animate-pulse">
-          {isLoading ? "Confirming your transaction..." : "Syncing your account..."}
+          {isLoading
+            ? "Confirming your transaction..."
+            : "Syncing your account..."}
         </p>
       </div>
     );
@@ -55,12 +71,15 @@ const PaymentSuccessPage = () => {
         <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
           <Receipt className="w-10 h-10 text-red-500" />
         </div>
-        <h1 className="text-2xl font-bold text-[#1F2D2E] mb-2">Something went wrong</h1>
+        <h1 className="text-2xl font-bold text-[#1F2D2E] mb-2">
+          Something went wrong
+        </h1>
         <p className="text-[#5F6F73] max-w-md mb-8">
-          We couldn't retrieve your payment details. If you've just completed a payment, it might take a moment to reflect.
+          We couldn&apos;t retrieve your payment details. If you&apos;ve just
+          completed a payment, it might take a moment to reflect.
         </p>
-        <Link 
-          href="/" 
+        <Link
+          href="/"
           className="bg-[#0FA4A9] text-white px-8 py-3 rounded-full font-bold hover:bg-opacity-90 transition-all shadow-md"
         >
           Return Home
@@ -74,14 +93,25 @@ const PaymentSuccessPage = () => {
   const getDashboardUrl = () => {
     if (!currentUser) return "/user-dashboard";
 
-    const { role, profession_type } = currentUser;
+    const { role, profession_type, user_type } = currentUser;
 
     if (role === "admin") return "/admin-dashboard/overview";
 
-    if (role === "professional" || role === "trainer_coach" || role === "supplement_supplier" || role === "nutritionist") {
-      if (profession_type === "trainer_coach") return "/trainer-dashboard/overview";
-      if (profession_type === "supplement_supplier") return "/supplier-dashboard";
-      if (profession_type === "nutritionist") return "/nutritionist-dashboard/overview";
+    // Handle professional roles (consistency with ProtectedRoute)
+    const isProfessional =
+      role === "professional" ||
+      user_type === "professional" ||
+      role === "trainer_coach" ||
+      role === "supplement_supplier" ||
+      role === "nutritionist";
+
+    if (isProfessional) {
+      if (profession_type === "trainer_coach")
+        return "/trainer-dashboard/overview";
+      if (profession_type === "supplement_supplier")
+        return "/supplier-dashboard";
+      if (profession_type === "nutritionist")
+        return "/nutritionist-dashboard/overview";
     }
 
     if (role === "individual") return "/user-dashboard";
@@ -107,10 +137,16 @@ const PaymentSuccessPage = () => {
       <main className="container mx-auto px-6  flex flex-col items-center">
         {/* Success Icon & Heading */}
         <div className="text-center mb-10 animate-in fade-in zoom-in duration-700">
-          
-          <h1 className="text-4xl md:text-5xl font-bold text-[#1F2D2E] mb-3">Subscription Confirmed!</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-[#1F2D2E] mb-3">
+            Subscription Confirmed!
+          </h1>
           <p className="text-[#5F6F73] text-lg">
-            Thank you, <span className="text-[#1F2D2E] font-semibold">{summaryUser?.name || currentUser?.name || 'Customer'}</span>. Your {latest_payment?.plan?.name || 'Subscription'} plan is now active.
+            Thank you,{" "}
+            <span className="text-[#1F2D2E] font-semibold">
+              {summaryUser?.name || currentUser?.name || "Customer"}
+            </span>
+            . Your {latest_payment?.plan?.name || "Subscription"} plan is now
+            active.
           </p>
         </div>
 
@@ -118,13 +154,19 @@ const PaymentSuccessPage = () => {
         <div className="w-full max-w-2xl bg-white rounded-3xl border border-[#E5E9EA] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-10 animate-in slide-in-from-bottom-8 duration-700 delay-150">
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-50">
             <div>
-              <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-1">Transaction ID</p>
-              <p className="text-[#1F2D2E] font-mono text-sm break-all">{latest_payment?.transaction_id || 'N/A'}</p>
+              <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-1">
+                Transaction ID
+              </p>
+              <p className="text-[#1F2D2E] font-mono text-sm break-all">
+                {latest_payment?.transaction_id || "N/A"}
+              </p>
             </div>
             <div className="text-right">
-              <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-1">Status</p>
+              <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-1">
+                Status
+              </p>
               <span className="bg-[#E6F6F6] text-[#0FA4A9] text-xs font-bold px-3 py-1 rounded-full border border-[#B2E2E3]">
-                {(latest_payment?.status || 'Active').toUpperCase()}
+                {(latest_payment?.status || "Active").toUpperCase()}
               </span>
             </div>
           </div>
@@ -133,37 +175,52 @@ const PaymentSuccessPage = () => {
             <div className="flex justify-between items-center px-4 py-5 bg-[#F9FAFB] rounded-2xl border border-gray-50">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center border border-gray-100">
-                   <div className="w-3 h-3 rounded-full bg-[#3A86FF]" />
+                  <div className="w-3 h-3 rounded-full bg-[#3A86FF]" />
                 </div>
                 <div>
-                  <p className="font-bold text-[#1F2D2E]">{latest_payment?.plan?.name || 'Membership'} Plan</p>
-                  <p className="text-xs text-[#5F6F73] font-medium">Billed {(latest_payment?.currency || 'USD').toUpperCase()}</p>
+                  <p className="font-bold text-[#1F2D2E]">
+                    {latest_payment?.plan?.name || "Membership"} Plan
+                  </p>
+                  <p className="text-xs text-[#5F6F73] font-medium">
+                    Billed {(latest_payment?.currency || "USD").toUpperCase()}
+                  </p>
                 </div>
               </div>
-              <p className="text-xl font-bold text-[#1F2D2E]">${latest_payment?.amount || '0.00'}</p>
+              <p className="text-xl font-bold text-[#1F2D2E]">
+                ${latest_payment?.amount || "0.00"}
+              </p>
             </div>
 
             <div className="flex justify-between items-center text-sm px-2">
               <span className="text-[#5F6F73] font-medium">Subtotal</span>
-              <span className="text-[#1F2D2E] font-semibold">${latest_payment?.amount || '0.00'}</span>
+              <span className="text-[#1F2D2E] font-semibold">
+                ${latest_payment?.amount || "0.00"}
+              </span>
             </div>
-           
+
             <div className="pt-4 border-t border-gray-50 flex justify-between items-center px-2">
-              <span className="text-base font-bold text-[#1F2D2E]">Total Amount Paid</span>
-              <span className="text-2xl font-black text-[#0FA4A9]">${latest_payment?.amount || '0.00'}</span>
+              <span className="text-base font-bold text-[#1F2D2E]">
+                Total Amount Paid
+              </span>
+              <span className="text-2xl font-black text-[#0FA4A9]">
+                ${latest_payment?.amount || "0.00"}
+              </span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link 
-              href={getDashboardUrl()} 
+            <Link
+              href={getDashboardUrl()}
               className="flex items-center justify-center gap-2 bg-primary text-white py-4 rounded-2xl font-bold  transition-all group"
             >
-              <LayoutDashboard size={20} className="group-hover:scale-110 transition-transform" />
+              <LayoutDashboard
+                size={20}
+                className="group-hover:scale-110 transition-transform"
+              />
               Go To Dashboard
             </Link>
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="flex items-center justify-center gap-2 bg-[#E6F6F6] text-[#0FA4A9] py-4 rounded-2xl font-bold hover:bg-[#D9EFEF] transition-all border border-[#B2E2E3]"
             >
               <Home size={20} />
@@ -171,8 +228,6 @@ const PaymentSuccessPage = () => {
             </Link>
           </div>
         </div>
-
-        
       </main>
     </div>
   );
