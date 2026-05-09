@@ -16,16 +16,25 @@ import {
 } from "@/redux/features/slice/authSlice";
 
 const PaymentSuccessPage = () => {
-  const { data, isLoading, isError } = useGetPaymentSummaryQuery();
-  const { data: userData, isLoading: isUserLoading } = useGetCurrentUserQuery(
-    undefined,
-    {
-      skip: !data?.success,
-    },
-  );
+  const {
+    data,
+    isLoading,
+    isFetching: isFetchingSummary,
+    isError,
+  } = useGetPaymentSummaryQuery();
+
+  const {
+    data: userData,
+    isLoading: isUserLoading,
+    isFetching: isFetchingUser,
+  } = useGetCurrentUserQuery(undefined, {
+    skip: !data?.success,
+  });
+
   const dispatch = useDispatch();
   const currentUser = useSelector(selectCurrentUser);
 
+  // 1. Invalidate tags once payment is confirmed
   useEffect(() => {
     if (data?.success) {
       console.log("Payment successful, invalidating tags...");
@@ -33,31 +42,52 @@ const PaymentSuccessPage = () => {
     }
   }, [data, dispatch]);
 
+  // 2. Proactively update Redux state with plan info from the payment summary
+  // This ensures that even if /user/me is slow or stale, the local state
+  // has the plan_id needed to pass ProtectedRoute checks.
+  useEffect(() => {
+    if (data?.success && currentUser) {
+      const planId = data.latest_payment?.plan?.id;
+      const planName = data.latest_payment?.plan?.name;
+
+      if (planId && currentUser.plan_id !== planId) {
+        console.log("Enriching Redux user with plan info from payment summary:", planId);
+        dispatch(
+          updateUser({
+            plan_id: planId,
+            plan_name: planName,
+          })
+        );
+      }
+    }
+  }, [data, currentUser, dispatch]);
+
+  // 3. Sync full user data once /user/me re-fetches
   useEffect(() => {
     if (userData?.success && data?.success) {
-      // Handle nested user data if it exists
       const freshUser = userData.data?.user || userData.data;
       if (freshUser) {
-        // Enrich user data with plan information from payment summary
-        // This prevents the "redirect loop" if /user/me is slightly behind
         const enrichedUser = {
           ...freshUser,
-          plan_id: freshUser.plan_id || data.latest_payment?.plan?.id,
-          plan_name: freshUser.plan_name || data.latest_payment?.plan?.name,
+          // Prefer plan info from payment summary if available
+          plan_id: data.latest_payment?.plan?.id || freshUser.plan_id,
+          plan_name: data.latest_payment?.plan?.name || freshUser.plan_name,
         };
 
-        console.log("Updating user state with enriched data:", enrichedUser);
+        console.log("Syncing user state with fresh data:", enrichedUser);
         dispatch(updateUser(enrichedUser));
       }
     }
   }, [userData, data, dispatch]);
 
-  if (isLoading || isUserLoading) {
+  // We check isFetching as well to ensure we don't show the dashboard button
+  // while the state enrichment/syncing is still in progress.
+  if (isLoading || isUserLoading || isFetchingSummary || isFetchingUser) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center justify-center p-6">
         <Loader2 className="w-12 h-12 text-[#0FA4A9] animate-spin mb-4" />
         <p className="text-[#5F6F73] font-medium animate-pulse">
-          {isLoading
+          {isLoading || isFetchingSummary
             ? "Confirming your transaction..."
             : "Syncing your account..."}
         </p>
