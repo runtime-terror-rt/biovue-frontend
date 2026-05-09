@@ -34,8 +34,14 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
       : true;
 
     // FOR PROFESSIONALS: Ensure they have a plan_id before allowing access to dashboard
-    const isProfessionalUser = role === "professional" || user.user_type === "professional";
+    const isProfessionalUser = 
+      role === "professional" || 
+      user.user_type === "professional" ||
+      ["trainer_coach", "supplement_supplier", "nutritionist"].includes(role) ||
+      ["trainer_coach", "supplement_supplier", "nutritionist"].includes(profession_type);
+
     if (isProfessionalUser && !plan_id && isRoleAllowed && isProfessionAllowed) {
+      console.log("Professional user missing plan_id, redirecting to choose-plan");
       router.replace("/register/business/choose-plan");
       return;
     }
