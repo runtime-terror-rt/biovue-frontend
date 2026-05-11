@@ -25,8 +25,10 @@ type ProjectionItem = ProjectionGalleryResponse["data"][0];
 
 const getFullUrl = (url?: string) => {
   if (!url) return "";
-  // Remove double slashes but preserve protocol (https://)
-  return url.replace(/([^:]\/)\/+/g, "$1");
+  if (url.startsWith("http")) return url;
+  const base = "https://ai.biovuedigitalwellness.com";
+  const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
+  return `${base}${normalizedUrl}`;
 };
 
 const formatDateShort = (dateString: string) => {
@@ -145,6 +147,7 @@ export default function ProjectionGallery() {
                             src={getFullUrl(thumbnailUrl)}
                             alt="Thumbnail"
                             fill
+                            unoptimized
                             className="object-cover"
                           />
                         </div>
@@ -248,6 +251,7 @@ export default function ProjectionGallery() {
                             alt="Current Lifestyle Projection"
                             width={500}
                             height={400}
+                            unoptimized
                             className="w-full object-contain max-h-96"
                           />
                         </div>
@@ -307,6 +311,7 @@ export default function ProjectionGallery() {
                             alt="Future Goal Projection"
                             width={500}
                             height={400}
+                            unoptimized
                             className="w-full object-contain max-h-96"
                           />
                         </div>

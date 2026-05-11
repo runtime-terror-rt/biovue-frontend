@@ -23,6 +23,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import SubscriptionGuard from "@/components/common/SubscriptionGuard";
 
 type ProjectionItem = ProjectionGalleryResponse["data"][0];
+ 
+const getFullUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  const base = "https://ai.biovuedigitalwellness.com";
+  const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
+  return `${base}${normalizedUrl}`;
+};
 
 const formatDateShort = (dateString: string) => {
   if (!dateString) return "N/A";
@@ -131,11 +139,11 @@ export default function ProjectionGallery() {
                         {thumbnailUrl ? (
                           <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-200">
                             <Image
-                              src={thumbnailUrl || "/placeholder-user.png"}
+                              src={getFullUrl(thumbnailUrl) || "/placeholder-user.png"}
                               alt="Thumbnail"
-                              width={48}
-                              height={48}
-                              className="object-cover w-full h-full"
+                              fill
+                              unoptimized
+                              className="object-cover"
                             />
                           </div>
                         ) : (
@@ -240,12 +248,15 @@ export default function ProjectionGallery() {
                             </div>
 
                             <div className="w-full h-auto bg-gray-50 rounded-xl border border-gray-100 overflow-hidden shadow-inner flex items-center justify-center">
-                              <img
-                                src={
+                              <Image
+                                src={getFullUrl(
                                   current.image ||
                                   (current as any).projection_url
-                                }
+                                )}
                                 alt="Current Lifestyle Projection"
+                                width={500}
+                                height={400}
+                                unoptimized
                                 className="w-full object-contain max-h-[400px]"
                               />
                             </div>
@@ -303,11 +314,14 @@ export default function ProjectionGallery() {
                             </div>
 
                             <div className="w-full h-auto bg-gray-50 rounded-xl border border-gray-100 overflow-hidden shadow-inner flex items-center justify-center">
-                              <img
-                                src={
+                              <Image
+                                src={getFullUrl(
                                   future.image || (future as any).projection_url
-                                }
+                                )}
                                 alt="Future Goal Projection"
+                                width={500}
+                                height={400}
+                                unoptimized
                                 className="w-full object-contain max-h-[400px]"
                               />
                             </div>

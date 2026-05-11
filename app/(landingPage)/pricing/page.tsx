@@ -486,8 +486,11 @@ const PricingPage = () => {
                 Plans for API Services
               </h2>
 
-              <p className="text-[#041228] text-center text-[18px] mt-4">
+              <p className="text-[#5F6F73] text-center text-[18px] mt-4 max-w-2xl mx-auto">
                 Integrate BioVue AI into your platform with scalable API plans.
+                <span className="block mt-2 font-bold text-[#3A86FF] uppercase tracking-widest text-sm bg-[#E4EFFF] w-fit mx-auto px-3 py-1 rounded-full">
+                  Not live yet
+                </span>
               </p>
             </div>
 
@@ -528,18 +531,13 @@ const PricingPage = () => {
                     { text: plan.projections, included: true },
                     { text: plan.users, included: true },
                   ]}
-                  cta={
-                    plan.name === "Enterprise" ? "Contact Sales" : "Get Started"
-                  }
-                  ctaColor="bg-[#0FA4A9]"
+                  cta="Not Live Yet"
+                  ctaColor="bg-gray-400"
+                  comingSoon
                   onSelect={() => {
-                    if (plan.name === "Enterprise") {
-                      setIsContactModalOpen(true);
-                    } else {
-                      window.location.href =
-                        "mailto:BioVueSupport@gmail.com?subject=API Plan Inquiry";
-                    }
+                    toast.info("API services are not live yet. Stay tuned!");
                   }}
+                  className="grayscale-[0.3]"
                 />
               ))}
             </div>
@@ -622,12 +620,18 @@ const PricingPage = () => {
               website to deliver real-time health insights to your users.
             </p>
           </div>
-          <a
-            href="mailto:BioVueSupport@gmail.com?subject=API Pricing Inquiry&body=Hi BioVue team,%0D%0A%0D%0AI would like to know about API pricing.%0D%0A%0D%0AThanks."
-            className="bg-[#8E53FF] text-white px-8 py-3 rounded-full font-bold hover:bg-opacity-90 transition-all shadow-md whitespace-nowrap inline-block"
+          <div
+            className="relative group overflow-hidden bg-gray-100 rounded-full"
           >
-            Contact For API Pricing
-          </a>
+            <div
+              className="bg-[#94A3B8] text-white px-10 py-4 rounded-full font-bold transition-all shadow-md whitespace-nowrap inline-block opacity-80 cursor-not-allowed border-2 border-white/50"
+            >
+              Not Live Yet
+            </div>
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex items-center justify-center pointer-events-none">
+               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600">Coming Soon</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -656,15 +660,30 @@ const PricingCard = ({
   onCancel,
   isLoading,
   isCancelling,
+  comingSoon,
   ...props
 }: any) => {
   return (
     <div
       className={cn(
-        "bg-white rounded-xl p-8 border border-[#E5E9EA] shadow-sm transition-all flex flex-col h-full hover:border-blue-100 hover:shadow-md",
+        "bg-white rounded-xl p-8 border border-[#E5E9EA] shadow-sm transition-all flex flex-col h-full hover:border-blue-100 hover:shadow-md relative overflow-hidden",
         active && "border-[#3A86FF] ring-1 ring-[#3A86FF]/10 shadow-lg",
+        comingSoon && "border-gray-100",
+        props.className,
       )}
     >
+      {comingSoon && (
+        <div className="absolute inset-0 z-10 bg-white/40 backdrop-blur-[2px] flex flex-col items-center justify-center p-6 text-center">
+          <div className="bg-white/90 border border-[#3A86FF]/20 shadow-xl rounded-2xl p-6 transform -rotate-3 hover:rotate-0 transition-transform duration-300">
+            <span className="bg-[#E4EFFF] text-[#3A86FF] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] mb-3 block w-fit mx-auto">
+              Coming Soon
+            </span>
+            <p className="text-[#1F2D2E] font-bold text-lg leading-tight">
+              API Integration <br /> Is Not Live Yet
+            </p>
+          </div>
+        </div>
+      )}
       <div className="mb-6">
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-bold text-[#3A86FF] mb-2">{title}</h3>
