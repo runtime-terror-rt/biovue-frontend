@@ -397,7 +397,7 @@ export default function InsightsPage() {
                           <path d="m20 16-2.5-2.5"></path>
                           <circle cx="12" cy="12" r="4"></circle>
                         </svg>
-                        TRAINER&apos;S NOTE
+                        AI TRAINER&apos;S NOTE
                       </div>
                       <p className="text-[#1F2D2E] text-xs font-medium leading-relaxed">
                         {proj.trainers_note}
