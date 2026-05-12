@@ -164,7 +164,7 @@ const SubscriptionManagement = ({
           <span className="text-xs font-bold opacity-90">
             Plan: {activePlanName}
           </span>
-          {(activePlanId || currentUser?.plan_id) && (
+          {(activePlanId || currentUser?.plan_id) && currentUser?.user_type !== "individual" && (
             <div className="flex flex-col items-end gap-1">
               <button
                 onClick={handleCancelSubscription}
@@ -320,20 +320,22 @@ const SubscriptionManagement = ({
                         <span className="text-[10px] font-bold text-[#0FA4A9] uppercase tracking-widest flex items-center gap-1.5 bg-[#EAFBF7] px-3 py-1 rounded-full border border-[#0FA4A9]/20">
                           <Check size={12} strokeWidth={3} /> Active Plan
                         </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCancelSubscription();
-                          }}
-                          disabled={!canCancel || isCancelling}
-                          className={cn(
-                            "text-[10px] font-bold text-red-500 hover:text-red-600 uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition-all",
-                            (!canCancel || isCancelling) &&
-                              "opacity-50 cursor-not-allowed",
-                          )}
-                        >
-                          <Trash2 size={12} /> Cancel
-                        </button>
+                        {currentUser?.user_type !== "individual" && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelSubscription();
+                            }}
+                            disabled={!canCancel || isCancelling}
+                            className={cn(
+                              "text-[10px] font-bold text-red-500 hover:text-red-600 uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition-all",
+                              (!canCancel || isCancelling) &&
+                                "opacity-50 cursor-not-allowed",
+                            )}
+                          >
+                            <Trash2 size={12} /> Cancel
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
