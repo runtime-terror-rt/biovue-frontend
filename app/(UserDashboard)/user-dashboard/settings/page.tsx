@@ -1366,8 +1366,10 @@ const SubscriptionView = ({
               Plan: {activePlanName}
             </span>
             <div className="flex flex-col items-end gap-1">
-              {/* Show cancel button if ANY active plan is detected */}
-              {(activePlanId || currentUser?.plan_id) && (
+              {/* Show cancel button if ANY active plan is detected and NOT an individual account */}
+              {(activePlanId || currentUser?.plan_id) && 
+               currentUser?.user_type !== "individual" && 
+               currentUser?.role !== "individual" && (
                 <>
                   <button
                     onClick={handleCancelSubscription}
@@ -1571,20 +1573,22 @@ const SubscriptionView = ({
                         <span className="text-[10px] font-bold text-[#0FA4A9] uppercase tracking-widest flex items-center gap-1">
                           <Check size={10} /> Active Plan
                         </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCancelSubscription();
-                          }}
-                          disabled={!canCancel || isCancelling}
-                          className={cn(
-                            "text-[10px] font-bold text-red-500 hover:text-red-600 uppercase tracking-widest flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition-all",
-                            (!canCancel || isCancelling) &&
-                              "opacity-50 cursor-not-allowed",
-                          )}
-                        >
-                          <Trash2 size={10} /> Cancel
-                        </button>
+                        {currentUser?.user_type !== "individual" && currentUser?.role !== "individual" && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelSubscription();
+                            }}
+                            disabled={!canCancel || isCancelling}
+                            className={cn(
+                              "text-[10px] font-bold text-red-500 hover:text-red-600 uppercase tracking-widest flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition-all",
+                              (!canCancel || isCancelling) &&
+                                "opacity-50 cursor-not-allowed",
+                            )}
+                          >
+                            <Trash2 size={10} /> Cancel
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
