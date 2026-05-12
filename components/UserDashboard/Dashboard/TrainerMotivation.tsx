@@ -3,7 +3,8 @@
 import { useGetConversationsQuery, Message } from "@/redux/features/api/userDashboard/messagesApi";
 import { Loader2, Quote, Sparkles } from "lucide-react";
 import { useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { cn, getFullImageUrl } from "@/lib/utils";
+import Avatar from "@/components/common/Avatar";
 
 export default function TrainerMotivation() {
   const { data: conversationsData, isLoading } = useGetConversationsQuery();
@@ -47,9 +48,18 @@ export default function TrainerMotivation() {
           <div className="p-2 bg-[#0FA4A9] rounded-lg text-white">
             <Sparkles size={18} />
           </div>
-          <h3 className="text-sm font-bold text-[#1F2D2E] uppercase tracking-wider">
-            Motivation from {latestMessage.sender.name}
-          </h3>
+          <div className="flex items-center gap-2">
+            <Avatar 
+              src={latestMessage.sender.image_url || latestMessage.sender.profile_image || latestMessage.sender.profile?.image} 
+              name={latestMessage.sender.name} 
+              size="sm" 
+              border={false}
+              className="w-6 h-6"
+            />
+            <h3 className="text-sm font-bold text-[#1F2D2E] uppercase tracking-wider">
+              Motivation from {latestMessage.sender.name}
+            </h3>
+          </div>
         </div>
 
         <div className="space-y-2">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { MoreVertical, Send } from "lucide-react";
-
+import { useSearchParams } from "next/navigation";
 import ChatArea from "@/components/TrainerDashboard/messages/ChatArea";
 import ClientsListSidebar from "@/components/TrainerDashboard/messages/ClientListSidebar";
 import MotivationModal from "@/components/TrainerDashboard/messages/MotivationModal";
@@ -14,16 +14,20 @@ import { useGetConnectedClientsQuery } from "@/redux/features/api/TrainerDashboa
 export default function MessagesPage() {
   const { data: connectedClientsData } = useGetConnectedClientsQuery();
   const clients = connectedClientsData?.data || [];
+  const searchParams = useSearchParams();
+  const urlClientId = searchParams.get("clientId");
 
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [openMotivation, setOpenMotivation] = useState(false);
 
   useEffect(() => {
-    if (clients.length > 0 && !selectedClientId) {
+    if (urlClientId) {
+      setSelectedClientId(urlClientId);
+    } else if (clients.length > 0 && !selectedClientId) {
       setSelectedClientId(clients[0].id.toString());
     }
-  }, [clients, selectedClientId]);
+  }, [clients, selectedClientId, urlClientId]);
 
   const selectedClient = clients.find((c) => c.id.toString() === selectedClientId);
 
@@ -60,7 +64,7 @@ export default function MessagesPage() {
           )}
 
           {/* More Vertical */}
-          <div className="relative">
+          {/* <div className="relative">
             <button
               onClick={() => setOpenMenu(!openMenu)}
               className="p-2 cursor-pointer rounded-lg hover:bg-gray-100"
@@ -90,7 +94,7 @@ export default function MessagesPage() {
                 </button>
               </div>
             )}
-          </div>
+          </div> */}
         </div>
       </div>
 

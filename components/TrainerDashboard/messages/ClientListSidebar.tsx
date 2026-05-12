@@ -5,6 +5,7 @@ import { Search, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { useGetConnectedClientsQuery } from "@/redux/features/api/TrainerDashboard/Clients/YourClients";
 import { useMemo } from "react";
+import { getFullImageUrl } from "@/lib/utils";
 
 interface ClientsListSidebarProps {
   selectedClientId: string | null;
@@ -28,7 +29,11 @@ export default function ClientsListSidebar({
     return connectedClientsData.data.map((client) => ({
       id: client.id.toString(),
       name: client.name,
-      avatar: client.image_url,
+      avatar: getFullImageUrl(
+        client.image_url || 
+        (client as any).profile_image || 
+        (client as any).profile?.image
+      ),
       lastMessage: "Connected", // Placeholder since we don't have the last message from this API
       timestamp: "",
     }));

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { User } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getFullImageUrl } from "@/lib/utils";
 
 interface AvatarProps {
   src?: string | null;
@@ -34,8 +34,9 @@ export default function Avatar({
   };
 
   // Add cache-busting parameter to image URL to force refresh
-  const imageSrcWithCacheBust = src && src.trim() !== "" 
-    ? `${src}?t=${Date.now()}` 
+  const fullSrc = getFullImageUrl(src);
+  const imageSrcWithCacheBust = fullSrc && fullSrc.trim() !== "" 
+    ? `${fullSrc}${fullSrc.includes('?') ? '&' : '?'}t=${Date.now()}` 
     : null;
 
   return (
