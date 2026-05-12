@@ -4,24 +4,36 @@ import Image from "next/image";
 import { User, Mail, Lock, Camera, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useChangePasswordMutation } from "@/redux/features/api/auth/authApi";
-import { useCreateUpdateProfileMutation, useGetProfileQuery } from "@/redux/features/api/profileApi";
+import {
+  useCreateUpdateProfileMutation,
+  useGetProfileQuery,
+} from "@/redux/features/api/profileApi";
 import { useSelector, useDispatch } from "react-redux";
-import { selectCurrentUser, updateUser } from "@/redux/features/slice/authSlice";
+import {
+  selectCurrentUser,
+  updateUser,
+} from "@/redux/features/slice/authSlice";
 import { toast } from "sonner";
+import { getFullImageUrl } from "@/lib/utils";
 
 export default function EditProfileForm() {
   const dispatch = useDispatch();
   const loggedInUser = useSelector(selectCurrentUser);
-  
+
   // Use the Redux session ID to fetch detailed profile data
   const effectiveUserId = loggedInUser?.id;
-  
-  const { data: profileData, isLoading: isProfileLoading } = useGetProfileQuery(effectiveUserId || "", {
-    skip: !effectiveUserId
-  });
+
+  const { data: profileData, isLoading: isProfileLoading } = useGetProfileQuery(
+    effectiveUserId || "",
+    {
+      skip: !effectiveUserId,
+    },
+  );
   console.log("profileData", profileData);
-  const [createUpdateProfile, { isLoading: isUpdatingProfile }] = useCreateUpdateProfileMutation();
-  const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
+  const [createUpdateProfile, { isLoading: isUpdatingProfile }] =
+    useCreateUpdateProfileMutation();
+  const [changePassword, { isLoading: isChangingPassword }] =
+    useChangePasswordMutation();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -34,9 +46,7 @@ export default function EditProfileForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getImageUrl = (imagePath: string | null) => {
-    if (!imagePath) return "/images/avatar.png";
-    if (imagePath.startsWith("http") || imagePath.startsWith("/")) return imagePath;
-    return `${process.env.NEXT_PUBLIC_API_BASE_URL}/${imagePath}`;
+    return getFullImageUrl(imagePath, null);
   };
 
   useEffect(() => {
@@ -45,29 +55,39 @@ export default function EditProfileForm() {
 
     // Prioritize specific profile data, then Redux
     const sourceData = profileData?.data || loggedInUser;
-    
+
     if (sourceData) {
       const userObj = sourceData.user || sourceData;
       const profileObj = sourceData.profile || sourceData;
-      
+
       const newName = userObj.name || "";
       const newEmail = userObj.email || "";
-      const newImage = profileObj.image || sourceData.image_url || sourceData.image || null;
-      
+      const newImage =
+        profileObj.image || sourceData.image_url || sourceData.image || null;
+
       // Only update fields if they haven't been manually touched or if we're getting fresh profile data
       if (!hasInitialized || profileData?.data) {
         setName(newName);
         setEmail(newEmail);
         setImagePreview(getImageUrl(newImage));
       }
-      
-      // Mark as fully initialized only when we have the specific profile data 
+
+      // Mark as fully initialized only when we have the specific profile data
       // or if we have Redux data and the profile fetch is definitely not happening
-      if (profileData?.data || (loggedInUser && !isProfileLoading && !effectiveUserId)) {
+      if (
+        profileData?.data ||
+        (loggedInUser && !isProfileLoading && !effectiveUserId)
+      ) {
         setHasInitialized(true);
       }
     }
-  }, [profileData, loggedInUser, hasInitialized, isProfileLoading, effectiveUserId]);
+  }, [
+    profileData,
+    loggedInUser,
+    hasInitialized,
+    isProfileLoading,
+    effectiveUserId,
+  ]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,13 +120,16 @@ export default function EditProfileForm() {
       const res = await createUpdateProfile(formData).unwrap();
       if (res.success) {
         toast.success(res.message || "Profile updated successfully");
-        
+
         // Correctly handle the nested response data
         const updatedUserRaw = res.data?.user || res.data;
         const profileDataRaw = res.data?.profile || res.data;
-        
+
         const finalizedName = updatedUserRaw.name || name;
-        const finalizedImage = profileDataRaw.image || updatedUserRaw.image_url || updatedUserRaw.image;
+        const finalizedImage =
+          profileDataRaw.image ||
+          updatedUserRaw.image_url ||
+          updatedUserRaw.image;
 
         if (finalizedName) setName(finalizedName);
         if (finalizedImage) {
@@ -115,13 +138,14 @@ export default function EditProfileForm() {
 
         const userDataToStore = {
           ...updatedUserRaw,
-          image: finalizedImage
+          image: finalizedImage,
         };
         dispatch(updateUser(userDataToStore));
-        
+
         setSelectedFile(null); // Clear selected file after success
       }
     } catch (err: any) {
+      
       toast.error(err?.data?.message || "Failed to update profile");
     }
   };
@@ -143,7 +167,7 @@ export default function EditProfileForm() {
         new_password: newPassword,
         new_password_confirmation: confirmPassword,
       }).unwrap();
-      
+
       if (res.success) {
         toast.success(res.message || "Password changed successfully");
         setCurrentPassword("");
@@ -158,12 +182,16 @@ export default function EditProfileForm() {
   const handleSaveChanges = async () => {
     const user = loggedInUser;
     const isProfileChanged = name !== user?.name || selectedFile !== null;
-    const isPasswordAttempted = !!(currentPassword || newPassword || confirmPassword);
+    const isPasswordAttempted = !!(
+      currentPassword ||
+      newPassword ||
+      confirmPassword
+    );
 
     if (isProfileChanged) {
       await handleUpdateProfile();
     }
-    
+
     if (isPasswordAttempted) {
       await handleChangePassword();
     }
@@ -189,16 +217,20 @@ export default function EditProfileForm() {
 
       <div className="flex flex-col items-center mb-12">
         <div className="relative group">
-          <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-md">
-            <Image
-              key={imagePreview}
-              src={imagePreview || "/images/avatar.png"}
-              alt="Admin Profile"
-              width={128}
-              height={128}
-              className="object-cover w-full h-full"
-              unoptimized={true}
-            />
+          <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-md flex items-center justify-center bg-slate-50">
+            {imagePreview ? (
+              <Image
+                key={imagePreview}
+                src={imagePreview}
+                alt="Admin Profile"
+                width={128}
+                height={128}
+                className="object-cover w-full h-full"
+                unoptimized={true}
+              />
+            ) : (
+              <User size={64} className="text-slate-300" />
+            )}
           </div>
           <input
             type="file"
@@ -207,14 +239,14 @@ export default function EditProfileForm() {
             className="hidden"
             accept="image/*"
           />
-          <button 
+          <button
             onClick={() => fileInputRef.current?.click()}
             className="absolute bottom-1 right-1 bg-[#4F46E5] text-white p-2 rounded-full border-4 border-white shadow-sm hover:scale-105 transition-transform cursor-pointer"
           >
             <Camera size={18} />
           </button>
         </div>
-        <button 
+        <button
           onClick={() => fileInputRef.current?.click()}
           className="mt-4 text-[#4F46E5] font-bold text-sm hover:underline cursor-pointer"
         >
@@ -235,8 +267,8 @@ export default function EditProfileForm() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="John Anderson"
-              className="w-full bg-slate-50 border border-slate-200 cursor-not-allowed text-[#1E293B] pl-12 pr-4 py-4 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/10 cursor-not focus:border-blue-500/50 transition-all"
+              placeholder="Full Name"
+              className="w-full bg-slate-50 border border-slate-200 text-[#1E293B] pl-12 pr-4 py-4 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all"
             />
           </div>
         </div>
@@ -315,7 +347,7 @@ export default function EditProfileForm() {
       </div>
 
       <div className="flex justify-end gap-4 pt-4">
-        <button 
+        <button
           onClick={() => {
             const sourceData = profileData?.data || loggedInUser;
             const profileObj = sourceData?.profile || sourceData;
@@ -331,12 +363,14 @@ export default function EditProfileForm() {
         >
           Cancel
         </button>
-        <button 
+        <button
           onClick={handleSaveChanges}
           disabled={isUpdatingProfile || isChangingPassword}
           className="px-8 py-3.5 rounded-xl bg-linear-to-r from-[#6366F1] to-[#4F46E5] hover:opacity-80 text-white font-bold text-sm shadow-md active:scale-95 cursor-pointer disabled:opacity-50 flex items-center gap-2"
         >
-          {(isUpdatingProfile || isChangingPassword) && <Loader2 size={16} className="animate-spin" />}
+          {(isUpdatingProfile || isChangingPassword) && (
+            <Loader2 size={16} className="animate-spin" />
+          )}
           Save Changes
         </button>
       </div>
