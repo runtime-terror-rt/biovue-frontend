@@ -101,10 +101,13 @@ export default function ClientDetailsContent({
             <ChevronLeft size={16} />
             Back
           </Link>
-          <button className="flex items-center gap-2 bg-[#0D9488] text-white px-4 py-3 cursor-pointer rounded-lg text-sm font-semibold hover:bg-[#0A7A6F] transition-colors">
+          <Link
+            href={`/trainer-dashboard/messages?clientId=${clientDetails.id}`}
+            className="flex items-center gap-2 bg-[#0D9488] text-white px-4 py-3 cursor-pointer rounded-lg text-sm font-semibold hover:bg-[#0A7A6F] transition-colors"
+          >
             <MessageSquare size={16} />
             Message Client
-          </button>
+          </Link>
         </div>
       </div>
 

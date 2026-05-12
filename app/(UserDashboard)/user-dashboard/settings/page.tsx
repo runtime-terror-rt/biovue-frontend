@@ -44,7 +44,7 @@ import {
   Check,
   Crown,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getFullImageUrl } from "@/lib/utils";
 
 // --- Types ---
 type ViewState = "overview" | "profile" | "subscription";
@@ -659,7 +659,7 @@ const ProfileEditView = ({
       });
 
       if (p?.image) {
-        setImagePreview(p.image);
+        setImagePreview(getFullImageUrl(p.image));
       }
     }
   }, [profileData, currentUser]);

@@ -24,7 +24,7 @@ import {
   User,
   Loader2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getFullImageUrl } from "@/lib/utils";
 import {
   useConnectProfessionMutation,
   useGetConnectedProfessionsQuery,
@@ -441,20 +441,6 @@ const SupportPage = () => {
   const [supportTeamIndex, setSupportTeamIndex] = useState(0);
   const [browseIndex, setBrowseIndex] = useState(0);
 
-  const getFullImageUrl = (url?: any, defaultUrl?: string) => {
-    const fallback = defaultUrl ?? null;
-
-    if (!url || typeof url !== "string" || url === "null" || url === "undefined") {
-      return fallback;
-    }
-
-    if (url.startsWith("http")) return url;
-
-    const storageBase = "https://api.biovuedigitalwellness.com/storage";
-    const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
-
-    return `${storageBase}${normalizedUrl}`;
-  };
 
   const TopImagesRow = ({ items }: { items: any[] }) => {
     if (!items || items.length === 0) return null;
@@ -503,8 +489,10 @@ useEffect(() => {
       item.professional?.profile_image ||
       item.professional?.image_url ||
       item.professional?.image ||
+      item.profile?.image ||
       item.image_url ||
       item.profile_image ||
+      item.image ||
       null;
 
     return {
@@ -587,8 +575,12 @@ useEffect(() => {
       item.professional_info?.profile_image ||
         item.professional_info?.image_url ||
         item.professional_info?.profile?.image ||
+        item.professional?.profile?.image ||
+        item.professional?.profile_image ||
+        item.professional?.image_url ||
         item.image_url ||
-        item.image,
+        item.image ||
+        item.profile_image,
     ),
     status: "Active",
   }));

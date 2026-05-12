@@ -10,6 +10,7 @@ import { User, ChevronDown, LogOut, Settings as SettingsIcon } from "lucide-reac
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { getFullImageUrl } from "@/lib/utils";
 
 interface ProfileDropdownProps {
   roleLabel: string;
@@ -31,8 +32,9 @@ export default function ProfileDropdown({ roleLabel, settingsHref }: ProfileDrop
   const fullName = profileResponse?.data?.name || user?.name || "Professional";
 
   // Add cache-busting parameter to image URL to force refresh when profile is updated
-  const imageSrcWithCacheBust = profileImage 
-    ? `${profileImage}?t=${profile?.updated_at || Date.now()}` 
+  const fullSrc = getFullImageUrl(profileImage);
+  const imageSrcWithCacheBust = fullSrc 
+    ? `${fullSrc}${fullSrc.includes('?') ? '&' : '?'}t=${profile?.updated_at || Date.now()}` 
     : null;
 
   // Close dropdown when clicking outside
