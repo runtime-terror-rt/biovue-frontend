@@ -5,6 +5,10 @@ export interface User {
   name: string;
   email: string;
   image_url: string | null;
+  profile_image?: string | null;
+  profile?: {
+    image?: string | null;
+  };
   user_type: string;
 }
 
