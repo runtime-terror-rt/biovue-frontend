@@ -46,7 +46,7 @@ export default function EditProfileForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getImageUrl = (imagePath: string | null) => {
-    return getFullImageUrl(imagePath, null);
+    return getFullImageUrl(imagePath);
   };
 
   useEffect(() => {
