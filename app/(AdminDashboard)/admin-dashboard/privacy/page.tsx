@@ -11,7 +11,7 @@ import { useGetPrivacyQuery } from "@/redux/features/api/adminDashboard/GetPriva
 export default function PrivacyPage() {
   const [hasPolicy, setHasPolicy] = useState(false);
   const [openModal, setOpenModal] = useState(false);
-
+  const [mode, setMode] = useState<"create" | "edit">("create");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [sections, setSections] = useState([
@@ -22,25 +22,45 @@ export default function PrivacyPage() {
   useEffect(() => {
     if (data?.data) {
       setHasPolicy(true);
-
-      setTitle(data.data.title);
-
-      setSections(
-        data.data.content.map((item) => ({
-          id: item.id,
-          title: item.heading,
-          content: item.content,
-        })),
-      );
     }
   }, [data]);
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setSections([{ id: Date.now(), title: "", content: "" }]);
+  };
+
+  const openCreateModal = () => {
+    setMode("create");
+    resetForm();
+    setOpenModal(true);
+  };
+
+  const openEditModal = () => {
+    if (!data?.data) return;
+
+    setMode("edit");
+
+    setTitle(data.data.title);
+    setDescription("");
+
+    setSections(
+      data.data.content.map((item: any) => ({
+        id: item.id,
+        title: item.heading,
+        content: item.content,
+      })),
+    );
+
+    setOpenModal(true);
+  };
   const addSection = () => {
     setSections([...sections, { id: Date.now(), title: "", content: "" }]);
   };
 
   const updateSection = (id: number | string, field: string, value: string) => {
-    setSections(
-      sections.map((sec) => (sec.id === id ? { ...sec, [field]: value } : sec)),
+    setSections((prev) =>
+      prev.map((sec) => (sec.id === id ? { ...sec, [field]: value } : sec)),
     );
   };
 
@@ -61,37 +81,28 @@ export default function PrivacyPage() {
         })),
       };
 
-      const res = await createPrivacy(payload).unwrap();
+      const res =
+        mode === "edit"
+          ? await createPrivacy(payload).unwrap() // replace later with update API
+          : await createPrivacy(payload).unwrap();
+
       if (res.success) {
-        toast.success(res.message || "Privacy Policy Posted Successfully");
+        toast.success(
+          res.message ||
+            (mode === "edit"
+              ? "Privacy Policy Updated"
+              : "Privacy Policy Created"),
+        );
 
         setHasPolicy(true);
         setOpenModal(false);
-
+        resetForm();
         refetch();
-
-        setTitle("");
-        setDescription("");
-        setSections([{ id: Date.now(), title: "", content: "" }]);
-      }
-
-      //   if (res.success) {
-      //     toast.success(res.message || "Privacy Policy Posted Successfully");
-
-      //     setHasPolicy(true);
-      //     setOpenModal(false);
-
-      //     setTitle("");
-      //     setDescription("");
-      //     setSections([{ id: Date.now(), title: "", content: "" }]);
-      //   }
-      else {
+      } else {
         toast.error(res.message || "Something went wrong");
       }
     } catch (error: any) {
-      console.error("Privacy API Error:", error);
-
-      toast.error(error?.data?.message || "Failed to post privacy policy");
+      toast.error(error?.data?.message || "Failed request");
     }
   };
 
@@ -102,7 +113,7 @@ export default function PrivacyPage() {
         <DashboardHeading heading="Privacy Policy" />
 
         <Button
-          onClick={() => setOpenModal(true)}
+          onClick={openCreateModal}
           className="bg-[#0FA4A9] hover:bg-[#0D8E92] text-white flex items-center gap-2 cursor-pointer"
         >
           <Plus size={16} /> Add Privacy Policy
@@ -118,13 +129,20 @@ export default function PrivacyPage() {
       {hasPolicy && data?.data && (
         <div className="bg-white p-6 rounded-xl border space-y-6">
           {/* Title + Last Updated */}
-          <div>
-            <h2 className="text-xl font-bold">{data.data.title}</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Last updated: {new Date(data.data.updated_at).toLocaleString()}
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold">{data.data.title}</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Last updated: {new Date(data.data.updated_at).toLocaleString()}
+              </p>
+            </div>
+            <Button
+              onClick={openEditModal}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Edit Privacy Policy
+            </Button>
           </div>
-
           {/* Sections */}
           {data.data.content.map((item) => (
             <div key={item.id} className="space-y-1">
@@ -143,7 +161,9 @@ export default function PrivacyPage() {
           <div className="bg-white w-full max-w-2xl rounded-xl p-6 max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Add Privacy Policy</h2>
+              <h2 className="text-xl font-bold">
+                {mode === "edit" ? "Edit Privacy Policy" : "Add Privacy Policy"}
+              </h2>
               <button onClick={() => setOpenModal(false)}>
                 <X />
               </button>
@@ -170,7 +190,7 @@ export default function PrivacyPage() {
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full border p-2 rounded-lg"
+                className="w-full border p-2 rounded-lg h-24 overflow-y-auto resize-none"
                 placeholder="Enter description"
               />
             </div>
@@ -194,7 +214,7 @@ export default function PrivacyPage() {
                     onChange={(e) =>
                       updateSection(sec.id, "content", e.target.value)
                     }
-                    className="w-full border p-2 rounded"
+                    className="w-full border p-2 rounded h-24 resize-none"
                   />
                 </div>
               ))}
@@ -221,7 +241,13 @@ export default function PrivacyPage() {
                 disabled={isLoading}
                 className="px-4 py-2 bg-[#0FA4A9] text-white rounded-lg"
               >
-                {isLoading ? "Posting..." : "Post Privacy"}
+                {isLoading
+                  ? mode === "edit"
+                    ? "Updating..."
+                    : "Posting..."
+                  : mode === "edit"
+                    ? "Update Privacy"
+                    : "Post Privacy"}
               </button>
             </div>
           </div>

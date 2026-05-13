@@ -1,103 +1,45 @@
-// "use client";
-
-// import { useEffect } from 'react';
-// import { useRouter } from 'next/navigation';
-// import axios from 'axios';
-
-// export default function AutoLogout() {
-//   const router = useRouter();
-  
-//   const INACTIVITY_LIMIT = 5 * 60 * 1000; 
-
-//   useEffect(() => {
-//     let timeout;
-
-//     const logoutUser = async () => {
-//       try {
-//         await axios.post('/api/logout'); 
-//       } catch (error) {
-//         console.error("Logout failed", error);
-//       }
-      
-//       localStorage.removeItem('token'); 
-      
-//       router.push('/login');
-//       router.refresh();
-//     };
-
-//     const resetTimer = () => {
-//       if (timeout) clearTimeout(timeout);
-//       timeout = setTimeout(logoutUser, INACTIVITY_LIMIT);
-//     };
-
-//     window.addEventListener('mousemove', resetTimer);
-//     window.addEventListener('keypress', resetTimer);
-//     window.addEventListener('click', resetTimer);
-//     window.addEventListener('scroll', resetTimer);
-
-//     resetTimer();
-
-//     return () => {
-//       if (timeout) clearTimeout(timeout);
-//       window.removeEventListener('mousemove', resetTimer);
-//       window.removeEventListener('keypress', resetTimer);
-//       window.removeEventListener('click', resetTimer);
-//       window.removeEventListener('scroll', resetTimer);
-//     };
-//   }, [router]);
-
-//   return null;
-// }
-
-
-
 "use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { useEffect, useRef, useCallback } from "react";
 
 export default function AutoLogout() {
-  const router = useRouter();
-  
-  const INACTIVITY_LIMIT = 5 * 60 * 1000; 
+  const INACTIVITY_LIMIT = 5 * 60 * 1000;
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const logoutUser = useCallback(() => {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  }, []);
+
+  const resetTimer = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      logoutUser();
+    }, INACTIVITY_LIMIT);
+  }, [logoutUser]);
 
   useEffect(() => {
-    let timeout: NodeJS.Timeout | null = null;
+    const events = ["mousemove", "keypress", "click", "scroll"];
 
-    const logoutUser = async () => {
-      try {
-        await axios.post('/api/logout'); 
-      } catch (error) {
-        console.error("Logout failed", error);
-      }
-      
-      localStorage.removeItem('token'); 
-      
-      router.push('/login');
-      router.refresh();
-    };
+    events.forEach((event) =>
+      window.addEventListener(event, resetTimer)
+    );
 
-    const resetTimer = () => {
-      if (timeout) clearTimeout(timeout);
-      timeout = setTimeout(logoutUser, INACTIVITY_LIMIT);
-    };
-
-    window.addEventListener('mousemove', resetTimer);
-    window.addEventListener('keypress', resetTimer);
-    window.addEventListener('click', resetTimer);
-    window.addEventListener('scroll', resetTimer);
-
-    resetTimer();
+    resetTimer(); // start timer
 
     return () => {
-      if (timeout) clearTimeout(timeout);
-      window.removeEventListener('mousemove', resetTimer);
-      window.removeEventListener('keypress', resetTimer);
-      window.removeEventListener('click', resetTimer);
-      window.removeEventListener('scroll', resetTimer);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      events.forEach((event) =>
+        window.removeEventListener(event, resetTimer)
+      );
     };
-  }, [router]);
+  }, [resetTimer]);
 
   return null;
 }
