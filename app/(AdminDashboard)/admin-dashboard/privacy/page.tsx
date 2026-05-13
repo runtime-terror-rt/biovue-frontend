@@ -136,12 +136,12 @@ export default function PrivacyPage() {
                 Last updated: {new Date(data.data.updated_at).toLocaleString()}
               </p>
             </div>
-            <Button
+            {/* <Button
               onClick={openEditModal}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               Edit Privacy Policy
-            </Button>
+            </Button> */}
           </div>
           {/* Sections */}
           {data.data.content.map((item) => (
