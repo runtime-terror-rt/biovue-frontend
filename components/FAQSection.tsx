@@ -16,7 +16,7 @@ const FAQItemComponent = ({ faq, isOpen, toggle }: { faq: FAQItem; isOpen: boole
         className="w-full py-6 flex items-center justify-between text-left group gap-4 bg-transparent cursor-pointer"
       >
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 flex items-center justify-center transition-colors rounded-[4px] bg-[#0FA4A9]/25">
+          <div className="w-10 h-10 flex items-center justify-center transition-colors rounded-lg bg-[#0FA4A9]/25">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <mask id="mask0_1089_312" style={{ maskType: 'luminance' }} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
                 <path d="M23.5205 0.202637H0.480469V23.2426H23.5205V0.202637Z" fill="white"/>
@@ -90,7 +90,7 @@ const FAQSection = () => {
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="font-roboto font-medium text-4xl sm:text-5xl md:text-6xl lg:text-[64px] leading-tight md:leading-[72px] tracking-[-2px] mb-6"
+              className="font-roboto font-medium text-4xl sm:text-5xl md:text-6xl lg:text-[64px] leading-tight md:leading-18 tracking-[-2px] mb-6"
               style={{
                 background: "linear-gradient(270deg, #4F6BFF 0%, #7B3FE4 100%)",
                 WebkitBackgroundClip: "text",
@@ -105,12 +105,12 @@ const FAQSection = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="font-roboto font-normal text-lg sm:text-xl md:text-2xl leading-relaxed md:leading-[34px] max-w-md"
+              className="font-roboto font-normal text-lg sm:text-xl md:text-2xl leading-relaxed md:leading-9 max-w-md"
               style={{
                 color: "#5F6F73"
               }}
             >
-              Real feedback from people who've used our platform to create, grow, and succeed.
+              Real feedback from people who&apos;ve used our platform to create, grow, and succeed.
             </motion.p>
           </div>
 
