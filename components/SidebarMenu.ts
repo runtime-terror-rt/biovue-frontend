@@ -76,11 +76,11 @@ export const SIDEBAR_MENU: SidebarMenu = {
       icon: Users,
       href: "/trainer-dashboard/clients",
     },
-    {
-      label: "Suggested Clients",
-      icon: BrainCircuitIcon,
-      href: "/trainer-dashboard/suggested-clients",
-    },
+    // {
+    //   label: "Suggested Clients",
+    //   icon: BrainCircuitIcon,
+    //   href: "/trainer-dashboard/suggested-clients",
+    // },
     { label: "Programs", icon: FileText, href: "/trainer-dashboard/programs" },
     { label: "Messages", icon: Mail, href: "/trainer-dashboard/messages" },
     { label: "Calendar", icon: Calendar, href: "/trainer-dashboard/calendar" },
