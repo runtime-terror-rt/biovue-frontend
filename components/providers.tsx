@@ -4,6 +4,8 @@ import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import ReduxProvider from "../redux/provider";
 import { Toaster } from "sonner";
 import React from "react";
+import AutoLogout from "./AutoLogout";
+
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const recaptchaKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
@@ -31,8 +33,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     >
       <ReduxProvider>
         {children}
+        <AutoLogout />
         <Toaster position="top-right" richColors />
       </ReduxProvider>
+
     </GoogleReCaptchaProvider>
   );
 }
