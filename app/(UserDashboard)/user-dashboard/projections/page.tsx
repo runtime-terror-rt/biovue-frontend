@@ -22,14 +22,12 @@ import { useAppSelector } from "@/redux/store/hooks";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { toast } from "sonner";
 import { useCreateFutureGoalMutation } from "@/redux/features/api/userDashboard/Projection/FutureGoal";
-import {
-  ProjectionResponse,
-  useCurrentLifestyleProjectionMutation,
-} from "@/redux/features/api/userDashboard/Projection/CurrentProjection";
 import { useGetLatestProjectionQuery } from "@/redux/features/api/userDashboard/Projection/GetCurrentProjection";
 import { useSaveCurrentProjectionMutation } from "@/redux/features/api/userDashboard/Projection/SaveCurrentProjection";
 import { useSaveFutureGoalMutation } from "@/redux/features/api/userDashboard/Projection/SaveFutureGoal";
 import { useGetFutureGoalProjectionQuery } from "@/redux/features/api/userDashboard/Projection/GetFutureGoal";
+import { useGetProfileQuery } from "@/redux/features/api/profileApi";
+
 import {
   useCombinedProjectionMutation,
   CombinedProjectionResponse,
@@ -57,7 +55,12 @@ const ProjectionsPage = () => {
     useState<CombinedProjectionResponse | null>(null);
 
   const user = useAppSelector(selectCurrentUser);
+  const { data: profileResponse } = useGetProfileQuery(user?.id, {
+    skip: !user?.id,
+  });
+  const userProfile = profileResponse?.data?.profile;
   const router = useRouter();
+
 
   const [combinedProjection, { isLoading: isCombinedLoading }] =
     useCombinedProjectionMutation();
@@ -95,12 +98,13 @@ const ProjectionsPage = () => {
   };
 
   const loadingTexts = [
-    "Analyzing habits and routines…",
+    " Analyzing habits and routines…",
     " Evaluating diet, activity, and sleep…",
     " Calculating health and risk factors…",
     " Projecting future body and wellness…",
     " Generating photorealistic outcome…",
     " Preparing your personalized report….",
+    " Almost there, finalizing your projection…",
   ];
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
 
@@ -328,42 +332,6 @@ const ProjectionsPage = () => {
               </div>
             </div>
           </div>
-
-          {/* Quality */}
-          {/* <div className="space-y-3">
-            <p className="text-sm font-semibold text-[#5F6F73]">Quality</p>
-
-            <div
-              onClick={() => setQuality("fast")}
-              className={cn(
-                "flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all",
-                quality === "fast"
-                  ? "border-[#3A86FF] bg-[#F8FAFF]"
-                  : "border-gray-100 hover:border-gray-200",
-              )}
-            >
-              <span className="font-semibold text-[#041228]">Fast</span>
-              <div
-                className={cn(
-                  "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                  quality === "fast"
-                    ? "border-[#3A86FF] bg-[#3A86FF]"
-                    : "border-gray-300",
-                )}
-              >
-                {quality === "fast" && (
-                  <div className="w-2 h-2 bg-white rounded-full" />
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50">
-              <span className="font-semibold text-gray-400">Ultra</span>
-              <span className="text-xs font-semibold text-gray-400">
-                Pro user
-              </span>
-            </div>
-          </div> */}
         </div>
       </div>
 
@@ -396,7 +364,9 @@ const ProjectionsPage = () => {
           </h3>
           <label className="flex items-center gap-2 text-[#3A86FF] font-medium hover:text-[#2a6fd9] transition-all cursor-pointer">
             {imagePreview ? <RotateCcw size={18} /> : <Upload size={18} />}
-            {imagePreview ? "Replace Photo" : "Upload Your Photo (maximum size: 15 MB)"}
+            {imagePreview
+              ? "Replace Photo"
+              : "Upload Your Photo (maximum size: 15 MB)"}
             <input
               type="file"
               className="hidden"
@@ -408,8 +378,13 @@ const ProjectionsPage = () => {
             Note: For more accurate projections, please upload a photo in a swim
             suit.
           </p>
-          <span className="text-[10px] text-orange-400 mt-2 leading-relaxed bg-[#fffbf8] py-2 px-4 rounded-lg border border-orange-100">Please Upload a Vertical Image</span>
-          <span className="text-[10px] text-gray-400 mt-2 leading-relaxed bg-[#F8FAFF] py-2 px-4 rounded-lg border border-gray-100">Supported formats: JPG, JPEG, PNG, WEBP, GIF, SVG, AVIF, BMP, HEIC, HEIF</span>
+          <span className="text-[10px] text-orange-400 mt-2 leading-relaxed bg-[#fffbf8] py-2 px-4 rounded-lg border border-orange-100">
+            Please Upload a Vertical Image
+          </span>
+          <span className="text-[10px] text-gray-400 mt-2 leading-relaxed bg-[#F8FAFF] py-2 px-4 rounded-lg border border-gray-100">
+            Supported formats: JPG, JPEG, PNG, WEBP, GIF, SVG, AVIF, BMP, HEIC,
+            HEIF
+          </span>
           {/* <span className="text-[10px] text-gray-400 mt-2 leading-relaxed bg-[#F8FAFF] py-2 px-4 rounded-lg border border-gray-100">Maximum file size: 15 MB</span> */}
         </div>
 
@@ -468,11 +443,21 @@ const ProjectionsPage = () => {
         ? projection.expected_changes
         : [];
 
+      const getBodyTypeLabel = () => {
+        if (userProfile?.is_athletic) return "athletic";
+        if (userProfile?.toned) return "toned";
+        if (userProfile?.lean) return "lean";
+        if (userProfile?.muscular) return "muscular";
+        if (userProfile?.curvy_fit) return "curvy-fit";
+        return "muscular"; // Fallback
+      };
+      const bodyType = getBodyTypeLabel();
+
       let goalTitle = `Achieving your goal in ${data.timeframe}`;
       if (isFuture) {
-        goalTitle = `Achieving your goal: Reach muscular physique in ${data.timeframe}`; // Fallback
-        if (user?.profile?.weight && projection?.est_weight) {
-          const currentWeight = parseFloat(user.profile.weight);
+        goalTitle = `Achieving your goal: Reach ${bodyType} physique in ${data.timeframe}`; // Fallback
+        if (userProfile?.weight && projection?.est_weight) {
+          const currentWeight = parseFloat(userProfile.weight);
           const futureWeightStr = projection.est_weight
             .toLowerCase()
             .replace(/[^0-9.]/g, "");
@@ -480,11 +465,11 @@ const ProjectionsPage = () => {
           if (!isNaN(currentWeight) && !isNaN(futureWeight)) {
             const diff = currentWeight - futureWeight;
             if (diff > 0) {
-              goalTitle = `Achieving your goal: Lose ${Math.round(diff)} lbs and reach muscular physique in ${data.timeframe}`;
+              goalTitle = `Achieving your goal: Lose ${Math.round(diff)} lbs and reach ${bodyType} physique in ${data.timeframe}`;
             } else if (diff < 0) {
-              goalTitle = `Achieving your goal: Gain ${Math.round(Math.abs(diff))} lbs and reach muscular physique in ${data.timeframe}`;
+              goalTitle = `Achieving your goal: Gain ${Math.round(Math.abs(diff))} lbs and reach ${bodyType} physique in ${data.timeframe}`;
             } else {
-              goalTitle = `Achieving your goal: Maintain weight and reach muscular physique in ${data.timeframe}`;
+              goalTitle = `Achieving your goal: Maintain weight and reach ${bodyType} physique in ${data.timeframe}`;
             }
           }
         }

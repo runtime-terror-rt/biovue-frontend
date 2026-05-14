@@ -476,9 +476,7 @@ import {
   ArrowRight,
   ChevronDown,
   User,
-  Briefcase,
   Dumbbell,
-  Apple,
   ShoppingBag,
   ShieldCheck,
 } from "lucide-react";
@@ -599,7 +597,7 @@ const RoleDropdown = ({ value, onChange }: RoleDropdownProps) => {
                 }}
               >
                 <span
-                  className="flex items-center justify-center w-8 h-8 rounded-xl flex-shrink-0"
+                  className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0"
                   style={{ backgroundColor: `${role.color}1A` }}
                 >
                   <Icon size={17} style={{ color: role.color }} />
@@ -612,7 +610,7 @@ const RoleDropdown = ({ value, onChange }: RoleDropdownProps) => {
                 </span>
                 {isSelected && (
                   <span
-                    className="ml-auto w-2 h-2 rounded-full flex-shrink-0"
+                    className="ml-auto w-2 h-2 rounded-full shrink-0"
                     style={{ backgroundColor: role.color }}
                   />
                 )}
