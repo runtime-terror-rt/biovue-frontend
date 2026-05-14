@@ -396,7 +396,7 @@ const ProjectionsPage = () => {
           </h3>
           <label className="flex items-center gap-2 text-[#3A86FF] font-medium hover:text-[#2a6fd9] transition-all cursor-pointer">
             {imagePreview ? <RotateCcw size={18} /> : <Upload size={18} />}
-            {imagePreview ? "Replace Photo" : "Upload Your Photo"}
+            {imagePreview ? "Replace Photo" : "Upload Your Photo (maximum size: 15 MB)"}
             <input
               type="file"
               className="hidden"
@@ -408,8 +408,9 @@ const ProjectionsPage = () => {
             Note: For more accurate projections, please upload a photo in a swim
             suit.
           </p>
-          <span className="text-[10px] text-gray-400 mt-2 leading-relaxed bg-[#F8FAFF] py-2 px-4 rounded-lg border border-gray-100">Supported formats: JPG, JPEG, PNG, WEBP</span>
-          <span className="text-[10px] text-gray-400 mt-2 leading-relaxed bg-[#F8FAFF] py-2 px-4 rounded-lg border border-gray-100">Maximum file size: 5 MB</span>
+          <span className="text-[10px] text-orange-400 mt-2 leading-relaxed bg-[#fffbf8] py-2 px-4 rounded-lg border border-orange-100">Please Upload a Vertical Image</span>
+          <span className="text-[10px] text-gray-400 mt-2 leading-relaxed bg-[#F8FAFF] py-2 px-4 rounded-lg border border-gray-100">Supported formats: JPG, JPEG, PNG, WEBP, GIF, SVG, AVIF, BMP, HEIC, HEIF</span>
+          {/* <span className="text-[10px] text-gray-400 mt-2 leading-relaxed bg-[#F8FAFF] py-2 px-4 rounded-lg border border-gray-100">Maximum file size: 15 MB</span> */}
         </div>
 
         <button
