@@ -47,7 +47,7 @@ const PartnersSection = () => {
       </div>
 
       <div className="relative w-full overflow-visible flex flex-col items-center justify-center py-12">
-        {/* Superior Edge Fade Effects */}
+        
         <div className="absolute left-0 top-0 bottom-0 w-20 md:w-40 bg-linear-to-r from-landing to-transparent z-20 pointer-events-none" />
 
         <div className="w-full overflow-visible px-10">
