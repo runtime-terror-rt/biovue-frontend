@@ -49,6 +49,7 @@ const PaymentSuccessPage = () => {
     if (data?.success && currentUser) {
       const planId = data.latest_payment?.plan?.id;
       const planName = data.latest_payment?.plan?.name;
+      const planType = data.latest_payment?.plan?.plan_type;
 
       if (planId && currentUser.plan_id !== planId) {
         console.log("Enriching Redux user with plan info from payment summary:", planId);
@@ -56,6 +57,7 @@ const PaymentSuccessPage = () => {
           updateUser({
             plan_id: planId,
             plan_name: planName,
+            plan_type: planType,
           })
         );
       }
@@ -72,6 +74,7 @@ const PaymentSuccessPage = () => {
           // Prefer plan info from payment summary if available
           plan_id: data.latest_payment?.plan?.id || freshUser.plan_id,
           plan_name: data.latest_payment?.plan?.name || freshUser.plan_name,
+          plan_type: data.latest_payment?.plan?.plan_type || freshUser.plan_type,
         };
 
         console.log("Syncing user state with fresh data:", enrichedUser);
@@ -124,6 +127,13 @@ const PaymentSuccessPage = () => {
     if (!currentUser) return "/user-dashboard";
 
     const { role, profession_type, user_type } = currentUser;
+
+    const planType = latest_payment?.plan?.plan_type || currentUser?.plan_type || summaryUser?.plan_type;
+    const planName = latest_payment?.plan?.name || currentUser?.plan_name || summaryUser?.plan_name;
+
+    if (planType === "api" || (typeof planName === "string" && planName.toLowerCase().includes("api"))) {
+      return "/api-user";
+    }
 
     if (role === "admin") return "/admin-dashboard/overview";
 
