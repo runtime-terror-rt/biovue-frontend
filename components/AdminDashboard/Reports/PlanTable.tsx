@@ -39,6 +39,8 @@ export default function PlanTable({ data = [] }: PlanTableProps) {
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       plan.plan_type === "individual"
                         ? "bg-[#8746E726] text-[#8746E7] border border-[#8746E7]"
+                        : plan.plan_type === "api"
+                        ? "bg-[#EC489926] text-[#EC4899] border border-[#EC4899]"
                         : "bg-[#0FA4A926] text-[#0FA4A9] border border-[#0FA4A9]"
                     }`}
                   >

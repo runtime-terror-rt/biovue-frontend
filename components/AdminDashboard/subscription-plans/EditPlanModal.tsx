@@ -17,7 +17,7 @@ interface EditPlanModalProps {
 
 interface FormData {
   name: string;
-  plan_type: "individual" | "professional";
+  plan_type: "individual" | "professional" | "api";
   billing_cycle: string;
   price: number;
   status: boolean;
@@ -101,7 +101,7 @@ export default function EditPlanModal({
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-in fade-in duration-200">
       <div
-        className={`bg-white rounded-2xl shadow-2xl w-full ${formData.plan_type === "professional" ? "max-w-4xl" : "max-w-xl"} mx-4 max-h-[95vh] overflow-y-auto`}
+        className={`bg-white rounded-2xl shadow-2xl w-full ${formData.plan_type !== "individual" ? "max-w-4xl" : "max-w-xl"} mx-4 max-h-[95vh] overflow-y-auto`}
       >
         {/* Header */}
         <div className="flex items-start justify-between px-8 pt-8 pb-4">
@@ -110,6 +110,8 @@ export default function EditPlanModal({
               Edit{" "}
               {formData.plan_type === "individual"
                 ? "Individual"
+                : formData.plan_type === "api"
+                ? "API"
                 : "Professional"}{" "}
               Plan
             </h2>
@@ -117,6 +119,11 @@ export default function EditPlanModal({
               <p className="text-sm text-[#6B7280] mt-1">
                 Configure advanced settings and limits for the professional
                 tier.
+              </p>
+            )}
+            {formData.plan_type === "api" && (
+              <p className="text-sm text-[#6B7280] mt-1">
+                Configure advanced settings and limits for the API tier.
               </p>
             )}
           </div>
@@ -318,25 +325,27 @@ export default function EditPlanModal({
                 {/* Right Column */}
                 <div className="space-y-5">
                   <h3 className="text-[11px] font-bold text-[#4B39EF] uppercase tracking-[0.05em] mb-2">
-                    TEAMS & FEATURES
+                    {formData.plan_type === "api" ? "API LIMITS & SPECS" : "TEAMS & FEATURES"}
                   </h3>
 
-                  <div>
-                    <label className="block text-sm font-medium text-[#4B5563] mb-1.5">
-                      Member Limit
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.member_limit || 0}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          member_limit: parseInt(e.target.value),
-                        })
-                      }
-                      className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F39F6]/20 focus:border-[#4F39F6] transition-all"
-                    />
-                  </div>
+                  {formData.plan_type === "professional" && (
+                    <div>
+                      <label className="block text-sm font-medium text-[#4B5563] mb-1.5">
+                        Member Limit
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.member_limit || 0}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            member_limit: parseInt(e.target.value),
+                          })
+                        }
+                        className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F39F6]/20 focus:border-[#4F39F6] transition-all"
+                      />
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-[#4B5563] mb-1.5">

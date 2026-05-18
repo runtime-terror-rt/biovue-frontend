@@ -39,8 +39,12 @@ export default function SubscriptionPlansTable({
     useTogglePlanStatusMutation();
   const [isViewOpen, setIsViewOpen] = useState(false);
   const getTypeColor = (type: string) => {
-    if (type.toLowerCase() === "individual") {
+    const t = type.toLowerCase();
+    if (t === "individual") {
       return "bg-[#8746E726] text-[#8746E7] border-[#8746E7]";
+    }
+    if (t === "api") {
+      return "bg-[#EC489926] text-[#EC4899] border-[#EC4899]";
     }
     return "bg-[#0FA4A926] text-[#0FA4A9] border-[#0FA4A9]";
   };

@@ -55,6 +55,12 @@ const Navbar = () => {
     const userRole = user?.role;
     const userType = user?.user_type;
     const professionType = user?.profession_type;
+    const planType = user?.plan_type;
+    const planName = user?.plan_name;
+
+    if (planType === "api" || (typeof planName === "string" && planName.toLowerCase().includes("api"))) {
+      return "/api-user";
+    }
 
     if (userRole === "admin") return "/admin-dashboard/overview";
 
@@ -74,6 +80,12 @@ const Navbar = () => {
     if (!user) return "Member";
     const userRole = user?.role || user?.user_type;
     const professionType = user?.profession_type;
+    const planType = user?.plan_type;
+    const planName = user?.plan_name;
+
+    if (planType === "api" || (typeof planName === "string" && planName.toLowerCase().includes("api"))) {
+      return "API Developer";
+    }
 
     if (userRole === "admin") return "Admin";
     if (userRole === "professional") {

@@ -61,6 +61,17 @@ const PricingPage = () => {
       return (Number(a.price) || 0) - (Number(b.price) || 0);
     });
 
+  // Filter API Plans
+  const filteredApiPlans = plans
+    .filter((plan) => plan.plan_type === "api" && plan.status)
+    .sort((a, b) => {
+      const aEnt = a.name?.toLowerCase().includes("enterprise") || false;
+      const bEnt = b.name?.toLowerCase().includes("enterprise") || false;
+      if (aEnt && !bEnt) return 1;
+      if (!aEnt && bEnt) return -1;
+      return (Number(a.price) || 0) - (Number(b.price) || 0);
+    });
+
 
   const handlePlanSelection = async (plan: Plan) => {
     // Enterprise and Custom plan special handling
@@ -488,58 +499,51 @@ const PricingPage = () => {
 
               <p className="text-[#5F6F73] text-center text-[18px] mt-4 max-w-2xl mx-auto">
                 Integrate BioVue AI into your platform with scalable API plans.
-                <span className="block mt-2 font-bold text-[#3A86FF] uppercase tracking-widest text-sm bg-[#E4EFFF] w-fit mx-auto px-3 py-1 rounded-full">
-                  Not live yet
-                </span>
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 container mx-auto">
-              {[
-                {
-                  name: "Micro",
-                  price: "250",
-                  projections: "150 projections",
-                  users: "~75 users",
-                },
-                {
-                  name: "Small",
-                  price: "750",
-                  projections: "500 projections",
-                  users: "~250 users",
-                },
-                {
-                  name: "Medium",
-                  price: "3500",
-                  projections: "2,500 projections",
-                  users: "~1,250 users",
-                },
-                {
-                  name: "Enterprise",
-                  price: "12000",
-                  projections: "12,000 projections",
-                  users: "~6,000 users",
-                },
-              ].map((plan, idx) => (
-                <PricingCard
-                  key={idx}
-                  compact
-                  title={plan.name}
-                  price={plan.price}
-                  period={billingCycle === "monthly" ? "/Month" : "/Year"}
-                  features={[
-                    { text: plan.projections, included: true },
-                    { text: plan.users, included: true },
-                  ]}
-                  cta="Not Live Yet"
-                  ctaColor="bg-gray-400"
-                  comingSoon
-                  onSelect={() => {
-                    toast.info("API services are not live yet. Stay tuned!");
-                  }}
-                  className="grayscale-[0.3]"
-                />
-              ))}
+              {filteredApiPlans.length > 0 ? (
+                filteredApiPlans.map((plan, idx) => (
+                  <PricingCard
+                    key={plan.id}
+                    compact
+                    title={plan.name}
+                    price={
+                      plan.price === "0.00" || plan.price === 0
+                        ? "Custom"
+                        : getDisplayPrice(plan.price)
+                    }
+                    period={
+                      plan.price === "0.00" || plan.price === 0 
+                        ? "" 
+                        : billingCycle === "monthly" ? "/Month" : "/Year"
+                    }
+                    features={(() => {
+                      const baseFeatures = (plan.features || []).map((f) => ({ text: f, included: true }));
+                      const limits = [];
+                      if (plan.projection_limit) {
+                        limits.push({ text: `${plan.projection_limit.toLocaleString()} AI Projections`, included: true });
+                      }
+                      return [...limits, ...baseFeatures];
+                    })()}
+                    cta={
+                      plan.name.toLowerCase().includes("enterprise") ||
+                      plan.price === "0.00" ||
+                      plan.price === 0
+                        ? "Contact Via Mail"
+                        : "Buy Now"
+                    }
+                    ctaColor="bg-[#0FA4A9]"
+                    onSelect={() => handlePlanSelection(plan)}
+                    isLoading={loadingPlanId === plan.id}
+                  />
+                ))
+              ) : (
+                <div className="col-span-full py-12 text-center text-gray-500 italic text-sm bg-white rounded-2xl border border-gray-100 shadow-sm">
+                  No API service plans available at this moment.
+                </div>
+              )}
             </div>
           </section>
         </>

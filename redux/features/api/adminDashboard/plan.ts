@@ -3,7 +3,7 @@ import { baseApi } from "../baseApi";
 export interface Plan {
   id: number;
   name: string;
-  plan_type: "individual" | "professional";
+  plan_type: "individual" | "professional" | "api";
   billing_cycle: string;
   duration: number;
   member_limit: number | null;

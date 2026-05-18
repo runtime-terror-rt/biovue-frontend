@@ -23,7 +23,19 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
       return;
     }
 
-    const { role, profession_type, plan_id } = user;
+    const { role, profession_type, plan_id, plan_name, plan_type } = user;
+
+    // Check if the user has an API plan
+    const isApiPlan = plan_type === "api" || (typeof plan_name === "string" && plan_name.toLowerCase().includes("api"));
+
+    if (isApiPlan) {
+      if (allowedRoles.includes("api-user")) {
+        setIsAuthorized(true);
+      } else {
+        router.replace("/api-user");
+      }
+      return;
+    }
 
     // Check if the user's role is allowed
     const isRoleAllowed = allowedRoles.includes(role);
