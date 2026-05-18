@@ -22,6 +22,8 @@ export interface PaymentSummaryResponse {
     id: number;
     name: string;
     email: string;
+    plan_type?: string;
+    plan_name?: string;
   };
   latest_payment: {
     id: number;
@@ -35,6 +37,7 @@ export interface PaymentSummaryResponse {
       id: number;
       name: string;
       price: string;
+      plan_type?: string;
     };
   };
   payment_history: Array<{
@@ -49,6 +52,7 @@ export interface PaymentSummaryResponse {
       id: number;
       name: string;
       price: string;
+      plan_type?: string;
     };
   }>;
 }
