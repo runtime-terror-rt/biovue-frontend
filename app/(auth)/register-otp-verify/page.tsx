@@ -144,7 +144,7 @@ const RegisterOTPVerifyContent = () => {
                 OTP Required
               </h2>
               <p className="text-[#98A2B3] text-xs md:text-sm font-medium mb-8 px-2 leading-relaxed">
-                Enter the 5 digits OTP code we've sent{" "}
+                Enter the 5 digits OTP code we&apos;ve sent{" "}
                 <br className="hidden md:block" />
                 in your email address
               </p>
