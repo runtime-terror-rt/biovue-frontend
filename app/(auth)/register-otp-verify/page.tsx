@@ -115,7 +115,7 @@ const RegisterOTPVerifyContent = () => {
         </Link>
       </div>
       <div className="relative flex flex-col items-center justify-center bg-[#F4FBFA] px-6 min-h-screen py-12 overflow-hidden">
-        <div className="w-full max-w-[550px] flex flex-col items-center">
+        <div className="w-full max-w-140 flex flex-col items-center">
           {/* Logo Container */}
           <div className="mb-12">
             <Image
