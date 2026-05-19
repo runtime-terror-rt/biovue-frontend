@@ -75,15 +75,15 @@ const PricingPage = () => {
 
   const handlePlanSelection = async (plan: Plan) => {
     // Enterprise and Custom plan special handling
-    if (
-      plan.name?.toLowerCase().includes("enterprise") ||
-      (plan.plan_type === "professional" &&
-        (plan.price === "0.00" || plan.price === 0))
-    ) {
-      setContactEmail(user?.email || "");
-      setIsContactModalOpen(true);
-      return;
-    }
+    // if (
+    //   plan.name?.toLowerCase().includes("enterprise") ||
+    //   (plan.plan_type === "professional" &&
+    //     (plan.price === "0.00" || plan.price === 0))
+    // ) {
+    //   setContactEmail(user?.email || "");
+    //   setIsContactModalOpen(true);
+    //   return;
+    // }
 
     // Free Trial / Zero Price handling
     if (
@@ -527,13 +527,7 @@ const PricingPage = () => {
                       }
                       return [...limits, ...baseFeatures];
                     })()}
-                    cta={
-                      plan.name.toLowerCase().includes("enterprise") ||
-                      plan.price === "0.00" ||
-                      plan.price === 0
-                        ? "Contact Via Mail"
-                        : "Buy Now"
-                    }
+                    cta="Buy Now"
                     ctaColor="bg-[#0FA4A9]"
                     onSelect={() => handlePlanSelection(plan)}
                     isLoading={loadingPlanId === plan.id}
@@ -620,7 +614,7 @@ const PricingPage = () => {
               Already have an app or platform?
             </h2>
             <p className="text-[#5F6F73] text-lg">
-              Integrate BioVue's AI projections into your app, platform, or
+              Integrate BioVue&apos;s AI projections into your app, platform, or
               website to deliver real-time health insights to your users.
             </p>
           </div>

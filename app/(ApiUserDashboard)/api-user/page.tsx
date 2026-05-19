@@ -9,10 +9,7 @@ import {
   Key,
   Copy,
   Check,
-  ShieldCheck,
   AlertCircle,
-  Zap,
-  Brain,
   Sparkles,
   Image as ImageIcon,
   Send,
@@ -20,7 +17,6 @@ import {
   LogOut,
   User,
   ChevronDown,
-  CheckCircle,
   Terminal,
   HelpCircle,
 } from "lucide-react";
