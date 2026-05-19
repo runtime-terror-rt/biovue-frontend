@@ -207,7 +207,6 @@ const RegisterOTPVerifyContent = () => {
     </div>
   );
 };
-
 const RegisterOTPVerifyPage = () => {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#F4FBFA]">Loading...</div>}>
