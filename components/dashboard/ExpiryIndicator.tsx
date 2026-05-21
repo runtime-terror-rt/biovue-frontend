@@ -32,7 +32,7 @@ export default function ExpiryIndicator({
       opacity: 1,
       scale: 1,
       y: 0,
-      x: isAlert ? [0, -1.5, 1.5, -1.5, 1.5, 0] : 0, // Subtle shake
+      x: isAlert ? [0, -1.5, 1.5, -1.5, 1.5, 0] : 0,
       transition: {
         y: { duration: 0.4, ease: "easeOut" },
         x: isAlert
@@ -70,7 +70,7 @@ export default function ExpiryIndicator({
           animate="animate"
           whileHover="hover"
           className={cn(
-            "relative flex items-center gap-0.5 p-1 rounded-[16px] border transition-all duration-500 backdrop-blur-md overflow-hidden",
+            "relative flex items-center gap-0.5 p-1 rounded-3xl border transition-all duration-500 backdrop-blur-md overflow-hidden",
             isAlert
               ? "bg-white/95 border-red-200 shadow-sm"
               : "bg-white/80 border-emerald-100/50", // Subtler safe state

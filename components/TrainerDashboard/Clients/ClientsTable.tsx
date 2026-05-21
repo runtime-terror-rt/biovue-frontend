@@ -12,7 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MoreVertical, Eye, Gift } from "lucide-react";
+import { MoreVertical, Eye, Gift, UserMinus } from "lucide-react";
+import { useCancelConnectedUserMutation } from "@/redux/features/api/userDashboard/CancelConnect";
+import Swal from "sweetalert2";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +38,36 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [selectedUserName, setSelectedUserName] = useState<string>("");
+
+  const [cancelConnectedUser] = useCancelConnectedUserMutation();
+
+  const handleDisconnect = async (userId: number, userName: string) => {
+    Swal.fire({
+      title: "Disconnect Client?",
+      text: `Are you sure you want to disconnect ${userName}? This action cannot be undone.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, disconnect",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await cancelConnectedUser({ user_id: userId }).unwrap();
+          if (res.success) {
+            toast.success(res.message || `${userName} has been successfully disconnected.`);
+          } else {
+            toast.error(res.message || "Failed to disconnect client.");
+          }
+        } catch (err: any) {
+          console.error("Disconnect error:", err);
+          toast.error(
+            err?.data?.message || "An error occurred while disconnecting the client."
+          );
+        }
+      }
+    });
+  };
   const statusConfig: Record<string, { label: string; className: string }> = {
     "on-track": {
       label: "On track",
@@ -191,6 +224,13 @@ export default function ClientsTable({ clients, limit }: ClientsTableProps) {
                         >
                           <Gift size={16} className="text-[#0FA4A9]" />
                           Gift Projection
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-[#F8FBFA] text-sm text-red-600 hover:text-red-700 font-medium transition-colors mt-1"
+                          onClick={() => handleDisconnect(client.user_id, client.user_name)}
+                        >
+                          <UserMinus size={16} className="text-red-500" />
+                          Disconnect
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
