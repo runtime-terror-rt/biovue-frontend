@@ -9,6 +9,8 @@ import { Crown } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import ProjectionLimitIndicator from "../dashboard/ProjectionLimitIndicator";
+import ExpiryIndicator from "../dashboard/ExpiryIndicator";
+import MemberLimitIndicator from "../dashboard/MemberLimitIndicator";
 
 export default function TrainerNavbar() {
   const pathname = usePathname();
@@ -45,7 +47,8 @@ export default function TrainerNavbar() {
 
       <div className="flex items-center gap-6">
         <ProjectionLimitIndicator />
-
+        <MemberLimitIndicator />
+        <ExpiryIndicator />
         <NotificationBell iconSize={22} />
 
         {/* Divider */}
