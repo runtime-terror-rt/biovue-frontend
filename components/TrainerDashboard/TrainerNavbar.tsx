@@ -9,7 +9,6 @@ import { Crown } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import ProjectionLimitIndicator from "../dashboard/ProjectionLimitIndicator";
-import MemberLimitIndicator from "../dashboard/MemberLimitIndicator";
 
 export default function TrainerNavbar() {
   const pathname = usePathname();
@@ -30,7 +29,8 @@ export default function TrainerNavbar() {
     if (path.includes("/trainer-dashboard/clients")) return "My Clients";
     if (path.includes("/trainer-dashboard/programs")) return "Programs";
     if (path.includes("/trainer-dashboard/messages")) return "Messages";
-    if (path.includes("/trainer-dashboard/notifications")) return "Notifications";
+    if (path.includes("/trainer-dashboard/notifications"))
+      return "Notifications";
     if (path.includes("/trainer-dashboard/calendar")) return "Calendar";
     return "Dashboard";
   };
@@ -45,16 +45,16 @@ export default function TrainerNavbar() {
 
       <div className="flex items-center gap-6">
         <ProjectionLimitIndicator />
-        <MemberLimitIndicator/>
+
         <NotificationBell iconSize={22} />
-        
+
         {/* Divider */}
         <div className="h-8 w-[1px] bg-gray-100 hidden sm:block"></div>
 
         {/* Unified Profile Dropdown */}
-        <ProfileDropdown 
-          roleLabel="Trainer" 
-          settingsHref="/trainer-dashboard/settings" 
+        <ProfileDropdown
+          roleLabel="Trainer"
+          settingsHref="/trainer-dashboard/settings"
         />
 
         <Link href="/trainer-dashboard/upgrade">
@@ -64,7 +64,13 @@ export default function TrainerNavbar() {
           </button>
         </Link>
       </div>
-      {showPlans && <ProfessionalPlansModal onClose={() => window.history.replaceState({}, "", window.location.pathname)} />}
+      {showPlans && (
+        <ProfessionalPlansModal
+          onClose={() =>
+            window.history.replaceState({}, "", window.location.pathname)
+          }
+        />
+      )}
     </header>
   );
 }
