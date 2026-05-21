@@ -66,17 +66,25 @@ export default function LogHabitModal({
     }
 
     // Validate mandatory fields based on log type
-    if (type === "sleep" && !formData.sleep_hours) {
-      toast.error("Please enter sleep hours.");
-      return;
-    }
-    if (type === "activity" && !formData.daily_steps) {
-      toast.error("Please enter daily steps.");
-      return;
-    }
-    if (type === "hydration" && !formData.water_glasses) {
-      toast.error("Please enter water glasses/ounces.");
-      return;
+    if (type === "sleep") {
+      if (!formData.sleep_hours) {
+        toast.error("Please enter sleep hours.");
+        return;
+      }
+    } else if (type === "activity") {
+      if (!formData.daily_steps) {
+        toast.error("Please enter daily steps.");
+        return;
+      }
+      if (!formData.weight) {
+        toast.error("Please enter weight (required for activity logging).");
+        return;
+      }
+    } else if (type === "hydration") {
+      if (!formData.water_glasses) {
+        toast.error("Please enter water glasses/ounces.");
+        return;
+      }
     }
 
     try {
@@ -92,12 +100,12 @@ export default function LogHabitModal({
 
       const payload = {
         user_id: userId || 3,
-        weight: Number(formData.weight),
+        weight: formData.weight ? Number(formData.weight) : 0,
         // send unit as metric/imperial
         unit: weightUnit === "kg" ? "metric" : "imperial",
-        daily_steps: Number(formData.daily_steps),
-        sleep_hours: Number(formData.sleep_hours),
-        water_glasses: Number(formData.water_glasses),
+        daily_steps: formData.daily_steps ? Number(formData.daily_steps) : 0,
+        sleep_hours: formData.sleep_hours ? Number(formData.sleep_hours) : 0,
+        water_glasses: formData.water_glasses ? Number(formData.water_glasses) : 0,
         // default to date-only for non-sleep logs
         log_date: formatLocalDate(),
       };
@@ -245,39 +253,16 @@ export default function LogHabitModal({
               </div> */}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Weight Input (Optional for Sleep/Hydration, Mandatory for Activity) */}
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between ml-1">
                     <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider flex items-center gap-2">
                       <Scale size={14} className="text-[#3A86FF]" />
                       Weight
-                      {habitType.toLowerCase() === "weight" && (
+                      {habitType.toLowerCase() === "activity" && (
                         <span className="text-red-500">*</span>
                       )}
                     </label>
-                    {/* <div className="flex bg-gray-100/80 rounded-lg p-1 border border-gray-200">
-                      <button
-                        type="button"
-                        onClick={() => setWeightUnit("lbs")}
-                        className={`px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
-                          weightUnit === "lbs"
-                            ? "bg-white text-[#3A86FF] shadow-sm"
-                            : "text-gray-400 hover:text-gray-600"
-                        }`}
-                      >
-                        Imperial (lbs)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setWeightUnit("kg")}
-                        className={`px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
-                          weightUnit === "kg"
-                            ? "bg-white text-[#3A86FF] shadow-sm"
-                            : "text-gray-400 hover:text-gray-600"
-                        }`}
-                      >
-                        Metric (kg)
-                      </button>
-                    </div> */}
                   </div>
                   <div className="relative">
                     <input
@@ -291,63 +276,63 @@ export default function LogHabitModal({
                   </div>
                 </div>
 
-                {/* Steps */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
-                    <Footprints size={14} className="text-[#3A86FF]" />
-                    Daily Steps
-                    {habitType.toLowerCase() === "activity" && (
+                {/* Steps (Mandatory - Activity only) */}
+                {habitType.toLowerCase() === "activity" && (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
+                      <Footprints size={14} className="text-[#3A86FF]" />
+                      Daily Steps
                       <span className="text-red-500">*</span>
-                    )}
-                  </label>
-                  <input
-                    type="number"
-                    name="daily_steps"
-                    value={formData.daily_steps}
-                    onChange={handleChange}
-                    placeholder="Enter value..."
-                    className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
-                  />
-                </div>
+                    </label>
+                    <input
+                      type="number"
+                      name="daily_steps"
+                      value={formData.daily_steps}
+                      onChange={handleChange}
+                      placeholder="Enter value..."
+                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
+                    />
+                  </div>
+                )}
 
-                {/* Sleep */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
-                    <Bed size={14} className="text-[#3A86FF]" />
-                    Sleep Hours
-                    {habitType.toLowerCase() === "sleep" && (
+                {/* Sleep Hours (Mandatory - Sleep only) */}
+                {habitType.toLowerCase() === "sleep" && (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
+                      <Bed size={14} className="text-[#3A86FF]" />
+                      Sleep Hours
                       <span className="text-red-500">*</span>
-                    )}
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    name="sleep_hours"
-                    value={formData.sleep_hours}
-                    onChange={handleChange}
-                    placeholder="Enter value..."
-                    className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
-                  />
-                </div>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="sleep_hours"
+                      value={formData.sleep_hours}
+                      onChange={handleChange}
+                      placeholder="Enter value..."
+                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
+                    />
+                  </div>
+                )}
 
-                {/* Hydration */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
-                    <Droplets size={14} className="text-[#3A86FF]" />
-                    Water Ounces
-                    {habitType.toLowerCase() === "hydration" && (
+                {/* Water Ounces (Mandatory - Hydration only) */}
+                {habitType.toLowerCase() === "hydration" && (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
+                      <Droplets size={14} className="text-[#3A86FF]" />
+                      Water Ounces
                       <span className="text-red-500">*</span>
-                    )}
-                  </label>
-                  <input
-                    type="number"
-                    name="water_glasses"
-                    value={formData.water_glasses}
-                    onChange={handleChange}
-                    placeholder="Enter value..."
-                    className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
-                  />
-                </div>
+                    </label>
+                    <input
+                      type="number"
+                      name="water_glasses"
+                      value={formData.water_glasses}
+                      onChange={handleChange}
+                      placeholder="Enter value..."
+                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
+                    />
+                  </div>
+                )}
               </div>
 
               <button
