@@ -7,6 +7,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
 import { Crown } from "lucide-react";
 import ProjectionLimitIndicator from "@/components/dashboard/ProjectionLimitIndicator";
+import ExpiryIndicator from "@/components/dashboard/ExpiryIndicator";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import ProfileDropdown from "@/components/dashboard/ProfileDropdown";
 import { usePathname } from "next/navigation";
@@ -62,6 +63,7 @@ export default function UserDashboardLayout({
             </h1>
             <div className="flex items-center gap-6 ml-auto">
               <ProjectionLimitIndicator />
+              <ExpiryIndicator />
               <NotificationBell />
               <div className="flex items-center gap-3 pr-2">
                 <ProfileDropdown roleLabel="User" settingsHref="/user-dashboard/settings" />

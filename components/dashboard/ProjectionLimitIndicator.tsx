@@ -2,10 +2,10 @@
 
 import React from "react";
 import { useSubscriptionStatus } from "@/lib/hooks/useSubscriptionStatus";
-import { Zap, Calendar, AlertCircle } from "lucide-react";
+import { Zap, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import MemberLimitIndicator from "./MemberLimitIndicator";
+
 
 export default function ProjectionLimitIndicator() {
   const {
@@ -124,63 +124,7 @@ export default function ProjectionLimitIndicator() {
               </div>
             </motion.div>
           </div>
-          <MemberLimitIndicator />
-          {/* Expiry Section */}
-          <div className="relative z-10 flex items-center gap-2.5 px-3 py-1.5">
-            <motion.div
-              animate={isAlert ? { rotate: [0, 3, -3, 0] } : {}}
-              transition={{ repeat: Infinity, duration: 0.5 }}
-              className={cn(
-                "p-1.5 rounded-lg transition-colors duration-500 shadow-inner bg-gray-50/50",
-                isAlert ? "text-red-600" : "text-emerald-600",
-              )}
-            >
-              <Calendar size={14} strokeWidth={2.5} />
-            </motion.div>
-            <div className="flex flex-col">
-              <span
-                className={cn(
-                  "text-[8px] font-bold uppercase tracking-wider leading-none",
-                  isAlert ? "text-red-400" : "text-emerald-500",
-                )}
-              >
-                Expires
-              </span>
-              <motion.span
-                className={cn(
-                  "text-[13px] font-black leading-none mt-1 flex items-center gap-1",
-                  isAlert ? "text-red-700" : "text-emerald-700",
-                )}
-              >
-                {diffDays <= 0 ? (
-                  <span className="uppercase text-[10px] tracking-tight">
-                    Expired
-                  </span>
-                ) : (
-                  <>
-                    {diffDays}
-                    <span className="text-[9px] font-bold opacity-60 uppercase ml-0.5">
-                      Days
-                    </span>
-                  </>
-                )}
-              </motion.span>
-            </div>
-
-            {/* Pulsing indicator dot for warnings */}
-            {isAlert && (
-              <motion.div
-                animate={{
-                  scale: [1, 1.3, 1],
-                  opacity: [1, 0.5, 1],
-                }}
-                transition={{ repeat: Infinity, duration: 1 }}
-                className={cn(
-                  "w-2 h-2 rounded-full ml-0.5 shadow-sm bg-red-500 shadow-red-200",
-                )}
-              />
-            )}
-          </div>
+          
         </motion.div>
       </AnimatePresence>
     </div>
