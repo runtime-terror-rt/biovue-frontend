@@ -54,7 +54,7 @@ export default function MessagesView() {
           <ChatArea
             clientId={selectedClient.id}
             clientName={selectedClient.name}
-            clientAvatar={selectedClient.avatar}
+            clientAvatar={selectedClient.avatar || undefined}
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-[40px] border border-[#D9E6FF] shadow-xs text-[#94A3B8]">
