@@ -38,6 +38,7 @@ import {
 } from "@/redux/features/api/userDashboard/messagesApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
+import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { toast } from "sonner";
 import SubscriptionGuard from "@/components/common/SubscriptionGuard";
 
@@ -47,8 +48,7 @@ const RECOMMENDED_COACHES = [
     id: 101,
     name: "Sarah Jenkins, RD",
     role: "NUTRITION COACH",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=300&h=300&auto=format&fit=crop",
+    avatar: null,
     priority: "Already connected",
     priorityColor: "text-[#6B7280] bg-[#F3F4FB]",
     description:
@@ -58,8 +58,7 @@ const RECOMMENDED_COACHES = [
     id: 102,
     name: "David Aris",
     role: "WELLNESS COACH",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&h=300&auto=format&fit=crop",
+    avatar: null,
     priority: "Medium PRIORITY",
     priorityColor: "text-[#F59E0B] bg-[#FFFBEB]",
     description: "Recommended based on decreased deep sleep markers.",
@@ -68,8 +67,7 @@ const RECOMMENDED_COACHES = [
     id: 103,
     name: "Marcus Chen",
     role: "PERSONAL TRAINER",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&h=300&auto=format&fit=crop",
+    avatar: null,
     priority: "HIGH PRIORITY",
     priorityColor: "text-[#EF4444] bg-[#FEF2F2]",
     description:
@@ -82,8 +80,7 @@ const ALL_PROFESSIONALS = [
     id: 201,
     name: "Core Supplements",
     role: "SUPPLEMENT SHOP",
-    avatar:
-      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=300&h=300&auto=format&fit=crop",
+    avatar: null,
     rating: 4.9,
     isShop: true,
   },
@@ -91,40 +88,35 @@ const ALL_PROFESSIONALS = [
     id: 202,
     name: "Sarah Jenkins, RD",
     role: "NUTRITION COACH",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=300&h=300&auto=format&fit=crop",
+    avatar: null,
     rating: 4.9,
   },
   {
     id: 203,
     name: "David Aris",
     role: "WELLNESS COACH",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&h=300&auto=format&fit=crop",
+    avatar: null,
     rating: 4.9,
   },
   {
     id: 204,
     name: "Marcus Chen",
     role: "PERSONAL TRAINER",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&h=300&auto=format&fit=crop",
+    avatar: null,
     rating: 4.8,
   },
   {
     id: 205,
     name: "Elena Rios",
     role: "YOGA INSTRUCTOR",
-    avatar:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300&h=300&auto=format&fit=crop",
+    avatar: null,
     rating: 4.7,
   },
   {
     id: 206,
     name: "John Doe",
     role: "THERAPIST",
-    avatar:
-      "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=300&h=300&auto=format&fit=crop",
+    avatar: null,
     rating: 4.6,
   },
 ];
@@ -177,6 +169,18 @@ const SHARED_GOALS = [
   },
 ];
 
+const isStaticPlaceholder = (url?: string | null) => {
+  if (!url) return true;
+  const lowerUrl = url.toLowerCase();
+  return (
+    lowerUrl.includes("user.png") ||
+    lowerUrl.includes("avatar.png") ||
+    lowerUrl.includes("avatar") ||
+    lowerUrl.includes("unsplash.com") ||
+    lowerUrl.includes("placeholder")
+  );
+};
+
 const SafeImage = ({
   src,
   alt,
@@ -196,8 +200,8 @@ const SafeImage = ({
     setImgSrc(src);
   }, [src]);
 
-  // If there's no valid src, render a User icon instead of a default image
-  if (!imgSrc) {
+  // If there's no valid src or it is a static placeholder, render a User icon instead of a default image
+  if (!imgSrc || isStaticPlaceholder(imgSrc)) {
     return (
       <div className={cn("flex items-center justify-center bg-gray-50", className)}>
         <User size={34} className="text-[#9BAFB3]" />
@@ -304,7 +308,16 @@ const SupportTeamCard = ({
   onMessage: () => void;
   onGoals: () => void;
 }) => {
-  const [imgSrc, setImgSrc] = useState(member.avatar);
+  const { data: profileData } = useGetProfileQuery(member.id, {
+    skip: !member.id,
+  });
+
+  const resolvedAvatar = getFullImageUrl(
+    profileData?.data?.profile?.image ||
+      profileData?.data?.profile_image ||
+      profileData?.data?.image_url ||
+      member.avatar,
+  );
 
   return (
     <div className="bg-white rounded-[16px] p-6 border border-[#3A86FF]/25 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col gap-5 min-w-[320px]">
@@ -312,7 +325,7 @@ const SupportTeamCard = ({
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
             <SafeImage
-              src={member.avatar}
+              src={resolvedAvatar}
               alt={member.name}
               width={56}
               height={56}

@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { useGetConnectedClientsQuery } from "@/redux/features/api/TrainerDashboard/Clients/YourClients";
+import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { useMemo } from "react";
 import { getFullImageUrl } from "@/lib/utils";
 
@@ -12,6 +13,46 @@ interface ClientsListSidebarProps {
   onSelectClient: (id: string) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
+}
+
+// Sub-component: fetches profile image for a single client via the profile API.
+// This is necessary because /connected-professions only returns image_url at the
+// top level, which is null for users who uploaded their photo via /profile.
+function ClientAvatar({
+  clientId,
+  fallbackUrl,
+  name,
+}: {
+  clientId: string;
+  fallbackUrl: string | null;
+  name: string;
+}) {
+  const { data: profileData } = useGetProfileQuery(clientId, {
+    skip: !clientId,
+  });
+
+  const imageUrl = getFullImageUrl(
+    profileData?.data?.profile?.image ||
+      profileData?.data?.profile_image ||
+      profileData?.data?.image_url ||
+      fallbackUrl,
+  );
+
+  return (
+    <div className="relative w-12 h-12 shrink-0 rounded-full overflow-hidden border border-[#E5E7EB] bg-gray-50 flex items-center justify-center">
+      {imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt={name}
+          fill
+          unoptimized
+          className="object-cover"
+        />
+      ) : (
+        <UserIcon className="w-6 h-6 text-gray-400" strokeWidth={1.5} />
+      )}
+    </div>
+  );
 }
 
 export default function ClientsListSidebar({
@@ -29,12 +70,8 @@ export default function ClientsListSidebar({
     return connectedClientsData.data.map((client) => ({
       id: client.id.toString(),
       name: client.name,
-      avatar: getFullImageUrl(
-        client.image_url || 
-        (client as any).profile_image || 
-        (client as any).profile?.image
-      ),
-      lastMessage: "Connected", // Placeholder since we don't have the last message from this API
+      rawImageUrl: client.image_url || null,
+      lastMessage: "Connected",
       timestamp: "",
     }));
   }, [connectedClientsData]);
@@ -58,9 +95,13 @@ export default function ClientsListSidebar({
       <ScrollArea className="flex-1 -mr-4 pr-4">
         <div className="space-y-1">
           {isClientsLoading ? (
-            <p className="text-sm text-center text-gray-500 py-4">Loading clients...</p>
+            <p className="text-sm text-center text-gray-500 py-4">
+              Loading clients...
+            </p>
           ) : contacts.length === 0 ? (
-            <p className="text-sm text-center text-gray-500 py-4">No clients found</p>
+            <p className="text-sm text-center text-gray-500 py-4">
+              No clients found
+            </p>
           ) : (
             contacts
               .filter((c) =>
@@ -83,19 +124,12 @@ export default function ClientsListSidebar({
                       <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#0D9488] rounded-r-full" />
                     )}
 
-                    {/* Avatar */}
-                    <div className="relative w-12 h-12 shrink-0 rounded-full overflow-hidden border border-[#E5E7EB] bg-gray-50 flex items-center justify-center">
-                      {client.avatar ? (
-                        <Image
-                          src={client.avatar}
-                          alt={client.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <UserIcon className="w-6 h-6 text-gray-400" strokeWidth={1.5} />
-                      )}
-                    </div>
+                    {/* Avatar — fetches from profile API individually */}
+                    <ClientAvatar
+                      clientId={client.id}
+                      fallbackUrl={client.rawImageUrl}
+                      name={client.name}
+                    />
 
                     {/* Info */}
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -124,4 +158,3 @@ export default function ClientsListSidebar({
     </div>
   );
 }
-

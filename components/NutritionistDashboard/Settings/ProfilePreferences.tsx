@@ -111,7 +111,7 @@ export default function ProfilePreferences() {
               {imagePreview ? (
                 <Image
                   key={imagePreview}
-                  src={imagePreview || "/images/avatar.png"}
+                  src={imagePreview}
                   alt={name || "Nutritionist"}
                   width={112}
                   height={112}

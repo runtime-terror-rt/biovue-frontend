@@ -42,6 +42,18 @@ export default function ProfilePreferences() {
     return `${process.env.NEXT_PUBLIC_API_BASE_URL}/${imagePath}`;
   };
 
+  const isStaticPlaceholder = (url?: string | null) => {
+    if (!url) return true;
+    const lowerUrl = url.toLowerCase();
+    return (
+      lowerUrl.includes("user.png") ||
+      lowerUrl.includes("avatar.png") ||
+      lowerUrl.includes("avatar") ||
+      lowerUrl.includes("unsplash.com") ||
+      lowerUrl.includes("placeholder")
+    );
+  };
+
   useEffect(() => {
     if (currentUser || profileResponse) {
       const pData = profileResponse?.data?.profile;
@@ -177,10 +189,10 @@ export default function ProfilePreferences() {
           <div className="flex items-center gap-8">
             <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
               <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-[#F1F5F9] bg-gray-50 flex items-center justify-center relative">
-                {imagePreview ? (
+                {imagePreview && !isStaticPlaceholder(imagePreview) ? (
                   <Image
                     key={imagePreview}
-                    src={imagePreview || "/images/avatar.png"}
+                    src={imagePreview}
                     alt={formData.name || "Trainer"}
                     fill
                     unoptimized

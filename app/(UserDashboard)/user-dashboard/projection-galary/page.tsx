@@ -139,7 +139,7 @@ export default function ProjectionGallery() {
                         {thumbnailUrl ? (
                           <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-200">
                             <Image
-                              src={getFullUrl(thumbnailUrl) || "/placeholder-user.png"}
+                              src={getFullUrl(thumbnailUrl)}
                               alt="Thumbnail"
                               fill
                               unoptimized
