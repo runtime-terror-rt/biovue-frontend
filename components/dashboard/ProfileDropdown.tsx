@@ -28,12 +28,35 @@ export default function ProfileDropdown({ roleLabel, settingsHref }: ProfileDrop
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const profile = profileResponse?.data?.profile;
-  const profileImage = profile?.image;
+  const profileImage =
+    profile?.image ||
+    profileResponse?.data?.profile_image ||
+    profileResponse?.data?.image ||
+    user?.profile_image ||
+    user?.image ||
+    user?.avatar ||
+    user?.profile?.image ||
+    user?.photo_url ||
+    user?.photoURL ||
+    null;
   const fullName = profileResponse?.data?.name || user?.name || "Professional";
+
+  // Check if image is a static placeholder like avatar.png or user.png
+  const isStaticPlaceholder = (url?: string | null) => {
+    if (!url) return true;
+    const lowerUrl = url.toLowerCase();
+    return (
+      lowerUrl.includes("user.png") ||
+      lowerUrl.includes("avatar.png") ||
+      lowerUrl.includes("avatar") ||
+      lowerUrl.includes("unsplash.com") ||
+      lowerUrl.includes("placeholder")
+    );
+  };
 
   // Add cache-busting parameter to image URL to force refresh when profile is updated
   const fullSrc = getFullImageUrl(profileImage);
-  const imageSrcWithCacheBust = fullSrc 
+  const imageSrcWithCacheBust = fullSrc && !isStaticPlaceholder(fullSrc)
     ? `${fullSrc}${fullSrc.includes('?') ? '&' : '?'}t=${profile?.updated_at || Date.now()}` 
     : null;
 

@@ -28,7 +28,7 @@ export default function MessagesView() {
     return {
       id: contactUser.id.toString(),
       name: contactUser.name,
-      avatar: contactUser.image_url || "/images/user.png"
+      avatar: contactUser.image_url || contactUser.profile_image || contactUser.profile?.image || null
     };
   }, [conversationsData, selectedClientId]);
 
