@@ -487,8 +487,7 @@ const BrowseCard = ({
 const SupportPage = () => {
   const user = useSelector(selectCurrentUser);
   const [nearTab, setNearTab] = useState<"local" | "remote" | "both">("local");
-  // const { data: recommendationsData, isLoading: isLoadingRecommendations } =
-  //   useGetAiRecommendedProfessionalsQuery(user?.id, { skip: !user?.id });
+
   const { data: recommendationsData, isLoading: isLoadingRecommendations } =
     useGetAiRecommendedProfessionalsQuery(String(user?.id), {
       skip: !user?.id,
