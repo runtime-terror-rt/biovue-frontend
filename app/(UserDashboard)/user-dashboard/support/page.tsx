@@ -41,7 +41,7 @@ import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { toast } from "sonner";
 import SubscriptionGuard from "@/components/common/SubscriptionGuard";
-
+import { useCancelConnectedUserMutation } from "@/redux/features/api/userDashboard/CancelConnect";
 // --- Mock Data ---
 const RECOMMENDED_COACHES = [
   {
@@ -203,7 +203,9 @@ const SafeImage = ({
   // If there's no valid src or it is a static placeholder, render a User icon instead of a default image
   if (!imgSrc || isStaticPlaceholder(imgSrc)) {
     return (
-      <div className={cn("flex items-center justify-center bg-gray-50", className)}>
+      <div
+        className={cn("flex items-center justify-center bg-gray-50", className)}
+      >
         <User size={34} className="text-[#9BAFB3]" />
       </div>
     );
@@ -311,6 +313,9 @@ const SupportTeamCard = ({
   const { data: profileData } = useGetProfileQuery(member.id, {
     skip: !member.id,
   });
+  const [isConnected, setIsConnected] = useState(true);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [cancelConnectedUser] = useCancelConnectedUserMutation();
 
   const resolvedAvatar = getFullImageUrl(
     profileData?.data?.profile?.image ||
@@ -318,10 +323,33 @@ const SupportTeamCard = ({
       profileData?.data?.image_url ||
       member.avatar,
   );
+  const handleDisconnect = async () => {
+    if (!isConnected) return; // safety guard
+
+    try {
+      setIsDisconnecting(true);
+
+      console.log("API CALL START"); // debug
+
+      await cancelConnectedUser({
+        user_id: member.id,
+      }).unwrap();
+
+      console.log("API SUCCESS");
+
+      setIsConnected(false);
+      toast.success("Disconnected successfully");
+    } catch (err: any) {
+      console.log("API ERROR", err);
+      toast.error(err?.data?.message || "Failed to disconnect");
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-[16px] p-6 border border-[#3A86FF]/25 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col gap-5 min-w-[320px]">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-row justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
             <SafeImage
@@ -340,13 +368,16 @@ const SupportTeamCard = ({
               {member.name}
             </h3>
             <p className="text-[#5F6F73] text-[10px] font-medium">
-              Currently Support your goal
+              Currently Supporting your goal
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#10B981]/10 bg-[#ECFDF5] w-fit">
+
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#10B981]/10 bg-[#ECFDF5] h-fit">
           <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
-          <span className="text-[10px] font-bold text-[#10B981]">Active</span>
+          <span className="text-[10px] font-bold text-[#10B981] leading-none">
+            Active
+          </span>
         </div>
       </div>
 
@@ -358,9 +389,23 @@ const SupportTeamCard = ({
           Message Coach
           <MessageSquare size={14} />
         </button>
-        <button className="flex-1 border border-[#0FA4A9]/20 text-[#0FA4A9] bg-[#0FA4A9]/5 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-default">
-          Connected
-          <Check size={14} />
+        <button
+          onClick={handleDisconnect}
+          disabled={isDisconnecting}
+          className={`flex-1 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all
+    ${
+      isConnected
+        ? "border border-[#0FA4A9]/20 text-[#0FA4A9] bg-[#0FA4A9]/5 hover:bg-red-50 hover:text-red-500"
+        : "border border-[#10B981]/20 text-[#10B981] bg-[#ECFDF5]"
+    }`}
+        >
+          {isDisconnecting
+            ? "Processing..."
+            : isConnected
+              ? "Disconnect"
+              : "Connected"}
+
+          {!isDisconnecting && <Check size={14} />}
         </button>
       </div>
     </div>
@@ -442,8 +487,7 @@ const BrowseCard = ({
 const SupportPage = () => {
   const user = useSelector(selectCurrentUser);
   const [nearTab, setNearTab] = useState<"local" | "remote" | "both">("local");
-  // const { data: recommendationsData, isLoading: isLoadingRecommendations } =
-  //   useGetAiRecommendedProfessionalsQuery(user?.id, { skip: !user?.id });
+
   const { data: recommendationsData, isLoading: isLoadingRecommendations } =
     useGetAiRecommendedProfessionalsQuery(String(user?.id), {
       skip: !user?.id,
@@ -453,7 +497,6 @@ const SupportPage = () => {
 
   const [supportTeamIndex, setSupportTeamIndex] = useState(0);
   const [browseIndex, setBrowseIndex] = useState(0);
-
 
   const TopImagesRow = ({ items }: { items: any[] }) => {
     if (!items || items.length === 0) return null;
@@ -466,7 +509,9 @@ const SupportPage = () => {
             className="w-12 h-12 rounded-full overflow-hidden bg-gray-50 border border-white shadow-sm"
           >
             <SafeImage
-              src={it?.avatar || getFullImageUrl(it?.professional?.profile?.image)}
+              src={
+                it?.avatar || getFullImageUrl(it?.professional?.profile?.image)
+              }
               alt={it?.name || `professional-${idx}`}
               width={48}
               height={48}
@@ -493,9 +538,9 @@ const SupportPage = () => {
   const onsite = recommendationsData?.onsite || [];
   const remote = recommendationsData?.remote || [];
   const both = recommendationsData?.both || [];
-useEffect(() => {
-  console.log("AI DATA:", recommendationsData);
-}, [recommendationsData]);
+  useEffect(() => {
+    console.log("AI DATA:", recommendationsData);
+  }, [recommendationsData]);
   const mapProfessional = (item: any) => {
     const profileImage =
       item.professional?.profile?.image ||
@@ -1264,7 +1309,11 @@ useEffect(() => {
                   </div>
                   {/* Top 3 professional images from AI recommendations */}
                   <TopImagesRow
-                    items={displayRecommended && displayRecommended.length > 0 ? displayRecommended : displayBrowse}
+                    items={
+                      displayRecommended && displayRecommended.length > 0
+                        ? displayRecommended
+                        : displayBrowse
+                    }
                   />
                 </div>
               </div>
