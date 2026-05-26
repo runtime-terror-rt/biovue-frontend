@@ -482,7 +482,6 @@ const BrowseCard = ({
   );
 };
 
-// --- Main Pages ---
 
 const SupportPage = () => {
   const user = useSelector(selectCurrentUser);
