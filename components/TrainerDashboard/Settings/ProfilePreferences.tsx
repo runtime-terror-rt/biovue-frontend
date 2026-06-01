@@ -93,10 +93,10 @@ export default function ProfilePreferences() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("Image size should be less than 10MB");
-        return;
-      }
+      // if (file.size > 2 * 1024 * 1024) {
+      //   toast.error("Image size should be less than 2MB");
+      //   return;
+      // }
       setImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {

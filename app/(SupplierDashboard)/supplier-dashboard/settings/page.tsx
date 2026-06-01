@@ -76,7 +76,7 @@
 //                   Upload a new profile image
 //                 </span>
 //                 <span className="text-[#94A3B8] text-sm font-semibold uppercase tracking-wider">
-//                   JPG, PNG (Max 2MB)
+//                   JPG, PNG
 //                 </span>
 //               </div>
 //             </div>
@@ -494,7 +494,7 @@ export default function SettingsPage() {
                     Upload a new profile image
                   </span>
                   <span className="text-[#94A3B8] text-sm font-semibold uppercase tracking-wider">
-                    JPG, PNG (Max 2MB)
+                    JPG, PNG
                   </span>
                 </div>
               </div>
