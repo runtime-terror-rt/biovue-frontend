@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, LogOut, Loader2, Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
+import { LogOut, Loader2, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useChangePasswordMutation, useLogoutMutation } from "@/redux/features/api/auth/authApi";
 import { useDispatch } from "react-redux";
 import { logout } from "@/redux/features/slice/authSlice";

@@ -48,7 +48,7 @@ export default function NutritionistNavbar() {
         <NotificationBell iconSize={22} />
         
         {/* Divider */}
-        <div className="h-8 w-[1px] bg-gray-100 hidden sm:block"></div>
+        <div className="h-8 w-px bg-gray-100 hidden sm:block"></div>
 
         {/* Unified Profile Dropdown */}
         <ProfileDropdown 

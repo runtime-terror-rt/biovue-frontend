@@ -61,7 +61,7 @@ export function BulkUploadModal({ onClose }: BulkUploadModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-100 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl p-8 w-[480px] relative flex flex-col gap-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+      <div className="bg-white rounded-3xl p-8 w-120 relative flex flex-col gap-6 shadow-2xl animate-in fade-in zoom-in duration-200">
         {/* Close Button */}
         <button
           className="absolute top-6 right-6 text-[#94A3B8] hover:text-[#041228] transition-colors bg-[#F8FBFA] p-2 rounded-full cursor-pointer"
