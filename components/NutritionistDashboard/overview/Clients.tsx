@@ -1,8 +1,6 @@
-import { Button } from "@/components/ui/button";
 import NutritionistClientsTable from "../Clients/NutritionistClientsTable";
 import DashboardHeading from "@/components/common/DashboardHeading";
-import { ChevronRight } from "lucide-react";
-import Link from "next/link";
+
 import { ClientTableItem } from "@/redux/features/api/NutritionistDashboard/nutritionistOverviewApi";
 
 interface ClientsProps {
@@ -10,7 +8,10 @@ interface ClientsProps {
   isLoading?: boolean;
 }
 
-export default function Clients({ clients: apiClients, isLoading }: ClientsProps) {
+export default function Clients({
+  clients: apiClients,
+  isLoading,
+}: ClientsProps) {
   // Use API data if available, otherwise default to empty array
   const displayClients = apiClients || [];
 

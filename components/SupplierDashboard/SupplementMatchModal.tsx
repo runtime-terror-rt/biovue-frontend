@@ -339,7 +339,7 @@ export default function SupplementMatchModal({
     >
       <div className="w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="relative p-8 bg-linear-to-br from-[#0FA4A9] to-[#0D9488] text-white flex-shrink-0">
+        <div className="relative p-8 bg-linear-to-br from-[#0FA4A9] to-[#0D9488] text-white shrink-0">
           <button
             onClick={onClose}
             className="absolute right-6 top-6 text-white/80 hover:text-white transition-colors cursor-pointer z-10 p-2 hover:bg-white/10 rounded-lg"
@@ -541,7 +541,7 @@ export default function SupplementMatchModal({
         </div>
 
         {/* Footer */}
-        <div className="p-8 pt-0 flex justify-end flex-shrink-0 border-t border-[#F8FBFA]">
+        <div className="p-8 pt-0 flex justify-end shrink-0 border-t border-[#F8FBFA]">
           <Button
             onClick={onClose}
             variant="outline"

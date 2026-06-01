@@ -34,7 +34,7 @@ export default function Actions() {
   return (
     <div className="">
       <h3 className="text-lg font-medium text-foreground mb-4">
-        Today's actions
+        Today&apos;s actions
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {actionCards.map((action, index) => (

@@ -20,7 +20,6 @@ interface ChatAreaProps {
 export default function ChatArea({
   clientId,
   clientName,
-  clientAvatar,
   clientEmail,
 }: ChatAreaProps) {
   const {

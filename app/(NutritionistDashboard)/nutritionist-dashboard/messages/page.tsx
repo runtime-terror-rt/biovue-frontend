@@ -8,7 +8,6 @@ import {
   useGetConversationsQuery,
   useGetMessagesByUserIdQuery,
   useSendMessageMutation,
-  Message,
 } from "@/redux/features/api/userDashboard/messagesApi";
 import { useSelector } from "react-redux";
 
@@ -179,7 +178,7 @@ const NutritionistMessagesPage = () => {
                       : "hover:bg-gray-50",
                   )}
                 >
-                  <div className="relative flex-shrink-0">
+                  <div className="relative shrink-0">
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
                       <Image
                         src={
@@ -311,7 +310,7 @@ const NutritionistMessagesPage = () => {
                   <button
                     onClick={handleSendMessage}
                     disabled={!messageText.trim() || isSending}
-                    className="w-10 h-10 flex items-center justify-center bg-[#0FA4A9] rounded-xl text-white hover:bg-opacity-90 transition-colors disabled:opacity-50 flex-shrink-0"
+                    className="w-10 h-10 flex items-center justify-center bg-[#0FA4A9] rounded-xl text-white hover:bg-opacity-90 transition-colors disabled:opacity-50 shrink-0"
                   >
                     {isSending ? (
                       <Loader2 size={18} className="animate-spin" />

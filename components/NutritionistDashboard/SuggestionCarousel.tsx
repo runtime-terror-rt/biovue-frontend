@@ -108,7 +108,7 @@ export default function SuggestionCarousel({ suggestions }: SuggestionCarouselPr
         </div>
       </div>
 
-      <div className="relative overflow-visible min-h-[380px]">
+      <div className="relative overflow-visible min-h-95">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
@@ -160,7 +160,7 @@ export default function SuggestionCarousel({ suggestions }: SuggestionCarouselPr
                     <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 group-hover:bg-white transition-colors">
                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Match Logic</span>
                       <p className="text-xs text-gray-600 leading-relaxed font-medium italic">
-                        "{suggestion.match_reason}"
+                        {suggestion.match_reason}
                       </p>
                     </div>
                   </div>
