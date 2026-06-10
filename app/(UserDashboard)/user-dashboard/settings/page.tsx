@@ -1247,7 +1247,9 @@ const SubscriptionView = ({
   const [cancelSubscription, { isLoading: isCancelling }] =
     useCancelSubscriptionMutation();
 
-  const plans = plansData?.data || [];
+  const plans = (plansData?.data || []).filter((plan: any) => plan.status === true);
+
+console.log("Plans:", plans);
 
   // Determine active plan ID - source of truth is either the summary (if active status) or the auth user data
   const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
