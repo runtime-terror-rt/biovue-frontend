@@ -34,10 +34,31 @@ export async function handlePlanSelection({
     plan.price === 0 ||
     (plan.name || "").toLowerCase().includes("free trial")
   ) {
+    // If user is authenticated, try to activate the free plan via processPayment
     if (token) {
-      router.push("/user-dashboard");
+      try {
+        setLoadingPlanId?.(plan.id);
+        const response = await processPayment({ plan_id: plan.id, billing }).unwrap();
+        // If backend returns a checkout_url, redirect (rare for free plans)
+        if (response?.checkout_url) {
+          window.location.href = response.checkout_url;
+          return;
+        }
+        // Otherwise assume activation succeeded and navigate to dashboard
+        if (response?.success) {
+          toast.success("Free trial activated");
+          router.push("/user-dashboard");
+        } else {
+          toast.error("Failed to activate free trial. Please try again.");
+        }
+      } catch (error: any) {
+        console.error("Free trial activation error:", error);
+        toast.error(error?.data?.message || "Failed to activate free trial.");
+      } finally {
+        setLoadingPlanId?.(null);
+      }
     } else {
-      router.push("/login");
+      router.push("/register?plan_id=" + plan.id);
     }
     return;
   }

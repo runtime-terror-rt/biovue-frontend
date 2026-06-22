@@ -1265,6 +1265,13 @@ console.log("Plans:", plans);
   const activePlanId = activePlanFromSummary || currentUser?.plan_id;
   const activePlanName = paymentSummary?.latest_payment?.plan?.name || currentUser?.plan_name || (activePlanId ? "Active Plan" : "Free Trial");
 
+  const hasActiveOrTrial = Boolean(
+    activePlanId ||
+      currentUser?.plan_id ||
+      (activePlanName || "").toLowerCase().includes("free trial") ||
+      (currentUser?.plan_name || "").toLowerCase().includes("free trial"),
+  );
+
   // Logic to help the user find their plan if it's on a different cycle
   useEffect(() => {
     if (activePlanId && plans.length > 0) {
@@ -1368,27 +1375,43 @@ console.log("Plans:", plans);
               Plan: {activePlanName}
             </span>
             <div className="flex flex-col items-end gap-1">
-              {/* Show cancel button if ANY active plan is detected and NOT an individual account */}
-              {(activePlanId || currentUser?.plan_id) && 
-               currentUser?.user_type !== "individual" && 
-               currentUser?.role !== "individual" && (
+              {/* Show cancel button for individuals; for others disable within 6 months */}
+              {hasActiveOrTrial && (
                 <>
-                  <button
-                    onClick={handleCancelSubscription}
-                    disabled={isCancelling}
-                    className={cn(
-                      "text-[10px] font-extrabold uppercase tracking-widest border px-4 py-1.5 rounded-lg transition-all",
-                      !isCancelling
-                        ? "border-white/40 hover:bg-white/10 cursor-pointer"
-                        : "border-white/20 text-white/40 cursor-not-allowed opacity-50 grayscale",
-                    )}
-                  >
-                    {isCancelling ? "Cancelling..." : "Cancel Subscription"}
-                  </button>
-                  {!canCancel && activePlanId && (
-                    <span className="text-[8px] font-bold text-white/50 uppercase tracking-tighter">
-                      6 months commitment required
-                    </span>
+                  {currentUser?.user_type === "individual" || currentUser?.role === "individual" ? (
+                    <button
+                      onClick={handleCancelSubscription}
+                      disabled={isCancelling}
+                      className={cn(
+                        "text-[10px] font-extrabold uppercase tracking-widest border px-4 py-1.5 rounded-lg transition-all",
+                        !isCancelling
+                          ? "border-white/40 hover:bg-white/10 cursor-pointer"
+                          : "border-white/20 text-white/40 cursor-not-allowed opacity-50 grayscale",
+                      )}
+                    >
+                      {isCancelling ? "Cancelling..." : "Cancel Subscription"}
+                    </button>
+                  ) : (
+                    <div className="flex flex-col items-end">
+                      <button
+                        onClick={handleCancelSubscription}
+                        disabled={!canCancel || isCancelling}
+                        className={cn(
+                          "text-[10px] font-extrabold uppercase tracking-widest border px-4 py-1.5 rounded-lg transition-all",
+                          (!canCancel || isCancelling)
+                            ? "border-white/20 text-white/40 cursor-not-allowed opacity-50 grayscale"
+                            : "border-white/40 hover:bg-white/10 cursor-pointer",
+                        )}
+                        title={!canCancel ? "You cannot disable within 6 months" : "Cancel subscription"}
+                      >
+                        {isCancelling ? "Cancelling..." : "Cancel Subscription"}
+                      </button>
+                      {!canCancel && activePlanId && (
+                        <span className="text-[8px] font-bold text-white/50 uppercase tracking-tighter">
+                          YOU CANNOT DISABLE WITHIN 6 MONTHS
+                        </span>
+                      )}
+                    </div>
                   )}
                 </>
               )}
