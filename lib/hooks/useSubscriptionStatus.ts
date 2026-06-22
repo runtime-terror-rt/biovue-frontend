@@ -11,6 +11,9 @@ type SubscriptionStatus = {
   projection_limit: number;
   member_limit: number;
   diffDays: number;
+  hasExpiry: boolean;
+  expiryOver: boolean;
+  projectionZero: boolean;
 };
 
 // export const useSubscriptionStatus = (): SubscriptionStatus => {
@@ -91,6 +94,9 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
     projection_limit: 0,
     member_limit: 0,
     diffDays: 0,
+    hasExpiry: false,
+    expiryOver: false,
+    projectionZero: false,
   };
 
   if (!user?.created_at || isLoading) {
@@ -109,20 +115,23 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
         (1000 * 60 * 60 * 24),
     );
 
-    const isBlocked =
-      limitData.projection_limit <= 0 || diffDays <= 0;
+    const projectionZero = limitData.projection_limit <= 0;
+    const expiryOver = diffDays <= 0;
 
     const isSafe =
       limitData.projection_limit >= 2 && diffDays > 3;
 
-    const isWarning = !isBlocked && !isSafe;
+    const isWarning = !projectionZero && !expiryOver && !isSafe;
 
     return {
-      restricted: isBlocked,
+      // keep `restricted` reserved for full account restriction (e.g., trial ended)
+      restricted: false,
       isSafe,
       isWarning,
-      reason: isBlocked
-        ? "subscription_expired_or_no_credits"
+      reason: projectionZero
+        ? "no_credits"
+        : expiryOver
+        ? "subscription_expired"
         : isWarning
         ? "low_credits_or_expiring_soon"
         : "",
@@ -130,6 +139,9 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
       projection_limit: limitData.projection_limit,
       member_limit: limitData.member_limit,
       diffDays,
+      hasExpiry: !!limitData.expired_at,
+      expiryOver,
+      projectionZero,
     };
   }
 
@@ -151,5 +163,8 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
     projection_limit: 0,
     member_limit: 0,
     diffDays: 0,
+    hasExpiry: false,
+    expiryOver: false,
+    projectionZero: false,
   };
 };
