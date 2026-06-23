@@ -184,28 +184,6 @@ export default function ClientDetailsContent({
 
       {/* Program Assignment / Projection Usage */}
       <div className="flex flex-wrap gap-4">
-        {/* Projection Usage */}
-        {/* <Card className="w-fit border-none shadow-xs bg-white">
-          <CardContent className="p-5 space-y-4">
-            <p className="text-base mb-2 font-bold text-[#5F6F73] tracking-wider uppercase">
-              Projection Usage
-            </p>
-            <div className="space-y-1">
-              <h3 className="text-base font-medium text-[#111827]">
-                Used: {clientDetails.projectionUsage.used}/
-                {clientDetails.projectionUsage.total}
-              </h3>
-              <p className="text-sm text-[#5F6F73]">
-                Next reset: {clientDetails.projectionUsage.nextResetDays} days
-              </p>
-              <p className="text-base text-[#22C55E] font-medium whitespace-nowrap">
-                Last projection:{" "}
-                {clientDetails.projectionUsage.lastProjectionDaysAgo} days ago
-              </p>
-            </div>
-          </CardContent>
-        </Card> */}
-
         {/* Program Assignment */}
         <Card className="flex-1 min-w-75 border-none shadow-xs bg-white">
           <CardContent className="p-5 space-y-4">
