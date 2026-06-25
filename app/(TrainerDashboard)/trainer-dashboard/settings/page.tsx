@@ -7,6 +7,7 @@ import RemindersAutomation from "@/components/TrainerDashboard/Settings/Reminder
 import ClientVisibility from "@/components/TrainerDashboard/Settings/ClientVisibility";
 import MessagingPreferences from "@/components/TrainerDashboard/Settings/MessagingPreferences";
 import AccountPrivacy from "@/components/TrainerDashboard/Settings/AccountPrivacy";
+import UpgradePlan from "@/components/TrainerDashboard/Settings/UpgradePlan";
 
 export default function SettingsPage() {
   return (
@@ -20,6 +21,7 @@ export default function SettingsPage() {
 
       <div className=" space-y-10">
         <ProfilePreferences />
+        <UpgradePlan />
         <NotificationSettings />
         {/* <RemindersAutomation />
         <ClientVisibility />
