@@ -27,7 +27,7 @@ const ChangeSourceModal = ({
         <div className="space-y-3">
           {/* Option 1: Connected Device */}
           <label className={cn(
-            "flex items-start gap-4 p-4 rounded-[16px] border-2 cursor-pointer transition-all",
+            "flex items-start gap-4 p-4 rounded-3xl border-2 cursor-pointer transition-all",
             dataSource === "device" ? "border-[#3A86FF] bg-[#F0F6FF]" : "border-gray-100 hover:bg-gray-50 bg-white"
           )}>
             <input 
