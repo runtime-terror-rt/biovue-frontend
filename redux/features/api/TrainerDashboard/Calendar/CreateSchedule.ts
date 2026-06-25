@@ -11,11 +11,9 @@ export interface CreateSchedulePayload {
   private_note: string;
   status?: "scheduled" | "missed" | "completed";
 }
-
 export interface CreateScheduleResponse {
   message: string;
 }
-
 export const scheduleApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createSchedule: builder.mutation<
