@@ -38,17 +38,19 @@ export default function TrainerNavbar() {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between py-4 bg-white border-b border-gray-100 px-6 w-full shrink-0">
-      <div className="flex flex-col">
-        <h1 className="text-xl font-semibold text-[#1F2D2E]">
+    <header className="sticky top-0 z-20 flex items-center justify-between py-4 bg-white border-b border-gray-100 px-4 md:px-6 w-full shrink-0">
+      <div className="flex flex-col pl-12 md:pl-0 flex-1 min-w-0 pr-2">
+        <h1 className="text-lg md:text-xl font-semibold text-[#1F2D2E] truncate">
           {getPageTitle()}
         </h1>
       </div>
 
-      <div className="flex items-center gap-6">
-        <ProjectionLimitIndicator />
-        <MemberLimitIndicator />
-        <ExpiryIndicator />
+      <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
+        <div className="hidden sm:flex items-center gap-2 sm:gap-4 md:gap-6">
+          <ProjectionLimitIndicator />
+          <MemberLimitIndicator />
+          <ExpiryIndicator />
+        </div>
         <NotificationBell iconSize={22} />
 
         {/* Divider */}
@@ -61,9 +63,9 @@ export default function TrainerNavbar() {
         />
 
         <Link href="/trainer-dashboard/upgrade">
-          <button className="flex items-center gap-2 bg-[#0FA4A9] text-white px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
-            <Crown size={18} fill="currentColor" />
-            Upgrade
+          <button className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
+            <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Upgrade</span>
           </button>
         </Link>
       </div>

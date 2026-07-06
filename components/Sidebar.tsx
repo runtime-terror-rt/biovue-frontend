@@ -106,12 +106,11 @@ export default function Sidebar({ role }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
-        className={`sticky top-0 self-start h-screen z-40 bg-white flex flex-col px-3 py-8 md:px-6 transition-all duration-300 ease-in-out border-r border-gray-200 ${
+        className={`fixed md:sticky top-0 left-0 self-start h-screen z-40 bg-white flex flex-col px-3 py-8 md:px-6 transition-all duration-300 ease-in-out border-r border-gray-200 ${
           isExpanded
-            ? "w-65 translate-x-0"
-            : "w-20 -translate-x-full md:translate-x-0 md:w-65"
+            ? "w-64 translate-x-0 shadow-2xl md:shadow-none"
+            : "-translate-x-full md:translate-x-0 w-20 md:w-64"
         }`}
       >
         {/* Logo */}

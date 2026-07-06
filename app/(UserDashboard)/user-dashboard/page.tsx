@@ -114,7 +114,7 @@ const UserDashboard = () => {
               </button>
             </Link>
           </div>
-          <div className="w-full md:w-auto flex flex-col gap-3 min-w-50">
+          <div className="w-full md:w-auto flex flex-col gap-3 min-w-0 md:min-w-[200px]">
             <div className="bg-white border border-[#3A86FF] rounded-xl p-4 flex flex-col transition-all cursor-pointer hover:bg-blue-50">
               <span className="text-[10px] font-bold text-[#5F6F73] uppercase tracking-wider mb-2">
                 Current Goal

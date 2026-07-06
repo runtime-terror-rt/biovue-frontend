@@ -337,8 +337,8 @@ const ProjectionsPage = () => {
 
       {/* Right Column */}
       <div className="space-y-6">
-        <div className="bg-white rounded-[24px] overflow-hidden border border-[#3A86FF]/20 flex flex-col items-center p-12 text-center shadow-sm">
-          <div className="relative w-80 h-[450px] rounded-2xl overflow-hidden mb-6 bg-gray-50 border border-gray-100 shadow-inner">
+        <div className="bg-white rounded-[24px] overflow-hidden border border-[#3A86FF]/20 flex flex-col items-center p-6 md:p-12 text-center shadow-sm">
+          <div className="relative w-full max-w-[320px] h-[450px] rounded-2xl overflow-hidden mb-6 bg-gray-50 border border-gray-100 shadow-inner">
             {imagePreview ? (
               <Image
                 src={imagePreview}

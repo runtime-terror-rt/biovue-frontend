@@ -18,12 +18,12 @@ export default function NutritionistDashboardLayout({
       </Suspense>
 
       {/* Right side */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 min-w-0">
         {/* Navbar */}
         <NutritionistNavbar />
 
         {/* Page Content */}
-        <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto w-full">{children}</main>
       </div>
     </div>
     </ProtectedRoute>

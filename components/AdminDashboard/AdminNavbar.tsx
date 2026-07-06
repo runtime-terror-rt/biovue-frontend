@@ -5,13 +5,13 @@ import ProfileDropdown from "../dashboard/ProfileDropdown";
 
 export default function AdminNavbar() {
   return (
-    <header className="md:ml-6 py-4 bg-white px-8 flex items-center justify-between shadow-sm border-b border-gray-100 z-30 sticky top-0">
-      <div className="flex flex-col">
-        <h1 className="text-lg font-bold text-[#1F2D2E] pl-10 md:pl-0">Dashboard</h1>
-        <p className="text-[11px] text-[#94A3B8] font-medium uppercase tracking-wider pl-10 md:pl-0">Admin Management</p>
+    <header className="md:ml-6 py-4 bg-white px-4 md:px-8 flex items-center justify-between shadow-sm border-b border-gray-100 z-30 sticky top-0">
+      <div className="flex flex-col pl-12 md:pl-0 flex-1 min-w-0 pr-2">
+        <h1 className="text-lg font-bold text-[#1F2D2E] truncate">Dashboard</h1>
+        <p className="text-[11px] text-[#94A3B8] font-medium uppercase tracking-wider hidden sm:block truncate">Admin Management</p>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 sm:gap-4 md:gap-6">
         <NotificationBell iconSize={24} />
         
         {/* Divider */}

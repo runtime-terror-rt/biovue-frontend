@@ -423,8 +423,8 @@ print(response.json())`;
                 <div className="w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
                   <User size={16} className="text-teal-600" />
                 </div>
-                <div className="text-left hidden sm:block">
-                  <p className="text-xs font-bold text-gray-800 leading-tight truncate max-w-[120px]">
+                <div className="text-left hidden sm:block flex-1 min-w-0">
+                  <p className="text-xs font-bold text-gray-800 leading-tight truncate">
                     {displayName}
                   </p>
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider leading-none">
