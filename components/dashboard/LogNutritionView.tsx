@@ -450,21 +450,28 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
     try {
       const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-      // Collect all foods for calculation
-      const allFoods = meals.flatMap((m) =>
-        m.foods.map((f) => ({
-          food: f.name,
-          quantity: f.quantity,
-          unit: f.unit,
-        })),
+      // Collect all foods for calculation, excluding previously saved ones
+      const newFoodsToSave = meals.flatMap((m) =>
+        m.foods
+          .filter((f) => !f.id.toString().startsWith("api-"))
+          .map((f) => ({
+            food: f.name,
+            quantity: f.quantity,
+            unit: f.unit,
+          })),
       );
+
+      if (newFoodsToSave.length === 0) {
+        toast.error("Please add at least one new food item before saving.");
+        return;
+      }
 
       // Call backend calculate first
       toast.loading("Calculating nutrition...", { id: "log-status" });
       const calculation = await calculateNutrition({
         user_id: userId,
         log_date: today,
-        foods: allFoods,
+        foods: newFoodsToSave,
       }).unwrap();
 
       if (!calculation.nutrition) {
@@ -476,20 +483,24 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
       const payload = {
         log_date: today,
         user_id: userId,
-        meals: meals.map((meal) => ({
-          type: meal.type,
-          foods: meal.foods.map((f) => ({
-            food: f.name,
-            quantity: f.quantity,
-            unit: f.unit,
-            // Use results from calculation if needed,
-            // though backend might calculate again on POST
-            calories: 0,
-            protein: 0,
-            carbs: 0,
-            fat: 0,
-          })),
-        })),
+        meals: meals
+          .map((meal) => ({
+            type: meal.type,
+            foods: meal.foods
+              .filter((f) => !f.id.toString().startsWith("api-"))
+              .map((f) => ({
+                food: f.name,
+                quantity: f.quantity,
+                unit: f.unit,
+                // Use results from calculation if needed,
+                // though backend might calculate again on POST
+                calories: 0,
+                protein: 0,
+                carbs: 0,
+                fat: 0,
+              })),
+          }))
+          .filter((meal) => meal.foods.length > 0),
       };
 
       const response = await postNutritionLog(payload).unwrap();
@@ -744,15 +755,13 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
               key={meal.id}
               className={cn(
                 "p-6 rounded-2xl border-2",
-                meal.id === "dynamic-1"
-                  ? "bg-teal-50 border-teal-300"
-                  : MEAL_TYPES.find((m) => m.value === meal.type)?.color || "",
+                MEAL_TYPES.find((m) => m.value === meal.type)?.color || "",
               )}
             >
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h4 className="text-[16px] font-bold text-[#1F2D2E] capitalize">
-                    {meal.id === "dynamic-1" ? "Food List" : meal.type}
+                    {meal.id === "today-log" ? "Food List" : meal.type}
                   </h4>
                   <p className="text-xs text-gray-600">{meal.time}</p>
                 </div>
@@ -958,13 +967,13 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
                 className={cn(
                   "px-4 py-2 rounded-lg font-semibold text-sm border-2 transition-all",
                   meals.some(
-                    (m) => m.id !== "dynamic-1" && m.type === mealType.value,
+                    (m) => m.id !== "today-log" && m.type === mealType.value,
                   )
                     ? "opacity-50 cursor-default"
                     : "border-gray-300 hover:border-gray-400",
                 )}
                 disabled={meals.some(
-                  (m) => m.id !== "dynamic-1" && m.type === mealType.value,
+                  (m) => m.id !== "today-log" && m.type === mealType.value,
                 )}
               >
                 <Plus size={16} className="inline mr-2" />
