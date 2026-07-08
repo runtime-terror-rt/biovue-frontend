@@ -59,6 +59,9 @@ export default function ProjectionGallery() {
   const [selectedProjection, setSelectedProjection] =
     useState<ProjectionItem | null>(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -97,6 +100,13 @@ export default function ProjectionGallery() {
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 
+  const totalPages = Math.ceil(projections.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProjections = projections.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
+
   return (
     <div className="mt-16 space-y-6 animate-in fade-in duration-700">
       <div className="flex flex-col space-y-2">
@@ -121,15 +131,16 @@ export default function ProjectionGallery() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {projections.map((proj, idx) => {
+              {paginatedProjections.map((proj, idx) => {
                 const thumbnailUrl = proj.input_image;
+                const actualIndex = startIndex + idx + 1;
                 return (
                   <tr
                     key={proj.id}
                     className="hover:bg-gray-50/50 transition-colors"
                   >
                     <td className="px-6 py-4 text-sm text-[#041228] font-medium">
-                      {idx + 1}
+                      {actualIndex}
                     </td>
                     <td className="px-6 py-4 text-sm text-[#5F6F73]">
                       {proj.created_at ? formatDateShort(proj.created_at) : "N/A"}
@@ -174,6 +185,63 @@ export default function ProjectionGallery() {
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      {projections.length > 0 && (
+        <div className="flex justify-between items-center mt-8 py-4 border-t border-gray-100">
+          <span className="text-sm text-[#5F6F73]">
+            Page <span className="font-medium text-[#041228]">{currentPage}</span> of{" "}
+            <span className="font-medium text-[#041228]">{totalPages}</span> —{" "}
+            <span className="font-medium text-[#041228]">{projections.length}</span> total
+          </span>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="w-8 h-8 flex items-center justify-center text-[#5F6F73] border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              «
+            </button>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 h-8 flex items-center justify-center gap-1 text-[#5F6F73] border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+            >
+              ‹ Prev
+            </button>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
+                  currentPage === page
+                    ? "bg-[#3A86FF] text-white border border-[#3A86FF]"
+                    : "text-[#5F6F73] border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 h-8 flex items-center justify-center gap-1 text-[#5F6F73] border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+            >
+              Next ›
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="w-8 h-8 flex items-center justify-center text-[#5F6F73] border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              »
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Projection Modal */}
       <AnimatePresence>
