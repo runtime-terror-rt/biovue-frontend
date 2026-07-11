@@ -90,6 +90,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
   const [targetCarbs, setTargetCarbs] = useState(200);
   const [targetFat, setTargetFat] = useState(70);
   const [generatedMealPlan, setGeneratedMealPlan] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [calorieTarget, setCalorieTarget] = useState(2000);
   const [customUnitInput, setCustomUnitInput] = useState("");
@@ -442,11 +443,14 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
   const caloriePercentage = getProgressPercentage();
 
   const handleSave = async () => {
+    if (isSubmitting) return;
+    
     if (meals.every((meal) => meal.foods.length === 0)) {
       toast.error("Please add at least one food item before saving.");
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
@@ -517,6 +521,8 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
     } catch (err: any) {
       console.error("Nutrition log submission error:", err);
       toast.error("An error occurred while saving.", { id: "log-status" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -986,11 +992,11 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
         {/* Save Button */}
         <button
           onClick={handleSave}
-          disabled={isSaving}
+          disabled={isSaving || isSubmitting}
           className="w-full bg-[#0FA4A9] text-white py-4 rounded-xl font-bold text-[18px] hover:bg-opacity-90 transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20 flex items-center justify-center gap-2"
         >
-          {isSaving && <Loader2 className="animate-spin" size={20} />}
-          {isSaving ? "Saving..." : "Save Food Log"}
+          {(isSaving || isSubmitting) && <Loader2 className="animate-spin" size={20} />}
+          {isSaving || isSubmitting ? "Saving..." : "Save Food Log"}
         </button>
       </div>
     </div>
