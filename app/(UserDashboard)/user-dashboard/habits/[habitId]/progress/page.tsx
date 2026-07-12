@@ -42,13 +42,13 @@ import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { Loader2, Footprints, Activity as ActivityIcon } from "lucide-react";
 
 const MOCK_DATA = [
-  { name: "M", val: 0, Protin: 35, Carbs: 45, Fats: 20 },
-  { name: "T", val: 0, Protin: 30, Carbs: 50, Fats: 20 },
-  { name: "W", val: 0, Protin: 40, Carbs: 40, Fats: 20 },
-  { name: "T", val: 0, Protin: 35, Carbs: 45, Fats: 20 },
-  { name: "F", val: 0, Protin: 35, Carbs: 45, Fats: 20 },
-  { name: "S", val: 0, Protin: 35, Carbs: 45, Fats: 20 },
-  { name: "S", val: 0, Protin: 35, Carbs: 45, Fats: 20 },
+  { name: "M", val: 0, Protein: 35, Carbs: 45, Fats: 20 },
+  { name: "T", val: 0, Protein: 30, Carbs: 50, Fats: 20 },
+  { name: "W", val: 0, Protein: 40, Carbs: 40, Fats: 20 },
+  { name: "T", val: 0, Protein: 35, Carbs: 45, Fats: 20 },
+  { name: "F", val: 0, Protein: 35, Carbs: 45, Fats: 20 },
+  { name: "S", val: 0, Protein: 35, Carbs: 45, Fats: 20 },
+  { name: "S", val: 0, Protein: 35, Carbs: 45, Fats: 20 },
 ];
 
 const HABIT_META: Record<string, any> = {
@@ -71,7 +71,7 @@ const HABIT_META: Record<string, any> = {
     title: "Nutrition",
     icon: <Apple size={24} className="text-[#0FA4A9]" />,
     iconBg: "bg-[#E6F6F6]",
-    avgStr: "0 Servings", 
+    avgStr: "0 Servings",
     consistency: "0%",
     streak: "0 DAYS",
     trend: "Stable",
@@ -133,7 +133,7 @@ export default function HabitProgressPage() {
   const habitId = params.habitId as string;
   const currentUser = useSelector(selectCurrentUser);
   const userId = currentUser?.id || currentUser?.user_id;
-  
+
   const [view, setView] = useState<"trends" | "logging">("trends");
   const [timeframe, setTimeframe] = useState("Weekly");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
@@ -150,7 +150,7 @@ export default function HabitProgressPage() {
   };
 
   const days = timeframeToDays(timeframe);
-  
+
   const { data: sleepReport, isLoading: isSleepLoading } = useGetSleepReportQuery(days, {
     skip: habitId !== 'sleep'
   });
@@ -261,41 +261,41 @@ export default function HabitProgressPage() {
     }
   }
 
-  const chartData = habitId === 'sleep' && sleepData?.chart_data ? 
+  const chartData = habitId === 'sleep' && sleepData?.chart_data ?
     sleepData.chart_data.map((item: any) => ({
       name: item.label, // Mon, Tue etc.
       date: item.date,  // 02 Mar etc.
       val: item.sleep_hours || 0,
     })) : habitId === 'activity' && activityData?.chart_data ?
       activityData.chart_data.map((item: any) => ({
-      name: item.label,
-      val: item.steps || 0,
-    })) : habitId === 'nutrition' && (nutritionReport?.data?.chart_data || nutritionReport?.chart_data || nutritionReport?.data?.statistics?.chart_data) ? 
-      (nutritionReport?.data?.chart_data || nutritionReport?.chart_data || nutritionReport?.data?.statistics?.chart_data).map((item: any) => ({
-        name: item.label || item.date || item.name,
-        Protin: Number(item.protein || item.Protin || 0),
-        Carbs: Number(item.carbs || item.Carbs || 0),
-        Fats: Number(item.fats || item.Fats || 0)
-      })) : habitId === 'hydration' && (hydrationReport?.hydration?.chart || hydrationReport?.hydration?.chart_data || hydrationReport?.chart_data || hydrationReport?.data?.chart_data) ? 
-        (() => {
-          const rawChart = hydrationReport?.hydration?.chart || hydrationReport?.hydration?.chart_data || hydrationReport?.chart_data || hydrationReport?.data?.chart_data;
-          if (Array.isArray(rawChart)) {
-            return rawChart.map((item: any) => ({
-              name: item.label || item.name || item.date || item.day,
-              val: Number(item.val || item.value || item.ounces || item.Ounces || 0)
+        name: item.label,
+        val: item.steps || 0,
+      })) : habitId === 'nutrition' && (nutritionReport?.data?.chart_data || nutritionReport?.chart_data || nutritionReport?.data?.statistics?.chart_data) ?
+        (nutritionReport?.data?.chart_data || nutritionReport?.chart_data || nutritionReport?.data?.statistics?.chart_data).map((item: any) => ({
+          name: item.label || item.date || item.name,
+          Protein: Number(item.protein || item.Protin || 0),
+          Carbs: Number(item.carbs || item.Carbs || 0),
+          Fats: Number(item.fats || item.Fats || 0)
+        })) : habitId === 'hydration' && (hydrationReport?.hydration?.chart || hydrationReport?.hydration?.chart_data || hydrationReport?.chart_data || hydrationReport?.data?.chart_data) ?
+          (() => {
+            const rawChart = hydrationReport?.hydration?.chart || hydrationReport?.hydration?.chart_data || hydrationReport?.chart_data || hydrationReport?.data?.chart_data;
+            if (Array.isArray(rawChart)) {
+              return rawChart.map((item: any) => ({
+                name: item.label || item.name || item.date || item.day,
+                val: Number(item.val || item.value || item.ounces || item.Ounces || 0)
+              }));
+            }
+            return Object.entries(rawChart || {}).map(([label, value]) => ({
+              name: label,
+              val: Number(value || 0)
             }));
-          }
-          return Object.entries(rawChart || {}).map(([label, value]) => ({
-            name: label,
-            val: Number(value || 0)
-          }));
-        })() : habitId === 'stress' && stressData?.chart_data ?
-      stressData.chart_data.map((item: any) => ({
-        name: item.day,
-        date: item.date,
-        val: item.stress_level || 0,
-        mood: item.mood
-      })) : MOCK_DATA;
+          })() : habitId === 'stress' && stressData?.chart_data ?
+            stressData.chart_data.map((item: any) => ({
+              name: item.day,
+              date: item.date,
+              val: item.stress_level || 0,
+              mood: item.mood
+            })) : MOCK_DATA;
 
 
   const handleLogClick = () => {
@@ -316,19 +316,19 @@ export default function HabitProgressPage() {
 
   const hData = habitData?.data || habitData;
   const habitKey = habitId.toLowerCase();
-  
+
   // Robust mapping for insights (handles nested and flat structures)
-  const biovueInsight = 
-    hData?.habits?.[habitKey]?.biovue_insights || 
-    hData?.habits?.[habitKey]?.insights || 
-    hData?.[`${habitKey}_biovue_insights`] || 
-    hData?.[`${habitKey}_insights`] || 
-    hData?.biovue_insights || 
+  const biovueInsight =
+    hData?.habits?.[habitKey]?.biovue_insights ||
+    hData?.habits?.[habitKey]?.insights ||
+    hData?.[`${habitKey}_biovue_insights`] ||
+    hData?.[`${habitKey}_insights`] ||
+    hData?.biovue_insights ||
     hData?.insights;
 
-  const whyThisMatters = 
-    hData?.habits?.[habitKey]?.why_this_matters || 
-    hData?.[`${habitKey}_why_this_matters`] || 
+  const whyThisMatters =
+    hData?.habits?.[habitKey]?.why_this_matters ||
+    hData?.[`${habitKey}_why_this_matters`] ||
     hData?.why_this_matters;
 
   return (
@@ -457,7 +457,7 @@ export default function HabitProgressPage() {
                         )}
                       />
                       <Bar
-                        dataKey="Protin"
+                        dataKey="Protein"
                         stackId="a"
                         fill="#3AAB67"
                         barSize={12}
@@ -582,7 +582,7 @@ export default function HabitProgressPage() {
               </div>
             </div>
 
-        
+
 
             {/* BIOVUE Insight */}
             <div className="bg-[#EAF6F6] rounded-4xl p-6 md:p-8 border border-teal-100 flex flex-col gap-3">

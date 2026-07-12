@@ -386,25 +386,25 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
       meals.map((meal) =>
         meal.id === mealId
           ? {
-              ...meal,
-              foods: [
-                ...meal.foods,
-                {
-                  id: Math.random().toString(),
-                  name: foodNameInput,
-                  quantity: parseFloat(foodQuantityInput),
-                  unit:
-                    foodUnitInput === "custom"
-                      ? customUnitInput
-                      : foodUnitInput,
-                  caloriesPerUnit: 0,
-                  calories: 0,
-                  protein: 0,
-                  carbs: 0,
-                  fat: 0,
-                },
-              ],
-            }
+            ...meal,
+            foods: [
+              ...meal.foods,
+              {
+                id: Math.random().toString(),
+                name: foodNameInput,
+                quantity: parseFloat(foodQuantityInput),
+                unit:
+                  foodUnitInput === "custom"
+                    ? customUnitInput
+                    : foodUnitInput,
+                caloriesPerUnit: 0,
+                calories: 0,
+                protein: 0,
+                carbs: 0,
+                fat: 0,
+              },
+            ],
+          }
           : meal,
       ),
     );
@@ -444,7 +444,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
 
   const handleSave = async () => {
     if (isSubmitting) return;
-    
+
     if (meals.every((meal) => meal.foods.length === 0)) {
       toast.error("Please add at least one food item before saving.");
       return;
