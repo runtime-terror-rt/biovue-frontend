@@ -63,7 +63,7 @@ const HABIT_META: Record<string, any> = {
     trend: "Stable",
     trendColor: "text-[#10B981]",
     insight: "Log your sleep to see insights.",
-    coachNote: "Maintaining regular timing will significantly increase your physical recovery markers.",
+    coachNote: "",
     coachName: "",
     coachTime: "",
   },
@@ -77,7 +77,7 @@ const HABIT_META: Record<string, any> = {
     trend: "Stable",
     trendColor: "text-[#10B981]",
     insight: "Log your nutrition to see insights.",
-    coachNote: "Proper nutrition provides essential macronutrients and micros for sustained energy.",
+    coachNote: "",
     coachName: "",
     coachTime: "",
   },
@@ -91,7 +91,7 @@ const HABIT_META: Record<string, any> = {
     trend: "Stable",
     trendColor: "text-[#10B981]",
     insight: "Log your stress levels to see insights.",
-    coachNote: "Managing cortisol prevents metabolic interference. Stress oversight is critical for longevity.",
+    coachNote: "",
     coachName: "",
     coachTime: "",
   },
@@ -106,7 +106,7 @@ const HABIT_META: Record<string, any> = {
     trend: "Stable",
     trendColor: "text-[#10B981]",
     insight: "Log your daily steps to see insights.",
-    coachNote: "Increasing your daily step count is one of the most effective ways to improve metabolic health.",
+    coachNote: "",
     coachName: "",
     coachTime: "",
   },
@@ -121,7 +121,7 @@ const HABIT_META: Record<string, any> = {
     trend: "Stable",
     trendColor: "text-[#10B981]",
     insight: "Log your hydration to see insights.",
-    coachNote: "Adequate water intake is crucial for cellular function and metabolism.",
+    coachNote: "",
     coachName: "",
     coachTime: "",
   },
@@ -175,6 +175,48 @@ export default function HabitProgressPage() {
   const activityData = activityReport?.data || activityReport;
   const stressData = stressReport; // Stress API returns success/period/chart_data/stats at top level
 
+  // Helper to safely extract profession_notes without throwing errors
+  const getCoachData = (reportObj: any) => {
+    try {
+      if (!reportObj) return { coachNote: "", coachName: "", coachTime: "" };
+      
+      // Safely access profession_notes wherever it might be nested
+      const notes = reportObj?.data?.profession_notes 
+        || reportObj?.profession_notes 
+        || reportObj?.hydration?.profession_notes 
+        || reportObj?.stats?.profession_notes 
+        || [];
+      
+      if (Array.isArray(notes) && notes.length > 0) {
+        const note = notes[0];
+        if (!note || typeof note !== 'object') return { coachNote: "", coachName: "", coachTime: "" };
+
+        let timeStr = "";
+        if (note.created_at) {
+          const d = new Date(note.created_at);
+          if (!isNaN(d.getTime())) {
+            timeStr = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+          }
+        }
+
+        return {
+          coachNote: typeof note.note === 'string' ? note.note : "",
+          coachName: typeof note.provider_name === 'string' ? note.provider_name : "",
+          coachTime: timeStr,
+        };
+      }
+    } catch (error) {
+      console.error("Error parsing coach notes:", error);
+    }
+    return { coachNote: "", coachName: "", coachTime: "" };
+  };
+
+  const sleepCoach = getCoachData(sleepData);
+  const activityCoach = getCoachData(activityData);
+  const nutritionCoach = getCoachData(nutritionReport);
+  const hydrationCoach = getCoachData(hydrationReport);
+  const stressCoach = getCoachData(stressData);
+
   const habit = habitId === 'sleep' && sleepData?.statistics ? {
     title: "Sleep",
     icon: <Bed size={24} className="text-[#3A86FF]" />,
@@ -186,9 +228,9 @@ export default function HabitProgressPage() {
     trend: sleepData.statistics.current_trend || "Stable",
     trendColor: "text-[#10B981]",
     insight: sleepData.bio_insight || "Your sleep quality supports physical recovery and mental clarity.",
-    coachNote: sleepData.bio_insight || "Maintaining regular timing will significantly increase your physical recovery markers.",
-    coachName: "",
-    coachTime: "",
+    coachNote: sleepCoach.coachNote,
+    coachName: sleepCoach.coachName,
+    coachTime: sleepCoach.coachTime,
   } : habitId === 'activity' && activityData?.statistics ? {
     title: "Activity",
     icon: <Footprints size={24} className="text-[#3A86FF]" />,
@@ -200,9 +242,9 @@ export default function HabitProgressPage() {
     trend: activityData.statistics.current_trend || "Stable",
     trendColor: "text-[#10B981]",
     insight: activityData.bio_insight || "Daily movement improves cardiovascular health and boosts cognitive function.",
-    coachNote: activityData.bio_insight || "Increasing your daily step count is one of the most effective ways to improve metabolic health.",
-    coachName: "",
-    coachTime: "",
+    coachNote: activityCoach.coachNote,
+    coachName: activityCoach.coachName,
+    coachTime: activityCoach.coachTime,
   } : habitId === 'nutrition' && (nutritionReport?.data || nutritionReport?.statistics) ? {
     title: "Nutrition",
     icon: <Apple size={24} className="text-[#0FA4A9]" />,
@@ -214,9 +256,9 @@ export default function HabitProgressPage() {
     trend: nutritionReport?.data?.statistics?.current_trend || nutritionReport?.statistics?.current_trend || "Stable",
     trendColor: "text-[#10B981]",
     insight: nutritionReport?.data?.bio_insight || nutritionReport?.bio_insight,
-    coachNote: nutritionReport?.data?.bio_insight || nutritionReport?.bio_insight,
-    coachName: nutritionReport?.data?.coach_name || nutritionReport?.coach_name || "",
-    coachTime: nutritionReport?.data?.coach_time || nutritionReport?.coach_time || "",
+    coachNote: nutritionCoach.coachNote,
+    coachName: nutritionCoach.coachName,
+    coachTime: nutritionCoach.coachTime,
   } : habitId === 'hydration' && (hydrationReport?.hydration || hydrationReport?.data) ? {
     title: "Hydration",
     icon: <Droplets size={24} className="text-[#3A86FF]" />,
@@ -228,9 +270,9 @@ export default function HabitProgressPage() {
     trend: hydrationReport?.hydration?.current_trend || hydrationReport?.data?.statistics?.current_trend || "Stable",
     trendColor: "text-[#10B981]",
     insight: hydrationReport?.hydration?.bio_insight || hydrationReport?.data?.bio_insight || "Your hydration levels are tracked based on your daily water intake.",
-    coachNote: hydrationReport?.hydration?.coach_note || hydrationReport?.hydration?.bio_insight || hydrationReport?.data?.bio_insight || "Adequate water intake is crucial for cellular function and metabolism.",
-    coachName: "",
-    coachTime: "",
+    coachNote: hydrationCoach.coachNote,
+    coachName: hydrationCoach.coachName,
+    coachTime: hydrationCoach.coachTime,
   } : habitId === 'stress' && stressData?.stats ? {
     title: "Stress",
     icon: <Frown size={24} className="text-[#A855F7]" />,
@@ -242,9 +284,9 @@ export default function HabitProgressPage() {
     trend: stressData.stats.current_trend || "Stable",
     trendColor: "text-[#10B981]",
     insight: stressData.bio_insight || "Managing cortisol prevents metabolic interference. Stress oversight is critical for longevity.",
-    coachNote: stressData.bio_insight || "Managing cortisol prevents metabolic interference. Stress oversight is critical for longevity.",
-    coachName: "",
-    coachTime: "",
+    coachNote: stressCoach.coachNote,
+    coachName: stressCoach.coachName,
+    coachTime: stressCoach.coachTime,
   } : (HABIT_META[habitId] || HABIT_META["sleep"]);
 
   // Final cleanup for units from API based on habit type
@@ -261,16 +303,16 @@ export default function HabitProgressPage() {
     }
   }
 
-  const chartData = habitId === 'sleep' && sleepData?.chart_data ?
+  const chartData = habitId === 'sleep' && Array.isArray(sleepData?.chart_data) ?
     sleepData.chart_data.map((item: any) => ({
       name: item.label, // Mon, Tue etc.
       date: item.date,  // 02 Mar etc.
       val: item.sleep_hours || 0,
-    })) : habitId === 'activity' && activityData?.chart_data ?
+    })) : habitId === 'activity' && Array.isArray(activityData?.chart_data) ?
       activityData.chart_data.map((item: any) => ({
         name: item.label,
         val: item.steps || 0,
-      })) : habitId === 'nutrition' && (nutritionReport?.data?.chart_data || nutritionReport?.chart_data || nutritionReport?.data?.statistics?.chart_data) ?
+      })) : habitId === 'nutrition' && Array.isArray(nutritionReport?.data?.chart_data || nutritionReport?.chart_data || nutritionReport?.data?.statistics?.chart_data) ?
         (nutritionReport?.data?.chart_data || nutritionReport?.chart_data || nutritionReport?.data?.statistics?.chart_data).map((item: any) => ({
           name: item.label || item.date || item.name,
           Protein: Number(item.protein || item.Protin || 0),
@@ -282,14 +324,14 @@ export default function HabitProgressPage() {
             if (Array.isArray(rawChart)) {
               return rawChart.map((item: any) => ({
                 name: item.label || item.name || item.date || item.day,
-                val: Number(item.val || item.value || item.ounces || item.Ounces || 0)
+                val: Number(item.val || item.value || item.ounces || item.Ounces || item.glasses || 0)
               }));
             }
             return Object.entries(rawChart || {}).map(([label, value]) => ({
               name: label,
               val: Number(value || 0)
             }));
-          })() : habitId === 'stress' && stressData?.chart_data ?
+          })() : habitId === 'stress' && Array.isArray(stressData?.chart_data) ?
             stressData.chart_data.map((item: any) => ({
               name: item.day,
               date: item.date,
@@ -594,24 +636,26 @@ export default function HabitProgressPage() {
             </div>
 
             {/* Coach Note */}
-            <div className="bg-[#F5F3FF] rounded-4xl p-6 md:p-8 border border-purple-100 flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#8B5CF6] flex items-center justify-center text-white shrink-0 shadow-sm">
-                  <User size={20} />
+            {habit.coachNote && (
+              <div className="bg-[#F5F3FF] rounded-4xl p-6 md:p-8 border border-purple-100 flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#8B5CF6] flex items-center justify-center text-white shrink-0 shadow-sm">
+                    <User size={20} />
+                  </div>
+                  <h3 className="text-[#8B5CF6] font-bold text-[17px]">
+                    Coach Note
+                  </h3>
                 </div>
-                <h3 className="text-[#8B5CF6] font-bold text-[17px]">
-                  Coach Note
-                </h3>
+                <p className="text-[#1F2D2E] italic text-[15px] leading-relaxed">
+                  {habit.coachNote}
+                </p>
+                {habit.coachName && (
+                  <span className="text-[#94A3B8] font-bold text-[11px] uppercase tracking-widest italic mt-1">
+                    {habit.coachName}{habit.coachTime ? `. ${habit.coachTime}` : ""}
+                  </span>
+                )}
               </div>
-              <p className="text-[#1F2D2E] italic text-[15px] leading-relaxed">
-                {habit.coachNote}
-              </p>
-              {habit.coachName && (
-                <span className="text-[#94A3B8] font-bold text-[11px] uppercase tracking-widest italic mt-1">
-                  {habit.coachName}{habit.coachTime ? `. ${habit.coachTime}` : ""}
-                </span>
-              )}
-            </div>
+            )}
 
             {/* Sticky-like Footer Button */}
             <div className="mt-8 mb-4">
