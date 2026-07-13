@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Apple, X, ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -91,6 +91,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
   const [targetFat, setTargetFat] = useState(70);
   const [generatedMealPlan, setGeneratedMealPlan] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSavingRef = useRef(false);
 
   const [calorieTarget, setCalorieTarget] = useState(2000);
   const [customUnitInput, setCustomUnitInput] = useState("");
@@ -443,9 +444,11 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
   const caloriePercentage = getProgressPercentage();
 
   const handleSave = async () => {
-    if (isSubmitting) return;
+    if (isSubmitting || isSavingRef.current) return;
+    isSavingRef.current = true;
 
     if (meals.every((meal) => meal.foods.length === 0)) {
+      isSavingRef.current = false;
       toast.error("Please add at least one food item before saving.");
       return;
     }
@@ -470,51 +473,20 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
         return;
       }
 
-      // Call backend calculate first
-      toast.loading("Calculating nutrition...", { id: "log-status" });
+      toast.loading("Saving food log...", { id: "log-status" });
       const calculation = await calculateNutrition({
         user_id: userId,
         log_date: today,
         foods: newFoodsToSave,
       }).unwrap();
 
-      if (!calculation.nutrition) {
-        toast.error("Calculation failed", { id: "log-status" });
-        return;
-      }
-
-      toast.loading("Saving food log...", { id: "log-status" });
-      const payload = {
-        log_date: today,
-        user_id: userId,
-        meals: meals
-          .map((meal) => ({
-            type: meal.type,
-            foods: meal.foods
-              .filter((f) => !f.id.toString().startsWith("api-"))
-              .map((f) => ({
-                food: f.name,
-                quantity: f.quantity,
-                unit: f.unit,
-                // Use results from calculation if needed,
-                // though backend might calculate again on POST
-                calories: 0,
-                protein: 0,
-                carbs: 0,
-                fat: 0,
-              })),
-          }))
-          .filter((meal) => meal.foods.length > 0),
-      };
-
-      const response = await postNutritionLog(payload).unwrap();
-      if (response.success || response.status === "success") {
+      if (calculation.success || calculation.status === "success" || calculation.nutrition) {
         toast.success("Nutrition data logged successfully!", {
           id: "log-status",
         });
         onSave();
       } else {
-        toast.error(response.message || "Failed to log nutrition data.", {
+        toast.error(calculation.message || "Failed to log nutrition data.", {
           id: "log-status",
         });
       }
@@ -522,6 +494,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
       console.error("Nutrition log submission error:", err);
       toast.error("An error occurred while saving.", { id: "log-status" });
     } finally {
+      isSavingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -992,11 +965,11 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
         {/* Save Button */}
         <button
           onClick={handleSave}
-          disabled={isSaving || isSubmitting}
+          disabled={loadingCalories || isSubmitting}
           className="w-full bg-[#0FA4A9] text-white py-4 rounded-xl font-bold text-[18px] hover:bg-opacity-90 transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20 flex items-center justify-center gap-2"
         >
-          {(isSaving || isSubmitting) && <Loader2 className="animate-spin" size={20} />}
-          {isSaving || isSubmitting ? "Saving..." : "Save Food Log"}
+          {(loadingCalories || isSubmitting) && <Loader2 className="animate-spin" size={20} />}
+          {loadingCalories || isSubmitting ? "Saving..." : "Save Food Log"}
         </button>
       </div>
     </div>

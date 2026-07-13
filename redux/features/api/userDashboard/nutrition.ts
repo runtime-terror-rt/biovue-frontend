@@ -19,7 +19,12 @@ export const nutritionApi = baseApi.injectEndpoints({
       invalidatesTags: ["Nutrition", "Habit"],
     }),
     getNutritionReport: builder.query<any, number | void>({
-      query: (days) => (days ? `/nutrition-report?days=${days}` : "/nutrition-report"),
+      query: (days) => {
+        let type = "weekly";
+        if (days === 30) type = "monthly";
+        if (days === 90) type = "3_months";
+        return `/nutrition-report?type=${type}`;
+      },
       providesTags: ["Nutrition"],
     }),
     calculateNutrition: builder.mutation({
@@ -28,12 +33,14 @@ export const nutritionApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
+      invalidatesTags: ["Nutrition", "Habit"],
     }),
     getNutritionShow: builder.query({
       query: () => "/nutrition/show",
       providesTags: ["Nutrition"],
     }),
   }),
+  overrideExisting: true,
 });
 export const {
   useGetNutritionLogsQuery,
