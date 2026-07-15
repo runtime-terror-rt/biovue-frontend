@@ -40,7 +40,6 @@ export const nutritionApi = baseApi.injectEndpoints({
       providesTags: ["Nutrition"],
     }),
   }),
-  overrideExisting: true,
 });
 export const {
   useGetNutritionLogsQuery,
