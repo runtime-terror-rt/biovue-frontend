@@ -473,23 +473,38 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
         return;
       }
 
-      toast.loading("Saving food log...", { id: "log-status" });
-      const calculation = await calculateNutrition({
-        user_id: userId,
-        log_date: today,
-        foods: newFoodsToSave,
-      }).unwrap();
+      let successCount = 0;
 
-      if (calculation.success || calculation.status === "success" || calculation.nutrition) {
-        toast.success("Nutrition data logged successfully!", {
-          id: "log-status",
-        });
-        onSave();
-      } else {
-        toast.error(calculation.message || "Failed to log nutrition data.", {
-          id: "log-status",
-        });
+      for (let i = 0; i < newFoodsToSave.length; i++) {
+        const food = newFoodsToSave[i];
+        toast.loading(`Saving food log (${i + 1}/${newFoodsToSave.length})...`, { id: "log-status" });
+        
+        try {
+          const calculation = await calculateNutrition({
+            user_id: userId,
+            log_date: today,
+            foods: [food],
+          }).unwrap();
+
+          if (calculation.success || calculation.status === "success" || calculation.nutrition) {
+            successCount++;
+          } else {
+            throw new Error(calculation.message || `Failed to log ${food.food}.`);
+          }
+        } catch (err: any) {
+          console.error("Nutrition log submission error for", food, err);
+          toast.error(err.message || `An error occurred while saving ${food.food}.`, { id: "log-status" });
+          if (successCount > 0) {
+            onSave();
+          }
+          return;
+        }
       }
+
+      toast.success("Nutrition data logged successfully!", {
+        id: "log-status",
+      });
+      onSave();
     } catch (err: any) {
       console.error("Nutrition log submission error:", err);
       toast.error("An error occurred while saving.", { id: "log-status" });
