@@ -589,7 +589,7 @@ export default function HabitProgressPage() {
             </div>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full">
               <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm flex flex-col gap-3">
                 <span className="text-[#3A86FF] font-bold text-[13px] uppercase tracking-widest">
                   AVERAGE
@@ -612,14 +612,6 @@ export default function HabitProgressPage() {
                 </span>
                 <span className="text-[20px] font-bold text-[#1F2D2E]">
                   {habit.streak}
-                </span>
-              </div>
-              <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm flex flex-col gap-3">
-                <span className="text-[#3A86FF] font-bold text-[13px] uppercase tracking-widest">
-                  CURRENT TREND
-                </span>
-                <span className={cn("text-[20px] font-bold", habit.trendColor)}>
-                  {habit.trend}
                 </span>
               </div>
             </div>
