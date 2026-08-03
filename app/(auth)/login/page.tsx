@@ -813,12 +813,12 @@ const LoginPage = () => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Role Selector */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <label className="text-sm font-bold text-[#041228] block ml-1">
               Login as
             </label>
             <RoleDropdown value={selectedRole} onChange={setSelectedRole} />
-          </div>
+          </div> */}
 
           {/* Email */}
           <div className="space-y-2">
