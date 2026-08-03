@@ -23,7 +23,7 @@ import ChartsNutrition from "@/components/UserDashboard/Dashboard/ChartsNutritio
 import DashboardBanner from "@/components/UserDashboard/Dashboard/DashboardBanner";
 import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { useGetHealthReportQuery } from "@/redux/features/api/userDashboard/dashboard/health-report";
-import { useGetAiCurrentInsightsQuery } from "@/redux/features/api/userDashboard/Projection/AIInsightsAPI";
+import { useGetInsightsQuery } from "@/redux/features/api/userDashboard/insightsApi";
 import { useGetUserOverviewChartQuery } from "@/redux/features/api/userDashboard/dashboardApi";
 import TrainerMotivation from "@/components/UserDashboard/Dashboard/TrainerMotivation";
 
@@ -40,7 +40,7 @@ const UserDashboard = () => {
   const [days, setDays] = useState(7);
   
   const { data: healthReport, isLoading: isHealthLoading } = useGetHealthReportQuery();
-  const { data: insightsData, isLoading: isInsightsLoading } = useGetAiCurrentInsightsQuery(currentUser?.id, { skip: !currentUser?.id });
+  const { data: insightsData, isLoading: isInsightsLoading } = useGetInsightsQuery(undefined, { skip: !currentUser?.id });
   const { data: chartResponse, isLoading: isChartLoading } = useGetUserOverviewChartQuery(days);
 
   const [habitData, setHabitData] = useState({

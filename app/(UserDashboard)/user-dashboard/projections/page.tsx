@@ -34,9 +34,9 @@ import {
   IndividualProjection,
 } from "@/redux/features/api/userDashboard/Projection/CombinedProjection";
 import {
-  useUpdateAiCurrentInsightsMutation,
-  useUpdateAiFutureInsightsMutation,
-} from "@/redux/features/api/userDashboard/Projection/AIInsightsAPI";
+  useFetchInsightsMutation,
+  useFetchFutureInsightsMutation,
+} from "@/redux/features/api/userDashboard/insightsApi";
 import { useRouter } from "next/navigation";
 import ProjectionGallery from "@/components/dashboard/ProjectionGallery";
 import SubscriptionGuard from "@/components/common/SubscriptionGuard";
@@ -66,9 +66,9 @@ const ProjectionsPage = () => {
     useCombinedProjectionMutation();
 
   const [updateCurrentInsights, { isLoading: isUpdatingCurrent }] =
-    useUpdateAiCurrentInsightsMutation();
+    useFetchInsightsMutation();
   const [updateFutureInsights, { isLoading: isUpdatingFuture }] =
-    useUpdateAiFutureInsightsMutation();
+    useFetchFutureInsightsMutation();
 
   const [saveCurrentProjection, { isLoading: isSaveLoading }] =
     useSaveCurrentProjectionMutation();
