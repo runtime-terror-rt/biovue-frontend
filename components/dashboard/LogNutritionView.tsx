@@ -478,7 +478,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
       for (let i = 0; i < newFoodsToSave.length; i++) {
         const food = newFoodsToSave[i];
         toast.loading(`Saving food log (${i + 1}/${newFoodsToSave.length})...`, { id: "log-status" });
-        
+
         try {
           const calculation = await calculateNutrition({
             user_id: userId,

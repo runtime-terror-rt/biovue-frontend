@@ -17,7 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useGetAiCurrentInsightsQuery, useGetAiFutureInsightsQuery, useUpdateAiCurrentInsightsMutation, useUpdateAiFutureInsightsMutation } from "@/redux/features/api/userDashboard/Projection/AIInsightsAPI";
+import { useGetInsightsQuery, useGetFutureInsightsQuery, useFetchInsightsMutation, useFetchFutureInsightsMutation } from "@/redux/features/api/userDashboard/insightsApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { toast } from "sonner";
@@ -34,11 +34,11 @@ export default function InsightsPage() {
   const currentUser = useSelector(selectCurrentUser);
   const userId = currentUser?.id || currentUser?.user_id;
 
-  const { data: insightsData, isLoading: isLoadingInsights } = useGetAiCurrentInsightsQuery(userId, { skip: !userId });
-  const { data: futureInsightsData, isLoading: isLoadingFuture } = useGetAiFutureInsightsQuery(userId, { skip: !userId });
+  const { data: insightsData, isLoading: isLoadingInsights } = useGetInsightsQuery(undefined, { skip: !userId });
+  const { data: futureInsightsData, isLoading: isLoadingFuture } = useGetFutureInsightsQuery(undefined, { skip: !userId });
 
-  const [updateCurrentInsights, { isLoading: isUpdatingCurrent }] = useUpdateAiCurrentInsightsMutation();
-  const [updateFutureInsights, { isLoading: isUpdatingFuture }] = useUpdateAiFutureInsightsMutation();
+  const [updateCurrentInsights, { isLoading: isUpdatingCurrent }] = useFetchInsightsMutation();
+  const [updateFutureInsights, { isLoading: isUpdatingFuture }] = useFetchFutureInsightsMutation();
 
   const isUpdating = isUpdatingCurrent || isUpdatingFuture;
 
