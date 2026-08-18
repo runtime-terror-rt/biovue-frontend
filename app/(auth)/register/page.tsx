@@ -7,7 +7,7 @@ import { User, Building2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SelectAccountTypeContent = () => {
-  const [selectedType, setSelectedType] = useState<"individual" | "business" | null>(null);
+  const [selectedType, setSelectedType] = useState<"individual" | "business" | "api_service" | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const planId = searchParams.get("plan_id");
@@ -18,6 +18,8 @@ const SelectAccountTypeContent = () => {
       router.push(`/register/individual${query}`);
     } else if (selectedType === "business") {
       router.push(`/register/business${query}`);
+    } else if (selectedType === "api_service") {
+      router.push(`/register/api-service${query}`);
     }
   };
 
@@ -44,7 +46,7 @@ const SelectAccountTypeContent = () => {
       </p>
 
       {/* Cards Container */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mb-12">
         {/* Individual Card */}
         <div
           onClick={() => setSelectedType("individual")}
@@ -80,6 +82,38 @@ const SelectAccountTypeContent = () => {
           <h3 className="text-xl font-bold text-[#041228] mb-2">Business</h3>
           <p className="text-[#98A2B3] text-center leading-relaxed">
             I&apos;m a coach, trainer, or wellness professional
+          </p>
+        </div>
+
+        {/* API Service Card */}
+        <div
+          onClick={() => setSelectedType("api_service")}
+          className={cn(
+            "cursor-pointer bg-white rounded-xl p-8 border-2 transition-all duration-200 flex flex-col items-center",
+            selectedType === "api_service"
+              ? "border-[#3A86FF] shadow-[0_0_20px_rgba(58,134,255,0.1)]"
+              : "border-transparent hover:border-gray-200"
+          )}
+        >
+          <div className="w-14 h-14 rounded-xl bg-[#E4EFFF] flex items-center justify-center mb-6">
+            <svg
+              className="text-[#3A86FF]"
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-[#041228] mb-2">API Service</h3>
+          <p className="text-[#98A2B3] text-center leading-relaxed">
+            I want to integrate BioVue into my own application
           </p>
         </div>
       </div>
