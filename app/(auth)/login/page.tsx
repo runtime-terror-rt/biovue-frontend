@@ -730,7 +730,13 @@ const LoginPage = () => {
           updateAiSuggestedTarget({ user_id: userId });
           updateProfessionalRecommendations({ user_id: userId });
 
-          if (isProfileCompleted === "Your profile is complete.") {
+          if (userType === "api") {
+            if (!userData?.plan_id && !invitedAndAccepted) {
+              router.push("/register/api-service/choose-plan");
+            } else {
+              router.push("/api-user");
+            }
+          } else if (isProfileCompleted === "Your profile is complete.") {
             router.push("/user-dashboard");
           } else {
             router.push(`/welcome?email=${formData.email}`);
