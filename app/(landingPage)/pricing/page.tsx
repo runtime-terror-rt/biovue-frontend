@@ -529,8 +529,7 @@ const PricingPage = () => {
                     })()}
                     cta="Buy Now"
                     ctaColor="bg-[#0FA4A9]"
-                    onSelect={() => handlePlanSelection(plan)}
-                    isLoading={loadingPlanId === plan.id}
+                    onSelect={() => router.push("/register")}
                   />
                 ))
               ) : (
