@@ -255,7 +255,7 @@ export default function ApiUserDashboard() {
           handleLogout={handleLogout}
         />
 
-        <main className="px-4 sm:px-6 max-w-7xl mx-auto mt-6 sm:mt-8">
+        <main className="px-4 sm:px-6 mt-6 sm:mt-8 w-full">
           <TopBanner
             displayName={displayName}
             planName={planName}
