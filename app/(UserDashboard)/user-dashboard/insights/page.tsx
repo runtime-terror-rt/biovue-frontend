@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -15,15 +15,19 @@ import {
   Calendar,
   ArrowRight,
   Loader2,
+  Crown,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetInsightsQuery, useGetFutureInsightsQuery, useFetchInsightsMutation, useFetchFutureInsightsMutation } from "@/redux/features/api/userDashboard/insightsApi";
+import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { toast } from "sonner";
 import SubscriptionGuard from "@/components/common/SubscriptionGuard";
 import { useSubscriptionStatus } from "@/lib/hooks/useSubscriptionStatus";
 import { useGetProjectionGalleryQuery } from "@/redux/features/api/userDashboard/Projection/GalleryAPI";
+import { generateInsightsPdf } from "@/lib/pdf/generateInsightsPdf";
 
 // Mock data removed in favor of API integration
 
@@ -34,8 +38,37 @@ export default function InsightsPage() {
   const currentUser = useSelector(selectCurrentUser);
   const userId = currentUser?.id || currentUser?.user_id;
 
+  const { data: paymentSummary } = useGetPaymentSummaryQuery();
+
+  const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
+  const activePlanFromSummary =
+    paymentSummary?.latest_payment &&
+    ACTIVE_STATUSES.includes(
+      (paymentSummary.latest_payment.status ?? "").toLowerCase()
+    )
+      ? paymentSummary.latest_payment.plan
+      : null;
+
+  const activePlanName = (
+    activePlanFromSummary?.name ||
+    currentUser?.plan_name ||
+    ""
+  ).toLowerCase();
+
+  const isPremium = Boolean(
+    activePlanFromSummary
+      ? activePlanName.includes("premium")
+      : currentUser?.plan_id && activePlanName.includes("premium")
+  );
+
+  useEffect(() => {
+    if (!isPremium && activeTab === "5-year") {
+      setActiveTab("current");
+    }
+  }, [isPremium, activeTab]);
+
   const { data: insightsData, isLoading: isLoadingInsights } = useGetInsightsQuery(undefined, { skip: !userId });
-  const { data: futureInsightsData, isLoading: isLoadingFuture } = useGetFutureInsightsQuery(undefined, { skip: !userId });
+  const { data: futureInsightsData, isLoading: isLoadingFuture } = useGetFutureInsightsQuery(undefined, { skip: !userId || !isPremium });
 
   const [updateCurrentInsights, { isLoading: isUpdatingCurrent }] = useFetchInsightsMutation();
   const [updateFutureInsights, { isLoading: isUpdatingFuture }] = useFetchFutureInsightsMutation();
@@ -65,16 +98,66 @@ export default function InsightsPage() {
     return `${diffDaysActual} days ago`;
   }, [galleryData]);
 
+  const handleTabChange = (tab: "current" | "5-year") => {
+    if (tab === "5-year" && !isPremium) {
+      toast.error("5-Year Health Insights are available exclusively on the Premium plan. Please upgrade to access.");
+      return;
+    }
+    setActiveTab(tab);
+  };
+
+  const handleDownloadReport = async () => {
+    if (!isPremium) {
+      toast.error(
+        "Downloadable reports are available exclusively on the Premium plan. Please upgrade to download."
+      );
+      return;
+    }
+
+    const isFiveYear = activeTab === "5-year";
+    const reportTitle = isFiveYear
+      ? "5-Year Health Outlook Report"
+      : "Current Health Insights Report";
+    const insightsToReport = isFiveYear ? futureInsights : currentInsights;
+
+    if (!insightsToReport || insightsToReport.length === 0) {
+      toast.error("No insights data available to generate report.");
+      return;
+    }
+
+    const toastId = toast.loading("Generating your PDF report...");
+
+    try {
+      await generateInsightsPdf({
+        reportTitle,
+        isFiveYear,
+        insightsToReport,
+        userName: currentUser?.name || currentUser?.email || "Valued Member",
+      });
+
+      toast.dismiss(toastId);
+      toast.success("PDF report generated & downloaded!");
+    } catch (error: any) {
+      toast.dismiss(toastId);
+      console.error("PDF generation error:", error);
+      toast.error("Failed to generate PDF report.");
+    }
+  };
+
   const handleRefreshInsights = async () => {
     if (!userId) {
       toast.error("User ID not found");
       return;
     }
     try {
-      await Promise.all([
-        updateCurrentInsights({ user_id: userId }).unwrap(),
-        updateFutureInsights({ user_id: userId, timeframe: "5 years" }).unwrap()
-      ]);
+      if (isPremium) {
+        await Promise.all([
+          updateCurrentInsights({ user_id: userId }).unwrap(),
+          updateFutureInsights({ user_id: userId, timeframe: "5 years" }).unwrap()
+        ]);
+      } else {
+        await updateCurrentInsights({ user_id: userId }).unwrap();
+      }
       toast.success("Insights refreshed successfully");
     } catch (error) {
       toast.error("Failed to refresh insights");
@@ -121,7 +204,7 @@ export default function InsightsPage() {
         <div className="flex items-center gap-1 bg-[#E6F6F6] p-1 rounded-lg border border-[#BDE8E8]">
 
          <button
-            onClick={() => setActiveTab("current")}
+            onClick={() => handleTabChange("current")}
             className={cn(
               "px-4 py-2 text-sm font-semibold rounded-md transition-all cursor-pointer",
               activeTab === "current"
@@ -132,20 +215,45 @@ export default function InsightsPage() {
             Current Projection
           </button>
           <button
-            onClick={() => setActiveTab("5-year")}
+            onClick={() => handleTabChange("5-year")}
             className={cn(
-              "px-4 py-2 text-sm font-semibold rounded-md transition-all cursor-pointer",
+              "px-4 py-2 text-sm font-semibold rounded-md transition-all flex items-center gap-1.5 cursor-pointer",
               activeTab === "5-year"
                 ? "bg-[#0FA4A9] text-white shadow-sm"
-                : "text-[#5F6F73] hover:text-[#1F2D2E]",
+                : isPremium
+                ? "text-[#5F6F73] hover:text-[#1F2D2E]"
+                : "text-gray-400 bg-gray-100/70 border border-gray-200 cursor-not-allowed opacity-75",
             )}
           >
-            5 - Year Projection
+            <span>5 - Year Projection</span>
+            {!isPremium && (
+              <span className="text-[10px] font-bold bg-amber-500/15 text-amber-600 border border-amber-500/30 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                <Crown size={10} fill="currentColor" /> Premium
+              </span>
+            )}
           </button>
          
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+          <button
+            onClick={handleDownloadReport}
+            className={cn(
+              "flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
+              isPremium
+                ? "bg-[#0FA4A9] text-white hover:bg-[#0d8d91] shadow-xs"
+                : "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed opacity-75"
+            )}
+          >
+            <Download size={14} />
+            Download Report
+            {!isPremium && (
+              <span className="text-[10px] font-bold bg-amber-500/15 text-amber-600 border border-amber-500/30 px-1.5 py-0.5 rounded flex items-center gap-0.5 ml-0.5">
+                <Crown size={10} fill="currentColor" /> Premium
+              </span>
+            )}
+          </button>
+
           <button
             onClick={handleRefreshInsights}
             disabled={isUpdating}

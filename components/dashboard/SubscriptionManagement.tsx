@@ -20,6 +20,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, User, Crown, Check, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { useGetProjectionLimitQuery } from "@/redux/features/api/userDashboard/Projection/ProjectionLimitAPI";
+
 interface SubscriptionManagementProps {
   onBack?: () => void;
   backLabel?: string;
@@ -48,8 +50,30 @@ const SubscriptionManagement = ({
     });
 
   const { data: paymentSummary } = useGetPaymentSummaryQuery();
+  const { data: projectionLimitData } = useGetProjectionLimitQuery();
   const [cancelSubscription, { isLoading: isCancelling }] =
     useCancelSubscriptionMutation();
+
+  const expiryDateString = projectionLimitData?.expired_at
+    ? new Date(projectionLimitData.expired_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+
+  const remainingDays = currentUser?.plan_duration
+    ? currentUser.plan_duration
+    : projectionLimitData?.expired_at
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(projectionLimitData.expired_at).getTime() -
+            new Date().getTime()) /
+            (1000 * 60 * 60 * 24),
+        ),
+      )
+    : null;
 
   const plans = plansData?.data || [];
 
@@ -88,14 +112,24 @@ const SubscriptionManagement = ({
   }, [paymentSummary]);
 
   const handleCancelSubscription = async () => {
+    let expiryInfo = "";
+    if (expiryDateString && remainingDays !== null && remainingDays > 0) {
+      expiryInfo = `<p class="mt-2 text-sm text-gray-600">Your subscription will remain active until <strong class="text-[#0FA4A9]">${expiryDateString}</strong> (${remainingDays} days left).</p>`;
+    } else if (expiryDateString) {
+      expiryInfo = `<p class="mt-2 text-sm text-[#5F6F73]">Your subscription will remain active until <strong class="text-[#0FA4A9]">${expiryDateString}</strong>.</p>`;
+    } else if (remainingDays !== null && remainingDays > 0) {
+      expiryInfo = `<p class="mt-2 text-sm text-[#5F6F73]">Your subscription will remain active for <strong class="text-[#0FA4A9]">${remainingDays} days</strong>.</p>`;
+    }
+
     const result = await Swal.fire({
       title: "Are you sure?",
-      text: "Do you really want to cancel your subscription?",
+      html: `<div class="text-[#1F2D2E]">Do you really want to cancel your subscription?</div>${expiryInfo}`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#0FA4A9",
       cancelButtonColor: "#d33",
       confirmButtonText: "Yes, cancel it!",
+      cancelButtonText: "Cancel",
     });
 
     if (result.isConfirmed) {

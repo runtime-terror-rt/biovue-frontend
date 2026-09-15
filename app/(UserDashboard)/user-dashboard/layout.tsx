@@ -13,6 +13,10 @@ import ProfileDropdown from "@/components/dashboard/ProfileDropdown";
 import { usePathname } from "next/navigation";
 import React, { useState, useEffect } from "react";
 
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/redux/features/slice/authSlice";
+import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
+
 export default function UserDashboardLayout({
   children,
 }: {
@@ -21,9 +25,31 @@ export default function UserDashboardLayout({
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
+  const currentUser = useSelector(selectCurrentUser);
+  const { data: paymentSummary } = useGetPaymentSummaryQuery();
+  console.log("paymentSummary", paymentSummary)
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
+  const activePlanFromSummary =
+    paymentSummary?.latest_payment &&
+    ACTIVE_STATUSES.includes(
+      (paymentSummary.latest_payment.status ?? "").toLowerCase()
+    )
+      ? paymentSummary.latest_payment.plan
+      : null;
+
+  const activePlanId = activePlanFromSummary?.id || currentUser?.plan_id;
+  const activePlanName = activePlanFromSummary?.name || currentUser?.plan_name;
+
+  const isPremium = Boolean(
+    activePlanFromSummary ||
+    activePlanId ||
+    (activePlanName && !activePlanName.toLowerCase().includes("free"))
+  );
 
   const getPageTitle = () => {
     if (!mounted) return "Dashboard";
@@ -66,18 +92,25 @@ export default function UserDashboardLayout({
             <div className="flex items-center gap-2 sm:gap-4 md:gap-6 ml-auto">
               <div className="hidden sm:flex items-center gap-2 sm:gap-4 md:gap-6">
                 <ProjectionLimitIndicator />
-                <ExpiryIndicator />
+                {/* <ExpiryIndicator /> */}
               </div>
               <NotificationBell />
               <div className="flex items-center gap-1 sm:gap-3 md:pr-2">
                 <ProfileDropdown roleLabel="User" settingsHref="/user-dashboard/settings" />
               </div>
-              <Link href="/user-dashboard/upgrade">
-                <button className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
-                  <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="hidden sm:inline">Upgrade</span>
-                </button>
-              </Link>
+              {mounted && isPremium ? (
+                <div className="flex items-center gap-1 sm:gap-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm shadow-sm shadow-amber-500/20">
+                  <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-amber-100" />
+                  <span>Premium</span>
+                </div>
+              ) : (
+                <Link href="/user-dashboard/upgrade">
+                  <button className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
+                    <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="hidden sm:inline">Upgrade</span>
+                  </button>
+                </Link>
+              )}
             </div>
           </header>
 
