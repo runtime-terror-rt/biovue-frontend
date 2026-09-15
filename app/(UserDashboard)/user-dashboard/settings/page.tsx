@@ -24,6 +24,7 @@ import {
   useCreateUpdateProfileMutation,
   useGetProfileQuery,
 } from "@/redux/features/api/profileApi";
+import { useGetProjectionLimitQuery } from "@/redux/features/api/userDashboard/Projection/ProjectionLimitAPI";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -1240,16 +1241,37 @@ const SubscriptionView = ({
     console.log("Plans Data:",plansData)
 
   const { data: paymentSummary } = useGetPaymentSummaryQuery();
+  const { data: projectionLimitData } = useGetProjectionLimitQuery();
+
+  const expiryDateString = projectionLimitData?.expired_at
+    ? new Date(projectionLimitData.expired_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+
+  const remainingDays = currentUser?.plan_duration
+    ? currentUser.plan_duration
+    : projectionLimitData?.expired_at
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(projectionLimitData.expired_at).getTime() -
+            new Date().getTime()) /
+            (1000 * 60 * 60 * 24),
+        ),
+      )
+    : null;
 
   console.log("Payment Summary:", paymentSummary);
 
-  
   const [cancelSubscription, { isLoading: isCancelling }] =
     useCancelSubscriptionMutation();
 
   const plans = (plansData?.data || []).filter((plan: any) => plan.status === true);
 
-console.log("Plans:", plans);
+  console.log("Plans:", plans);
 
   // Determine active plan ID - source of truth is either the summary (if active status) or the auth user data
   const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
@@ -1298,14 +1320,24 @@ console.log("Plans:", plans);
   }, [paymentSummary]);
 
   const handleCancelSubscription = async () => {
+    let expiryInfo = "";
+    if (expiryDateString && remainingDays !== null && remainingDays > 0) {
+      expiryInfo = `<p class="mt-2 text-sm text-gray-600">Your subscription will remain active until <strong class="text-[#0FA4A9]">${expiryDateString}</strong> (${remainingDays} days left).</p>`;
+    } else if (expiryDateString) {
+      expiryInfo = `<p class="mt-2 text-sm text-[#5F6F73]">Your subscription will remain active until <strong class="text-[#0FA4A9]">${expiryDateString}</strong>.</p>`;
+    } else if (remainingDays !== null && remainingDays > 0) {
+      expiryInfo = `<p class="mt-2 text-sm text-[#5F6F73]">Your subscription will remain active for <strong class="text-[#0FA4A9]">${remainingDays} days</strong>.</p>`;
+    }
+
     const result = await Swal.fire({
       title: "Are you sure?",
-      text: "Do you really want to cancel your subscription?",
+      html: `<div class="text-[#1F2D2E]">Do you really want to cancel your subscription?</div>${expiryInfo}`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#0FA4A9",
       cancelButtonColor: "#d33",
       confirmButtonText: "Yes, cancel it!",
+      cancelButtonText: "Cancel",
     });
 
     if (result.isConfirmed) {
