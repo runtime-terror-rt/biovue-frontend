@@ -12,29 +12,29 @@ interface TopBannerProps {
 
 export default function TopBanner({ displayName, planName, externalApiResponse }: TopBannerProps) {
   return (
-    <div className="relative overflow-hidden bg-linear-to-r from-gray-900 via-slate-800 to-teal-950 rounded-3xl p-8 text-white shadow-xl mb-8">
-      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-        <div className="space-y-3">
+    <div className="relative overflow-hidden bg-gradient-to-r from-gray-900 via-slate-800 to-teal-950 rounded-3xl p-5 sm:p-8 text-white shadow-xl mb-6 sm:mb-8">
+      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 sm:gap-8">
+        <div className="space-y-2 sm:space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
             Developer API Console
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight">
             Welcome back, {displayName}
           </h1>
-          <p className="text-gray-300 max-w-2xl text-sm sm:text-base leading-relaxed">
+          <p className="text-gray-300 max-w-2xl text-xs sm:text-sm md:text-base leading-relaxed">
             Seamlessly integrate BioVue's advanced body composition and lifestyle projections into your applications. Test endpoints, generate insights, and manage your API limits below.
           </p>
         </div>
 
         {/* Quick Billing Overview Card */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-6 min-w-[280px] space-y-4 shrink-0 shadow-lg">
+        <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 sm:p-6 w-full lg:w-auto lg:min-w-[280px] space-y-4 shrink-0 shadow-lg">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">
                 Current Plan
               </p>
-              <h3 className="text-xl font-black text-white">
+              <h3 className="text-lg sm:text-xl font-black text-white">
                 {planName}
               </h3>
             </div>
@@ -80,8 +80,8 @@ export default function TopBanner({ displayName, planName, externalApiResponse }
       </div>
 
       {/* Backdrop Glow Effects */}
-      <div className="absolute top-0 right-0 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
-      <div className="absolute bottom-0 left-0 w-60 h-60 bg-blue-500/10 rounded-full blur-2xl -ml-20 -mb-20"></div>
+      <div className="absolute top-0 right-0 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-60 h-60 bg-blue-500/10 rounded-full blur-2xl -ml-20 -mb-20 pointer-events-none"></div>
     </div>
   );
 }

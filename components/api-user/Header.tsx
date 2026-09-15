@@ -31,22 +31,22 @@ export default function Header({ displayName, currentUser, handleLogout }: Heade
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm px-6 py-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-xs px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <div className="flex items-center gap-2 sm:gap-3">
         <Image
           src="/images/logo.png"
           alt="BioVue Logo"
-          width={110}
-          height={50}
-          className="object-contain"
+          width={100}
+          height={45}
+          className="object-contain w-24 sm:w-28 h-auto"
           priority
         />
-        <span className="hidden sm:inline bg-teal-500/10 text-teal-600 text-[10px] font-black uppercase tracking-[0.15em] px-2.5 py-1 rounded-full border border-teal-500/20">
+        <span className="hidden md:inline bg-teal-500/10 text-teal-600 text-[10px] font-black uppercase tracking-[0.15em] px-2.5 py-1 rounded-full border border-teal-500/20">
           Developer Ecosystem
         </span>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 sm:gap-6">
         <Link
           href="/pricing"
           className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-950 transition-colors"
@@ -61,13 +61,13 @@ export default function Header({ displayName, currentUser, handleLogout }: Heade
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsProfileOpen((prev) => !prev)}
-            className="flex items-center gap-3 p-1.5 pr-4 rounded-full hover:bg-slate-50 border border-slate-100 bg-white transition-all cursor-pointer group shadow-sm"
+            className="flex items-center gap-2 sm:gap-3 p-1 sm:p-1.5 pr-2.5 sm:pr-4 rounded-full hover:bg-slate-50 border border-slate-200 bg-white transition-all cursor-pointer group shadow-xs"
           >
-            <div className="w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
-              <User size={16} className="text-teal-600" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-teal-500/10 flex items-center justify-center border border-teal-500/20 shrink-0">
+              <User size={15} className="text-teal-600" />
             </div>
             <div className="text-left hidden sm:block flex-1 min-w-0">
-              <p className="text-xs font-bold text-gray-800 leading-tight truncate">
+              <p className="text-xs font-bold text-gray-800 leading-tight truncate max-w-[120px]">
                 {displayName}
               </p>
               <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider leading-none">

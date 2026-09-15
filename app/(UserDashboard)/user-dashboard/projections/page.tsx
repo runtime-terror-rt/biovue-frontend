@@ -15,12 +15,14 @@ import {
   Upload,
   Sparkles,
   User,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { useAppSelector } from "@/redux/store/hooks";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { toast } from "sonner";
+import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
 import { useCreateFutureGoalMutation } from "@/redux/features/api/userDashboard/Projection/FutureGoal";
 import { useGetLatestProjectionQuery } from "@/redux/features/api/userDashboard/Projection/GetCurrentProjection";
 import { useSaveCurrentProjectionMutation } from "@/redux/features/api/userDashboard/Projection/SaveCurrentProjection";
@@ -55,11 +57,47 @@ const ProjectionsPage = () => {
     useState<CombinedProjectionResponse | null>(null);
 
   const user = useAppSelector(selectCurrentUser);
+  const { data: paymentSummary } = useGetPaymentSummaryQuery();
   const { data: profileResponse } = useGetProfileQuery(user?.id, {
     skip: !user?.id,
   });
   const userProfile = profileResponse?.data?.profile;
   const router = useRouter();
+
+  const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
+  const activePlanFromSummary =
+    paymentSummary?.latest_payment &&
+    ACTIVE_STATUSES.includes(
+      (paymentSummary.latest_payment.status ?? "").toLowerCase()
+    )
+      ? paymentSummary.latest_payment.plan
+      : null;
+
+  const activePlanName = (
+    activePlanFromSummary?.name ||
+    user?.plan_name ||
+    ""
+  ).toLowerCase();
+
+  const isPremium = Boolean(
+    activePlanFromSummary
+      ? activePlanName.includes("premium")
+      : user?.plan_id && activePlanName.includes("premium")
+  );
+
+  useEffect(() => {
+    if (!isPremium && resolution === "2k") {
+      setResolution("1k");
+    }
+  }, [isPremium, resolution]);
+
+  const handleSelectResolution = (res: "1k" | "2k" | "4k") => {
+    if (res === "2k" && !isPremium) {
+      toast.error("2K resolution is available exclusively on the Premium plan. Please upgrade to unlock.");
+      return;
+    }
+    setResolution(res);
+  };
 
 
   const [combinedProjection, { isLoading: isCombinedLoading }] =
@@ -107,6 +145,7 @@ const ProjectionsPage = () => {
     " Almost there, finalizing your projection…",
   ];
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const isMounted = useRef(true);
   useEffect(() => {
@@ -115,6 +154,20 @@ const ProjectionsPage = () => {
       isMounted.current = false;
     };
   }, []);
+
+  // Timer for elapsed seconds in loading modal
+  useEffect(() => {
+    if (step !== "loading") {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [step]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -261,8 +314,10 @@ const ProjectionsPage = () => {
           {/* Resolution */}
           <div className="space-y-3">
             <p className="text-sm font-semibold text-[#5F6F73]">Resolution</p>
+
+            {/* 1K Resolution - Available to all */}
             <div
-              onClick={() => setResolution("1k")}
+              onClick={() => handleSelectResolution("1k")}
               className={cn(
                 "flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all",
                 resolution === "1k"
@@ -284,16 +339,26 @@ const ProjectionsPage = () => {
                 )}
               </div>
             </div>
+
+            {/* 2K Resolution - Premium Plan Only */}
             <div
-              onClick={() => setResolution("2k")}
+              onClick={() => handleSelectResolution("2k")}
               className={cn(
-                "flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all",
+                "flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer",
                 resolution === "2k"
                   ? "border-[#3A86FF] bg-[#F8FAFF]"
                   : "border-gray-100 hover:border-gray-200",
+                !isPremium && "bg-gray-50/60 opacity-90",
               )}
             >
-              <span className="font-semibold text-[#041228]">2K</span>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-[#041228]">2K</span>
+                {!isPremium && (
+                  <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <Crown size={12} fill="currentColor" /> Premium Only
+                  </span>
+                )}
+              </div>
               <div
                 className={cn(
                   "w-5 h-5 rounded-full border-2 flex items-center justify-center",
@@ -308,8 +373,10 @@ const ProjectionsPage = () => {
               </div>
             </div>
 
+            {/* 4K Resolution - Hidden for future use */}
+            {/* 
             <div
-              onClick={() => setResolution("4k")}
+              onClick={() => handleSelectResolution("4k")}
               className={cn(
                 "flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all",
                 resolution === "4k"
@@ -331,6 +398,7 @@ const ProjectionsPage = () => {
                 )}
               </div>
             </div>
+            */}
           </div>
         </div>
       </div>
@@ -405,28 +473,180 @@ const ProjectionsPage = () => {
     </div>
   );
 
-  const renderLoadingStep = () => (
-    <div className="fixed inset-0 z-[100] bg-white/40 backdrop-blur-md flex items-center justify-center p-6 overflow-hidden">
-      <div className="flex flex-col items-center justify-center py-20 gap-4 animate-in fade-in duration-700">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full border-4 border-[#0FA4A9]/10 border-t-[#0FA4A9] animate-spin" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Sparkles size={20} className="text-[#0FA4A9] animate-pulse" />
+  const renderLoadingStep = () => {
+    const formatElapsed = (totalSecs: number) => {
+      const m = Math.floor(totalSecs / 60)
+        .toString()
+        .padStart(2, "0");
+      const s = (totalSecs % 60)
+        .toString()
+        .padStart(2, "0");
+      return `${m}:${s}`;
+    };
+
+    const loadingStages = [
+      {
+        subtitle: "Preparing your baseline",
+        description: "Uploading your photo and aligning it with your profile data.",
+      },
+      {
+        subtitle: "Analyzing lifestyle habits",
+        description: "Evaluating diet, physical activity, sleep, and daily routines.",
+      },
+      {
+        subtitle: "Calculating health risk factors",
+        description: "Projecting future body composition and metabolic trends.",
+      },
+      {
+        subtitle: "Generating photorealistic outcome",
+        description: "Finalizing your BioVue guided photorealistic report.",
+      },
+    ];
+
+    const currentStage =
+      loadingStages[
+        Math.min(Math.floor(elapsedSeconds / 15), loadingStages.length - 1)
+      ];
+
+    return (
+      <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-300">
+        <div className="bg-white rounded-[32px] p-6 sm:p-8 max-w-[460px] w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300 border border-gray-100 my-auto">
+          {/* Top Circular Progress Indicator (80x80) */}
+          <div className="w-[80px] h-[80px] relative flex items-center justify-center mb-6 shrink-0">
+            <svg
+              className="w-[80px] h-[80px] -rotate-90 animate-spin"
+              style={{ animationDuration: "2.5s" }}
+              viewBox="0 0 80 80"
+            >
+              {/* Background circle track: #E4F4F3 */}
+              <circle
+                cx="40"
+                cy="40"
+                r="35"
+                stroke="#E4F4F3"
+                strokeWidth="4.5"
+                fill="none"
+              />
+              {/* Spinning active progress arc: #15A7A5 */}
+              <circle
+                cx="40"
+                cy="40"
+                r="35"
+                stroke="#15A7A5"
+                strokeWidth="4.5"
+                strokeDasharray="220"
+                strokeDashoffset="140"
+                strokeLinecap="round"
+                fill="none"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Sparkles size={32} className="text-[#15A7A5]" />
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col items-center gap-1.5">
-          <h3 className="text-lg font-bold text-[#1F2D2E]">
-            Generating Your Projection
+
+          {/* Title & Subtitle */}
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0F172A] mb-1.5 tracking-tight">
+            Projection in progress
+          </h2>
+
+          <h3 className="text-base sm:text-lg font-bold text-[#1F2D2E] mb-1">
+            {currentStage.subtitle}
           </h3>
-          <div className="h-6 flex items-center justify-center">
-            <p className="text-[#5F6F73] text-sm font-medium animate-in fade-in slide-in-from-bottom-2 duration-500">
-              {loadingTexts[loadingTextIndex]}
-            </p>
+          <p className="text-xs sm:text-sm text-[#5F6F73] max-w-[320px] leading-relaxed mb-6">
+            {currentStage.description}
+          </p>
+
+          {/* Baseline Photo Thumbnail */}
+          <div className="relative w-32 h-36 rounded-2xl overflow-hidden mb-2 shadow-sm border border-gray-100 bg-gray-50 shrink-0">
+            {imagePreview ? (
+              <Image
+                src={imagePreview}
+                alt="Baseline Photo"
+                fill
+                className="object-cover"
+                sizes="128px"
+              />
+            ) : (
+              <Image
+                src="/images/projection-img.jpg"
+                alt="Baseline Photo"
+                fill
+                className="object-cover opacity-80"
+                sizes="128px"
+              />
+            )}
+          </div>
+          <span className="text-[11px] font-extrabold tracking-widest text-gray-400 uppercase mb-6">
+            BASELINE PHOTO
+          </span>
+
+          {/* Card 1: Current lifestyle (Light Blue) */}
+          <div className="w-full bg-[#F0F4FF] border border-[#D0DFFE] rounded-2xl p-3.5 flex items-start gap-3.5 text-left mb-3">
+            <div className="w-9 h-9 bg-white/90 rounded-xl flex items-center justify-center text-[#3A86FF] shadow-xs shrink-0 mt-0.5">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+                <line x1="8" y1="8" x2="10" y2="8"></line>
+                <line x1="8" y1="16" x2="12" y2="16"></line>
+              </svg>
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-[#1E293B] leading-tight">
+                Current lifestyle
+              </h4>
+              <p className="text-xs text-[#64748B] leading-normal mt-0.5">
+                Reactive projection based on existing habits
+              </p>
+            </div>
+          </div>
+
+          {/* Card 2: BioVue guided (Light Teal) */}
+          <div className="w-full bg-[#E8F8F7] border border-[#BBECE9] rounded-2xl p-3.5 flex items-start gap-3.5 text-left mb-6">
+            <div className="w-9 h-9 bg-white/90 rounded-xl flex items-center justify-center text-[#15A7A5] shadow-xs shrink-0 mt-0.5">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+                <line x1="8" y1="8" x2="10" y2="8"></line>
+                <line x1="8" y1="16" x2="12" y2="16"></line>
+              </svg>
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-[#1E293B] leading-tight">
+                BioVue guided
+              </h4>
+              <p className="text-xs text-[#64748B] leading-normal mt-0.5">
+                Improved projection with BioVue guidance
+              </p>
+            </div>
+          </div>
+
+          {/* Footer Time Elapsed */}
+          <div className="text-xs font-medium text-gray-400">
+            Elapsed {formatElapsed(elapsedSeconds)} • Usually takes 60–90 seconds
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderResultsStep = () => {
     if (!combinedProjectionData?.data) return null;

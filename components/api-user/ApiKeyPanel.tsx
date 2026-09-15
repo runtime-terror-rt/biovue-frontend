@@ -19,13 +19,13 @@ export default function ApiKeyPanel({
   copiedToken,
 }: ApiKeyPanelProps) {
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-8 space-y-6">
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-5 sm:p-8 space-y-6">
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-teal-500/5 rounded-2xl flex items-center justify-center border border-teal-500/15">
-          <Key className="w-6 h-6 text-teal-600" />
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-teal-500/5 rounded-2xl flex items-center justify-center border border-teal-500/15 shrink-0">
+          <Key className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" />
         </div>
         <div>
-          <h2 className="text-xl font-extrabold text-gray-900">
+          <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 leading-tight">
             API Key Credentials
           </h2>
           <p className="text-xs text-gray-400 font-semibold">
@@ -40,13 +40,13 @@ export default function ApiKeyPanel({
             type={isKeyVisible ? "text" : "password"}
             readOnly
             value={apiKey}
-            className="w-full h-14 px-4 pr-24 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono text-xs text-gray-700 tracking-wider focus:outline-none"
+            className="w-full h-12 sm:h-14 px-3 sm:px-4 pr-24 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono text-xs text-gray-700 tracking-wider focus:outline-none"
           />
-          <div className="absolute right-2 top-2 bottom-2 flex gap-1">
+          <div className="absolute right-2 top-1.5 bottom-1.5 flex gap-1">
             <button
               type="button"
               onClick={() => setIsKeyVisible(!isKeyVisible)}
-              className="px-2.5 flex items-center justify-center rounded-xl bg-white text-[10px] font-black text-gray-500 hover:text-gray-900 border border-slate-100 transition-all cursor-pointer"
+              className="px-2 sm:px-2.5 flex items-center justify-center rounded-xl bg-white text-[10px] font-black text-gray-500 hover:text-gray-900 border border-slate-100 transition-all cursor-pointer"
               title={isKeyVisible ? "Hide Key" : "Show Key"}
             >
               {isKeyVisible ? "Hide" : "Show"}
@@ -54,7 +54,7 @@ export default function ApiKeyPanel({
             <button
               type="button"
               onClick={handleCopyKey}
-              className="px-2.5 flex items-center justify-center rounded-xl bg-white hover:text-teal-600 border border-slate-100 transition-all cursor-pointer shadow-sm"
+              className="px-2 sm:px-2.5 flex items-center justify-center rounded-xl bg-white hover:text-teal-600 border border-slate-100 transition-all cursor-pointer shadow-xs"
               title="Copy Key"
             >
               {copiedToken ? (
