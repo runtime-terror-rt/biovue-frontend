@@ -1276,16 +1276,22 @@ const SubscriptionView = ({
   // Determine active plan ID - source of truth is either the summary (if active status) or the auth user data
   const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
   const activePlanFromSummary =
-    paymentSummary?.latest_payment &&
+    paymentSummary?.latest_payment?.plan?.id ||
+    (paymentSummary?.latest_payment &&
     ACTIVE_STATUSES.includes(
       (paymentSummary.latest_payment.status ?? "").toLowerCase()
     )
       ? paymentSummary.latest_payment.plan.id
-      : null;
+      : null);
 
   // Final active plan ID to use for UI highlights
   const activePlanId = activePlanFromSummary || currentUser?.plan_id;
-  const activePlanName = paymentSummary?.latest_payment?.plan?.name || currentUser?.plan_name || (activePlanId ? "Active Plan" : "Free Trial");
+  const activePlanName =
+    paymentSummary?.latest_payment?.plan?.name ||
+    paymentSummary?.user?.plan_name ||
+    paymentSummary?.user?.plan_type ||
+    currentUser?.plan_name ||
+    (activePlanId ? "Active Plan" : "Free Trial");
 
   const hasActiveOrTrial = Boolean(
     activePlanId ||
@@ -1506,7 +1512,15 @@ const SubscriptionView = ({
           </div>
         ) : (
           plans.map((plan: any) => {
-            const isActive = Number(activePlanId) === Number(plan.id);
+            const isNameMatch =
+              Boolean(activePlanName && plan.name) &&
+              activePlanName.trim().toLowerCase() ===
+                plan.name.trim().toLowerCase();
+            const isIdMatch =
+              Boolean(activePlanId && plan.id) &&
+              Number(activePlanId) === Number(plan.id);
+
+            const isActive = isNameMatch || isIdMatch;
             return (
               <div
                 key={plan.id}

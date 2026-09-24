@@ -260,11 +260,11 @@ const PaymentSuccessPage = () => {
               Go To Dashboard
             </Link>
             <Link
-              href="/"
+              href="/user-dashboard/settings"
               className="flex items-center justify-center gap-2 bg-[#E6F6F6] text-[#0FA4A9] py-4 rounded-2xl font-bold hover:bg-[#D9EFEF] transition-all border border-[#B2E2E3]"
             >
               <Home size={20} />
-              Back Home
+              Back 
             </Link>
           </div>
         </div>

@@ -5,6 +5,7 @@ import {
   usePostNutritionLogMutation,
   useGetNutritionShowQuery,
   useCalculateNutritionMutation,
+  useDeleteFoodMutation,
 } from "@/redux/features/api/userDashboard/nutrition";
 import {
   useGenerateMealMutation,
@@ -27,6 +28,8 @@ interface FoodItem {
   protein: number;
   carbs: number;
   fat: number;
+  backendId?: number | string;
+  isExisting?: boolean;
   macroBreakdown?: {
     mainIngredients: string[];
     proteinSources: string[];
@@ -77,6 +80,8 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
 
   const [postNutritionLog, { isLoading: isSaving }] =
     usePostNutritionLogMutation();
+  const [deleteFood, { isLoading: isDeletingFood }] = useDeleteFoodMutation();
+  const [deletingFoodId, setDeletingFoodId] = useState<string | null>(null);
 
   const { data: aiNutritionData } = useGetAiSuggestedTargetQuery(userId, {
     skip: !userId,
@@ -183,19 +188,47 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
       Number(aiNutritionData?.target_nutrition?.calories?.value || 2000),
     );
 
-    const apiFoods = nutri.foods.map((f: any, index: number) => ({
-      id: `api-${index}`,
-      name: f.food,
-      quantity: f.quantity,
-      unit: f.unit,
+    const apiFoods = nutri.foods.map((f: any, index: number) => {
+      let foodName = "";
+      if (typeof f === "string") {
+        foodName = f;
+      } else if (typeof f?.food === "string") {
+        foodName = f.food;
+      } else if (typeof f?.food?.name === "string") {
+        foodName = f.food.name;
+      } else if (typeof f?.food?.food === "string") {
+        foodName = f.food.food;
+      } else if (typeof f?.name === "string") {
+        foodName = f.name;
+      } else if (Array.isArray(f?.food) && typeof f.food[0] === "string") {
+        foodName = f.food[0];
+      } else if (f?.food) {
+        foodName = String(f.food);
+      }
 
-      // hide per-food calorie breakdown
-      caloriesPerUnit: 0,
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-    }));
+      return {
+        id: f.id !== undefined && f.id !== null ? String(f.id) : `api-${index}`,
+        backendId:
+          typeof f.id === "number" ||
+          (typeof f.id === "string" && !f.id.startsWith("api-"))
+            ? f.id
+            : undefined,
+        name: foodName,
+        quantity:
+          typeof f.quantity === "number"
+            ? f.quantity
+            : parseFloat(f.quantity) || 1,
+        unit: typeof f.unit === "string" ? f.unit : "g",
+        isExisting: true,
+
+        // hide per-food calorie breakdown
+        caloriesPerUnit: 0,
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+      };
+    });
 
     setMeals([
       {
@@ -417,14 +450,57 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
     setCustomUnitInput("");
   };
 
-  const removeFoodFromMeal = (mealId: string, foodId: string) => {
-    setMeals(
-      meals.map((meal) =>
-        meal.id === mealId
-          ? { ...meal, foods: meal.foods.filter((f) => f.id !== foodId) }
-          : meal,
-      ),
+  const removeFoodFromMeal = async (
+    mealId: string,
+    foodId: string,
+    foodItem?: FoodItem,
+  ) => {
+    const targetFood =
+      foodItem ||
+      meals.find((m) => m.id === mealId)?.foods.find((f) => f.id === foodId);
+
+    const updatedMeals = meals.map((meal) =>
+      meal.id === mealId
+        ? { ...meal, foods: meal.foods.filter((f) => f.id !== foodId) }
+        : meal,
     );
+
+    if (
+      targetFood &&
+      (targetFood.isExisting ||
+        targetFood.id.toString().startsWith("api-") ||
+        targetFood.backendId)
+    ) {
+      setDeletingFoodId(foodId);
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const logDate =
+          (existingNutrition?.log_date
+            ? existingNutrition.log_date.split("T")[0]
+            : null) || today;
+
+        const payload = {
+          food: targetFood.name,
+          log_date: logDate,
+          user_id: Number(userId) || userId,
+        };
+
+        const res = await deleteFood(payload).unwrap();
+        setMeals(updatedMeals);
+        toast.success(res?.message || "Food item deleted successfully");
+      } catch (err: any) {
+        console.error("Delete food error:", err);
+        setMeals(updatedMeals);
+        toast.error(
+          err?.data?.message || err?.message || "Failed to delete food item",
+        );
+      } finally {
+        setDeletingFoodId(null);
+      }
+    } else {
+      setMeals(updatedMeals);
+      toast.success("Food item removed");
+    }
   };
 
   const addNewMeal = (type: MealType) => {
@@ -791,10 +867,16 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
                           </p> */}
                         </div>
                         <button
-                          onClick={() => removeFoodFromMeal(meal.id, food.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                          onClick={() => removeFoodFromMeal(meal.id, food.id, food)}
+                          disabled={deletingFoodId === food.id}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                          title="Delete Food"
                         >
-                          <Trash2 size={16} />
+                          {deletingFoodId === food.id ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={16} />
+                          )}
                         </button>
                       </div>
 
@@ -915,6 +997,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
                         <option value="ml">ml</option>
                         <option value="piece">piece</option>
                         <option value="cup">cup</option>
+                        <option value="oz">oz (ounce)</option>
                         <option value="tbsp">tbsp</option>
                         <option value="custom">
                           Custom (input unit manually)

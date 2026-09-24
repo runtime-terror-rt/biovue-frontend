@@ -329,7 +329,7 @@ const LogTodayModal = ({
                 <option value="rarely">Rarely (1x/month)</option>
                 <option value="sometimes">Sometimes (1-2x/week)</option>
                 <option value="often">Often (3-4x/week)</option>
-                <option value="daily">Daily</option>
+                <option value="daily">Daily</option> 
               </select>
             </div>
 
@@ -363,10 +363,10 @@ const LogTodayModal = ({
                 className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-[#5F6F73] text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-50"
               >
                 <option value="">Select.....</option>
-                <option value="30">Less than 32 Ounces</option>
-                <option value="64">32-64 Ounces</option>
-                <option value="96">64-96 Ounces</option>
-                <option value="128">96+ Ounces</option>
+                <option value="30">Less than 32 Ounces (approx. &lt; 4 glasses)</option>
+                <option value="64">32-64 Ounces (4-8 glasses)</option>
+                <option value="96">64-96 Ounces (8-12 glasses)</option>
+                <option value="128">96+ Ounces (12+ glasses)</option>
               </select>
             </div>
           </div>
