@@ -2071,6 +2071,7 @@ const OnboardingStepsPage = () => {
                     className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-5 text-gray-400 font-medium appearance-none"
                   >
                     <option value="">Select.....</option>
+                    <option value="Never">Never</option>
                     <option value="Daily">Daily</option>
                     <option value="Once a week">Once a week</option>
                     <option value="Once a month">Once a month</option>
@@ -2237,6 +2238,7 @@ const OnboardingStepsPage = () => {
                   { title: "Anxiety", desc: "Mental Health" },
                   { title: "Sleep Apnea", desc: "General" },
                   { title: "Thyroid Issues", desc: "Metabolic" },
+                  { title: "None of the Above", desc: "none_of_the_avove" },
                 ].map((condition, i) => (
                   <label
                     key={i}
@@ -2272,7 +2274,7 @@ const OnboardingStepsPage = () => {
                 ))}
               </div>
 
-              <div className="mb-8">
+              {/* <div className="mb-8">
                 <button
                   onClick={() =>
                     setFormData({ ...formData, medicalHistory: [] })
@@ -2281,7 +2283,7 @@ const OnboardingStepsPage = () => {
                 >
                   None of the above
                 </button>
-              </div>
+              </div> */}
 
               <div className="space-y-2 mb-6">
                 <h3 className="text-[#041228] font-bold text-[16px]">

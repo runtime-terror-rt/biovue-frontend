@@ -82,7 +82,7 @@ export default function LogHabitModal({
       }
     } else if (type === "hydration") {
       if (!formData.water_glasses) {
-        toast.error("Please enter water glasses/ounces.");
+        toast.error("Please enter water ounces.");
         return;
       }
     }
@@ -318,17 +318,24 @@ export default function LogHabitModal({
                 {/* Water Ounces (Mandatory - Hydration only) */}
                 {habitType.toLowerCase() === "hydration" && (
                   <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
-                      <Droplets size={14} className="text-[#3A86FF]" />
-                      Water Ounces
-                      <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
+                        <Droplets size={14} className="text-[#3A86FF]" />
+                        Water (Ounces)
+                        <span className="text-red-500">*</span>
+                      </label>
+                      {formData.water_glasses && Number(formData.water_glasses) > 0 && (
+                        <span className="text-xs font-semibold text-[#0FA4A9] bg-[#0FA4A9]/10 px-2 py-0.5 rounded-md">
+                          ≈ {(Number(formData.water_glasses) / 8).toFixed(1).replace(/\.0$/, "")} glasses (1 glass = 8 oz)
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="number"
                       name="water_glasses"
                       value={formData.water_glasses}
                       onChange={handleChange}
-                      placeholder="Enter value..."
+                      placeholder="e.g. 64"
                       className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
                     />
                   </div>

@@ -36,20 +36,23 @@ export default function UserDashboardLayout({
   const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
   const activePlanFromSummary =
     paymentSummary?.latest_payment &&
-    ACTIVE_STATUSES.includes(
-      (paymentSummary.latest_payment.status ?? "").toLowerCase()
-    )
+      ACTIVE_STATUSES.includes(
+        (paymentSummary.latest_payment.status ?? "").toLowerCase()
+      )
       ? paymentSummary.latest_payment.plan
       : null;
 
-  const activePlanId = activePlanFromSummary?.id || currentUser?.plan_id;
-  const activePlanName = activePlanFromSummary?.name || currentUser?.plan_name;
+  const activePlanName = (
+    paymentSummary?.latest_payment?.plan?.name ||
+    activePlanFromSummary?.name ||
+    paymentSummary?.user?.plan_name ||
+    paymentSummary?.user?.plan_type ||
+    currentUser?.plan_name ||
+    (currentUser as any)?.plan?.name ||
+    ""
+  ).toLowerCase();
 
-  const isPremium = Boolean(
-    activePlanFromSummary ||
-    activePlanId ||
-    (activePlanName && !activePlanName.toLowerCase().includes("free"))
-  );
+  const isPremium = activePlanName.includes("premium");
 
   const getPageTitle = () => {
     if (!mounted) return "Dashboard";
@@ -61,13 +64,13 @@ export default function UserDashboardLayout({
     if (path.includes("/user-dashboard/insights")) return "Insights";
     if (path.includes("/user-dashboard/habits")) return "Habits";
     if (path.includes("/user-dashboard/support")) return "Support";
-     if (path.includes("/user-dashboard/schedule")) return "Schedule & Reminders";
+    if (path.includes("/user-dashboard/schedule")) return "Schedule & Reminders";
     if (path.includes("/user-dashboard/messages")) return "Message";
     if (path.includes("/user-dashboard/settings")) return "Settings";
     if (path.includes("/user-dashboard/upgrade")) return "Upgrade";
     if (path.includes("/user-dashboard/notifications")) return "Notifications";
-   
-    
+
+
     return "Dashboard";
   };
 
@@ -75,7 +78,7 @@ export default function UserDashboardLayout({
     <ProtectedRoute allowedRoles={["individual"]} allowedProfessions={[null]}>
       <div className={`flex min-h-screen bg-[#F4FBFA] ${poppins.className}`}>
         {/* Sidebar - Fixed width container to reserve space on desktop */}
-      
+
         <Suspense fallback={<div className="w-20 md:w-65 border-r border-gray-200" />}>
           <Sidebar role="user" />
         </Suspense>
@@ -98,19 +101,23 @@ export default function UserDashboardLayout({
               <div className="flex items-center gap-1 sm:gap-3 md:pr-2">
                 <ProfileDropdown roleLabel="User" settingsHref="/user-dashboard/settings" />
               </div>
-              {mounted && isPremium ? (
-                <div className="flex items-center gap-1 sm:gap-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm shadow-sm shadow-amber-500/20">
-                  <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-amber-100" />
-                  <span>Premium</span>
-                </div>
-              ) : (
+              {mounted && !isPremium && (
                 <Link href="/user-dashboard/upgrade">
-                  <button className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
+                  <div className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
                     <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span className="hidden sm:inline">Upgrade</span>
-                  </button>
+                    <span>Premium</span>
+                  </div>
                 </Link>
-              )}
+              )
+                // : (
+                //   <Link href="/user-dashboard/upgrade">
+                //     <button className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
+                //       <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5" />
+                //       <span className="hidden sm:inline">Upgrade</span>
+                //     </button>
+                //   </Link>
+                // )
+              }
             </div>
           </header>
 

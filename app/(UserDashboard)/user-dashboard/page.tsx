@@ -25,6 +25,8 @@ import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { useGetHealthReportQuery } from "@/redux/features/api/userDashboard/dashboard/health-report";
 import { useGetInsightsQuery } from "@/redux/features/api/userDashboard/insightsApi";
 import { useGetUserOverviewChartQuery } from "@/redux/features/api/userDashboard/dashboardApi";
+import { useGetStressReportQuery } from "@/redux/features/api/userDashboard/stresslog";
+import { useGetHydrationReportQuery } from "@/redux/features/api/userDashboard/hydration";
 import TrainerMotivation from "@/components/UserDashboard/Dashboard/TrainerMotivation";
 
 // --- Main Page ---
@@ -42,6 +44,8 @@ const UserDashboard = () => {
   const { data: healthReport, isLoading: isHealthLoading } = useGetHealthReportQuery();
   const { data: insightsData, isLoading: isInsightsLoading } = useGetInsightsQuery(undefined, { skip: !currentUser?.id });
   const { data: chartResponse, isLoading: isChartLoading } = useGetUserOverviewChartQuery(days);
+  const { data: stressReport, isLoading: isStressLoading } = useGetStressReportQuery(days);
+  const { data: hydrationReport, isLoading: isHydrationLoading } = useGetHydrationReportQuery(days);
 
   const [habitData, setHabitData] = useState({
     weight: "",
@@ -345,7 +349,14 @@ const UserDashboard = () => {
             </div>
           </div>
 
-          <ChartsNutrition data={chartData} isLoading={isChartLoading} />
+          <ChartsNutrition
+            data={chartData}
+            stressData={stressReport}
+            hydrationData={hydrationReport}
+            isLoading={isChartLoading}
+            isStressLoading={isStressLoading}
+            isHydrationLoading={isHydrationLoading}
+          />
         </div>
 
         {/* Today's Focus - Dynamic Insights */}
