@@ -28,6 +28,7 @@ import { useGetUserOverviewChartQuery } from "@/redux/features/api/userDashboard
 import { useGetStressReportQuery } from "@/redux/features/api/userDashboard/stresslog";
 import { useGetHydrationReportQuery } from "@/redux/features/api/userDashboard/hydration";
 import TrainerMotivation from "@/components/UserDashboard/Dashboard/TrainerMotivation";
+import TrialCountdownBanner from "@/components/dashboard/TrialCountdownBanner";
 
 // --- Main Page ---
 const UserDashboard = () => {
@@ -94,6 +95,9 @@ const UserDashboard = () => {
             Complete your setup to unlock future features
           </p>
         </div>
+
+        {/* Free Trial Countdown Banner */}
+        <TrialCountdownBanner />
 
         {/* Motivational Message from Trainer */}
         <TrainerMotivation />

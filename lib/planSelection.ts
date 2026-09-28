@@ -1,21 +1,26 @@
 import { toast } from "sonner";
+import { hasPaidPlan } from "@/lib/planType";
 
 type ProcessPaymentFn = (args: any) => { unwrap: () => Promise<any> };
 
 export async function handlePlanSelection({
   plan,
   token,
+  user,
   router,
   processPayment,
   setLoadingPlanId,
   billing = "monthly",
+  onFreeTrial,
 }: {
   plan: any;
   token: string | null | undefined;
+  user?: any;
   router: any;
   processPayment: ProcessPaymentFn;
   setLoadingPlanId?: (id: number | null) => void;
   billing?: string;
+  onFreeTrial?: (plan: any) => void;
 }) {
   // Enterprise / Custom
   if (
@@ -28,38 +33,23 @@ export async function handlePlanSelection({
     return;
   }
 
-  // Free trial / zero price
+  // Free trial / zero price — pick the plan that bills after 7 days
   if (
-    plan.price === "0.00" ||
-    plan.price === 0 ||
-    (plan.name || "").toLowerCase().includes("free trial")
+    (plan.name || "").toLowerCase().includes("free trial") ||
+    (plan.plan_type === "individual" &&
+      (plan.price === "0.00" || plan.price === 0))
   ) {
-    // If user is authenticated, try to activate the free plan via processPayment
-    if (token) {
-      try {
-        setLoadingPlanId?.(plan.id);
-        const response = await processPayment({ plan_id: plan.id, billing }).unwrap();
-        // If backend returns a checkout_url, redirect (rare for free plans)
-        if (response?.checkout_url) {
-          window.location.href = response.checkout_url;
-          return;
-        }
-        // Otherwise assume activation succeeded and navigate to dashboard
-        if (response?.success) {
-          toast.success("Free trial activated");
-          router.push("/user-dashboard");
-        } else {
-          toast.error("Failed to activate free trial. Please try again.");
-        }
-      } catch (error: any) {
-        console.error("Free trial activation error:", error);
-        toast.error(error?.data?.message || "Failed to activate free trial.");
-      } finally {
-        setLoadingPlanId?.(null);
-      }
-    } else {
-      router.push("/register?plan_id=" + plan.id);
+    if (user && hasPaidPlan(user)) {
+      toast.error(
+        "You already have an active paid plan (Plus/Premium) and cannot take the free trial.",
+      );
+      return;
     }
+    if (onFreeTrial) {
+      onFreeTrial(plan);
+      return;
+    }
+    router.push("/pricing");
     return;
   }
 

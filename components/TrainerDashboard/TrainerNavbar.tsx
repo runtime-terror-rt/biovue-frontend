@@ -11,6 +11,7 @@ import React, { useState, useEffect } from "react";
 import ProjectionLimitIndicator from "../dashboard/ProjectionLimitIndicator";
 import ExpiryIndicator from "../dashboard/ExpiryIndicator";
 import MemberLimitIndicator from "../dashboard/MemberLimitIndicator";
+import TrialCountdownHeaderBadge from "../dashboard/TrialCountdownHeaderBadge";
 
 export default function TrainerNavbar() {
   const pathname = usePathname();
@@ -46,6 +47,7 @@ export default function TrainerNavbar() {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
+        <TrialCountdownHeaderBadge settingsHref="/trainer-dashboard/settings" />
         <div className="hidden sm:flex items-center gap-2 sm:gap-4 md:gap-6">
           <ProjectionLimitIndicator />
           <MemberLimitIndicator />

@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { LogOut, Menu, X, ChevronDown } from "lucide-react";
+import { LogOut, Menu, X, ChevronDown, Lock } from "lucide-react";
 import { SIDEBAR_MENU, MenuItem } from "./SidebarMenu";
 import Tooltip from "@/components/Tooltip";
 
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { useSubscriptionStatus } from "@/lib/hooks/useSubscriptionStatus";
+import { useTrialCountdown } from "@/lib/hooks/useTrialCountdown";
 
 type Role = "user" | "trainer" | "admin" | "nutritionist";
 
@@ -30,17 +31,34 @@ export default function Sidebar({ role }: SidebarProps) {
   const [openSubmenus, setOpenSubmenus] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
+  const { isTrial } = useTrialCountdown();
   const restrictionState = useSubscriptionStatus();
-  const isRestricted = role === "user" ? restrictionState.restricted : false;
+  const isTrialRestricted = role === "user" && isTrial;
+  const isRestricted =
+    role === "user" ? isTrial || restrictionState.restricted : false;
 
-  const restrictedLabels = ["Projections", "Projection Galary", "Insights", "Habits", "Support", "Message"];
+  const restrictedLabels = [
+    "projections",
+    "projection galary",
+    "insights",
+    "habits",
+    "support",
+    "message",
+  ];
 
   const getTooltipMessage = (reason: string) => {
+    if (isTrialRestricted) {
+      return "Locked during Free Trial. Upgrade to Plus or Premium to unlock.";
+    }
     switch (reason) {
-      case "low_credits_or_expiring_soon": return "Low credits or subscription expiring soon! Please upgrade to maintain access.";
-      case "subscription_expired_or_no_credits": return "Subscription expired or no credits remaining! Please upgrade your plan to continue.";
-      case "trial_ended": return "Trial period ended. Please choose a plan to continue.";
-      default: return "To access this feature, you need an active subscription plan.";
+      case "low_credits_or_expiring_soon":
+        return "Low credits or subscription expiring soon! Please upgrade to maintain access.";
+      case "subscription_expired_or_no_credits":
+        return "Subscription expired or no credits remaining! Please upgrade your plan to continue.";
+      case "trial_ended":
+        return "Trial period ended. Please choose a plan to continue.";
+      default:
+        return "To access this feature, you need an active Plus or Premium subscription plan.";
     }
   };
 
@@ -143,7 +161,9 @@ export default function Sidebar({ role }: SidebarProps) {
 
             const hasChildren = item.children && item.children.length > 0;
             const isOpen = openSubmenus.includes(item.label);
-            const isItemRestricted = isRestricted && restrictedLabels.includes(item.label);
+            const isItemRestricted =
+              isRestricted &&
+              restrictedLabels.includes(item.label.toLowerCase().trim());
 
             return (
               <div key={item.label} className="w-full">
@@ -152,10 +172,15 @@ export default function Sidebar({ role }: SidebarProps) {
                   {isItemRestricted ? (
                     <Tooltip message={getTooltipMessage(restrictionState.reason)}>
                       <div
-                        className={`flex-1 flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap text-gray-400 opacity-50 cursor-not-allowed`}
+                        className={`flex-1 flex items-center justify-between px-2 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap text-gray-400 opacity-60 cursor-not-allowed select-none bg-gray-50/40`}
                       >
-                        <Icon size={20} className="shrink-0" />
-                        {showContent && <span>{item.label}</span>}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Icon size={20} className="shrink-0 text-gray-400" />
+                          {showContent && <span className="truncate">{item.label}</span>}
+                        </div>
+                        {showContent && (
+                          <Lock size={13} className="shrink-0 text-gray-400 ml-1" />
+                        )}
                       </div>
                     </Tooltip>
                   ) : (
@@ -193,15 +218,18 @@ export default function Sidebar({ role }: SidebarProps) {
                       {item.children?.map((child) => {
                         const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : "");
                         const isChildActive = fullPath === child.href;
-                        const isChildRestricted = isRestricted && restrictedLabels.includes(child.label);
+                        const isChildRestricted =
+                          isRestricted &&
+                          restrictedLabels.includes(child.label.toLowerCase().trim());
 
                         if (isChildRestricted) {
                           return (
                             <Tooltip key={child.label} message={getTooltipMessage(restrictionState.reason)}>
                               <div
-                                className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors text-gray-400 opacity-50 cursor-not-allowed`}
+                                className={`flex items-center justify-between px-4 py-2 text-xs font-medium rounded-lg transition-colors text-gray-400 opacity-60 cursor-not-allowed select-none bg-gray-50/40`}
                               >
-                                - {child.label}
+                                <span>- {child.label}</span>
+                                <Lock size={11} className="shrink-0 text-gray-400" />
                               </div>
                             </Tooltip>
                           );

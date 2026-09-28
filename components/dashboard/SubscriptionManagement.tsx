@@ -21,6 +21,9 @@ import { ArrowLeft, User, Crown, Check, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { useGetProjectionLimitQuery } from "@/redux/features/api/userDashboard/Projection/ProjectionLimitAPI";
+import FreeTrialPlanModal from "@/components/pricing/FreeTrialPlanModal";
+import { isFreeTrialPlan, hasPaidPlan } from "@/lib/planType";
+import { useTrialCountdown } from "@/lib/hooks/useTrialCountdown";
 
 interface SubscriptionManagementProps {
   onBack?: () => void;
@@ -42,6 +45,10 @@ const SubscriptionManagement = ({
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly",
   );
+  const [trialPlan, setTrialPlan] = useState<any | null>(null);
+
+  const { isTrial, remainingDays: trialRemainingDays, targetPlan } =
+    useTrialCountdown();
 
   const { data: plansData, isLoading: isLoadingPlans } =
     useGetSubscriptionPlansQuery({
@@ -62,18 +69,21 @@ const SubscriptionManagement = ({
       })
     : null;
 
-  const remainingDays = currentUser?.plan_duration
-    ? currentUser.plan_duration
-    : projectionLimitData?.expired_at
-    ? Math.max(
-        0,
-        Math.ceil(
-          (new Date(projectionLimitData.expired_at).getTime() -
-            new Date().getTime()) /
-            (1000 * 60 * 60 * 24),
-        ),
-      )
-    : null;
+  const remainingDays =
+    trialRemainingDays !== null
+      ? trialRemainingDays
+      : currentUser?.plan_duration
+      ? currentUser.plan_duration
+      : projectionLimitData?.expired_at
+      ? Math.max(
+          0,
+          Math.ceil(
+            (new Date(projectionLimitData.expired_at).getTime() -
+              new Date().getTime()) /
+              (1000 * 60 * 60 * 24),
+          ),
+        )
+      : null;
 
   const plans = plansData?.data || [];
 
@@ -91,17 +101,19 @@ const SubscriptionManagement = ({
     ACTIVE_STATUSES.includes(
       (paymentSummary.latest_payment.status ?? "").toLowerCase(),
     )
-      ? paymentSummary.latest_payment.plan.id
+      ? paymentSummary.latest_payment.plan?.id
       : null);
 
   // Final active plan ID to use for UI highlights
   const activePlanId = activePlanFromSummary || currentUser?.plan_id;
-  const activePlanName =
-    paymentSummary?.latest_payment?.plan?.name ||
-    paymentSummary?.user?.plan_name ||
-    paymentSummary?.user?.plan_type ||
-    currentUser?.plan_name ||
-    (activePlanId ? "Active Plan" : "Free Trial");
+  const activePlanName = isTrial
+    ? "Free Trial"
+    : paymentSummary?.latest_payment?.plan?.name ||
+      paymentSummary?.user?.plan_name ||
+      paymentSummary?.user?.plan_type ||
+      currentUser?.plan_name ||
+      (activePlanId ? "Active Plan" : "Free Trial");
+
 
   // Calculate if the subscription is more than 6 months old
   const canCancel = useMemo(() => {
@@ -186,30 +198,47 @@ const SubscriptionManagement = ({
           </div>
           <div className="flex flex-col items-end gap-2">
             <span className="text-[10px] font-bold opacity-80 uppercase tracking-widest">
-              {currentUser?.plan_duration
-                ? `${currentUser.plan_duration} DAYS LEFT`
+              {remainingDays !== null
+                ? isTrial
+                  ? `${remainingDays} DAYS REMAINING (TRIAL)`
+                  : `${remainingDays} DAYS REMAINING`
                 : activePlanId
                   ? "ACTIVE PLAN"
-                  : "NO ACTIVE PLAN"}
+                  : isTrial
+                    ? "7 DAYS FREE TRIAL"
+                    : "NO ACTIVE PLAN"}
             </span>
             <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2">
               <div
                 className={cn(
                   "w-2 h-2 rounded-full",
-                  activePlanId ? "bg-[#4ADE80]" : "bg-gray-400",
+                  activePlanId || isTrial ? "bg-[#4ADE80]" : "bg-gray-400",
                 )}
               />
               <span className="text-[9px] font-extrabold uppercase tracking-widest">
-                {activePlanId ? "ACTIVE" : "INACTIVE"}
+                {activePlanId || isTrial ? "ACTIVE" : "INACTIVE"}
               </span>
             </div>
           </div>
         </div>
 
         <div className="flex justify-between items-end relative z-10 w-full">
-          <span className="text-xs font-bold opacity-90">
-            Plan: {activePlanName}
-          </span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-bold opacity-90">
+              Plan: {typeof activePlanName === "string" ? activePlanName : "Active Plan"}
+            </span>
+            {targetPlan && isTrial && (
+              <span className="text-[11px] font-medium text-white/90">
+                Next plan:{" "}
+                <strong className="font-bold underline decoration-white/40">
+                  {typeof targetPlan === "string"
+                    ? targetPlan
+                    : (targetPlan as any)?.name || "Plus"}
+                </strong>{" "}
+                (auto-bills after 7 days)
+              </span>
+            )}
+          </div>
           {(activePlanId || currentUser?.plan_id) && (
             <div className="flex flex-col items-end gap-1">
               {currentUser?.user_type === "individual" ? (
@@ -317,26 +346,40 @@ const SubscriptionManagement = ({
               Number(activePlanId) === Number(plan.id);
 
             const isActive = isNameMatch || isIdMatch;
+            const isTrialIneligible =
+              isFreeTrialPlan(plan) && hasPaidPlan(currentUser, paymentSummary);
+
             return (
               <div
                 key={plan.id}
                 onClick={async () => {
                   if (isActive) return;
+                  if (isTrialIneligible) {
+                    toast.error(
+                      "You already have an active paid plan (Plus/Premium) and cannot take the free trial.",
+                    );
+                    return;
+                  }
                   await handlePlanSelection({
                     plan,
                     token,
+                    user: currentUser,
                     router,
                     processPayment,
                     setLoadingPlanId,
                     billing: plan.billing_cycle || "monthly",
+                    onFreeTrial: (trial) => setTrialPlan(trial),
                   });
                 }}
                 className={cn(
                   "rounded-[16px] p-6 border transition-all duration-300",
-                  !isActive && "cursor-pointer",
+                  !isActive && !isTrialIneligible && "cursor-pointer",
+                  isTrialIneligible && "opacity-60 cursor-not-allowed bg-gray-50",
                   isActive
                     ? "bg-[#F3FCFA] border-2 border-[#0FA4A9] shadow-sm"
-                    : "bg-white border-[#E2E8F0] shadow-sm hover:border-[#0FA4A9]/30",
+                    : !isTrialIneligible
+                      ? "bg-white border-[#E2E8F0] shadow-sm hover:border-[#0FA4A9]/30"
+                      : "border-gray-200",
                 )}
               >
                 <div className="flex items-center justify-between gap-4">
@@ -451,6 +494,15 @@ const SubscriptionManagement = ({
           {backLabel}
         </button>
       </div> */}
+
+      {trialPlan && (
+        <FreeTrialPlanModal
+          isOpen={!!trialPlan}
+          onClose={() => setTrialPlan(null)}
+          trialPlan={trialPlan}
+          defaultBilling={billingCycle}
+        />
+      )}
     </div>
   );
 };

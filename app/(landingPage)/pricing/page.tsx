@@ -23,6 +23,8 @@ import {
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import Swal from "sweetalert2";
+import FreeTrialPlanModal from "@/components/pricing/FreeTrialPlanModal";
+import { isFreeTrialPlan, hasPaidPlan } from "@/lib/planType";
 
 const PricingPage = () => {
   const router = useRouter();
@@ -38,6 +40,9 @@ const PricingPage = () => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactEmail, setContactEmail] = useState("");
   const [contactMessage, setContactMessage] = useState("");
+  const [trialPlan, setTrialPlan] = useState<Plan | null>(null);
+
+  const userHasPaid = hasPaidPlan(user);
 
   const { data: plans = [], isLoading } = useGetPlansQuery(billingCycle);
 
@@ -85,17 +90,14 @@ const PricingPage = () => {
     //   return;
     // }
 
-    // Free Trial / Zero Price handling
-    if (
-      plan.price === "0.00" ||
-      plan.price === 0 ||
-      plan.name?.toLowerCase().includes("free trial")
-    ) {
-      if (token) {
-        router.push("/user-dashboard");
-      } else {
-        router.push("/login");
+    if (isFreeTrialPlan(plan)) {
+      if (userHasPaid) {
+        toast.error(
+          "You already have an active paid plan (Plus/Premium) and cannot take the free trial.",
+        );
+        return;
       }
+      setTrialPlan(plan);
       return;
     }
 
@@ -322,10 +324,19 @@ const PricingPage = () => {
                   })}
                   cta={
                     plan.name?.toLowerCase().includes("free trial")
-                      ? `Start ${plan.duration || 0}-Day Trial`
+                      ? userHasPaid
+                        ? "Not Eligible (Active Paid Plan)"
+                        : `Start ${plan.duration || 7}-Day Trial`
                       : `Upgrade To ${plan.name || ""}`
                   }
-                  ctaColor="bg-[#0FA4A9]"
+                  ctaColor={
+                    plan.name?.toLowerCase().includes("free trial") && userHasPaid
+                      ? "bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200 shadow-none border border-gray-300"
+                      : "bg-[#0FA4A9]"
+                  }
+                  disabled={
+                    plan.name?.toLowerCase().includes("free trial") && userHasPaid
+                  }
                   specialFeature={
                     plan.name?.toLowerCase().includes("premium")
                       ? {
@@ -540,6 +551,16 @@ const PricingPage = () => {
             </div>
           </section>
         </>
+      )}
+
+      {trialPlan && (
+        <FreeTrialPlanModal
+          isOpen={!!trialPlan}
+          onClose={() => setTrialPlan(null)}
+          trialPlan={trialPlan}
+          defaultBilling={billingCycle}
+          planTypeOverride={trialPlan.plan_type}
+        />
       )}
 
       {/* Contact Modal */}
@@ -764,14 +785,14 @@ const PricingCard = ({
 
       <button
         onClick={active ? onCancel : onSelect}
-        disabled={isLoading || isCancelling}
+        disabled={isLoading || isCancelling || props.disabled}
         className={cn(
           "w-full text-center py-3.5 rounded-xl font-bold text-sm text-white hover:bg-opacity-90 transition-all shadow-md group flex items-center justify-center gap-2 cursor-pointer",
           active
             ? "bg-red-500 shadow-[0_4px_14px_0_rgba(239,68,68,0.3)]"
             : ctaColor ||
                 "bg-[#3A86FF] shadow-[0_4px_14px_0_rgba(58,134,255,0.3)]",
-          (isLoading || isCancelling) && "opacity-70 cursor-not-allowed",
+          (isLoading || isCancelling || props.disabled) && "opacity-70 cursor-not-allowed",
         )}
       >
         {isLoading || isCancelling ? (
