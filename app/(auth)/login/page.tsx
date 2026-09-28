@@ -495,6 +495,8 @@ import {
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { getRecaptchaToken } from "@/lib/recaptcha";
 import { isInvitedAndAccepted } from "@/lib/inviteHelpers";
+import { useProcessPaymentMutation } from "@/redux/features/api/paymentApi";
+import { resumePendingTrial } from "@/lib/trialPayment";
 
 
 // ─── Role options ──────────────────────────────────────────────────────────────
@@ -633,6 +635,7 @@ const LoginPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const [login, { isLoading }] = useLoginMutation();
+  const [processPayment] = useProcessPaymentMutation();
   const [updateAiSuggestedTarget] = useUpdateAiSuggestedTargetMutation();
   const [updateProfessionalRecommendations] =
     useUpdateProfessionalRecommendationsMutation();
@@ -679,6 +682,14 @@ const LoginPage = () => {
         );
 
         const userData = res?.data?.user;
+        const trialHandled = await resumePendingTrial({
+          processPayment,
+          token: res?.data?.token,
+          user: userData,
+          router,
+        });
+        if (trialHandled) return;
+
         const invitedAndAccepted = isInvitedAndAccepted(userData);
         const userRole = userData?.role;
         const userType = userData?.user_type;

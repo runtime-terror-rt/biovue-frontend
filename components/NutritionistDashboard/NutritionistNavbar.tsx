@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import ProjectionLimitIndicator from "../dashboard/ProjectionLimitIndicator";
 import ExpiryIndicator from "../dashboard/ExpiryIndicator";
+import TrialCountdownHeaderBadge from "../dashboard/TrialCountdownHeaderBadge";
 
 export default function NutritionistNavbar() {
   const pathname = usePathname();
@@ -43,6 +44,7 @@ export default function NutritionistNavbar() {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
+        <TrialCountdownHeaderBadge settingsHref="/nutritionist-dashboard/settings" />
         <div className="hidden sm:flex items-center gap-2 sm:gap-4 md:gap-6">
           <ProjectionLimitIndicator />
           <ExpiryIndicator />

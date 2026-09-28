@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Crown } from "lucide-react";
 import ProjectionLimitIndicator from "@/components/dashboard/ProjectionLimitIndicator";
 import ExpiryIndicator from "@/components/dashboard/ExpiryIndicator";
+import TrialCountdownHeaderBadge from "@/components/dashboard/TrialCountdownHeaderBadge";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import ProfileDropdown from "@/components/dashboard/ProfileDropdown";
 import { usePathname } from "next/navigation";
@@ -93,9 +94,12 @@ export default function UserDashboardLayout({
               </h1>
             </div>
             <div className="flex items-center gap-2 sm:gap-4 md:gap-6 ml-auto">
-              <div className="hidden sm:flex items-center gap-2 sm:gap-4 md:gap-6">
-                <ProjectionLimitIndicator />
-                {/* <ExpiryIndicator /> */}
+              <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
+                <TrialCountdownHeaderBadge />
+                <div className="hidden sm:flex items-center gap-2 sm:gap-4 md:gap-6">
+                  <ProjectionLimitIndicator />
+                  {/* <ExpiryIndicator /> */}
+                </div>
               </div>
               <NotificationBell />
               <div className="flex items-center gap-1 sm:gap-3 md:pr-2">

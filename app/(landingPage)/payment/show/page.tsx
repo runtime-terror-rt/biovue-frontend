@@ -10,18 +10,26 @@ import { cn } from "@/lib/utils";
 import { useDispatch, useSelector } from "react-redux";
 import { baseApi } from "@/redux/features/api/baseApi";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
+  selectCurrentToken,
   selectCurrentUser,
   updateUser,
 } from "@/redux/features/slice/authSlice";
+import { getDashboardPath } from "@/lib/planType";
 
 const PaymentSuccessPage = () => {
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const currentUser = useSelector(selectCurrentUser);
+  const token = useSelector(selectCurrentToken);
+
   const {
     data,
     isLoading,
     isFetching: isFetchingSummary,
     isError,
-  } = useGetPaymentSummaryQuery();
+  } = useGetPaymentSummaryQuery(undefined, { skip: !token });
 
   const {
     data: userData,
@@ -31,8 +39,11 @@ const PaymentSuccessPage = () => {
     skip: !data?.success,
   });
 
-  const dispatch = useDispatch();
-  const currentUser = useSelector(selectCurrentUser);
+  useEffect(() => {
+    if (!token) {
+      router.replace("/login");
+    }
+  }, [token, router]);
 
   // 1. Invalidate tags once payment is confirmed
   useEffect(() => {
@@ -50,14 +61,22 @@ const PaymentSuccessPage = () => {
       const planId = data.latest_payment?.plan?.id;
       const planName = data.latest_payment?.plan?.name;
       const planType = data.latest_payment?.plan?.plan_type;
+      const isTrial = data.latest_payment?.is_trial;
+      const targetPlan = data.latest_payment?.target_plan;
+      const targetPlanId = data.latest_payment?.target_plan_id;
+      const trialDays = data.latest_payment?.trial_days;
 
-      if (planId && currentUser.plan_id !== planId) {
+      if (planId && (currentUser.plan_id !== planId || isTrial !== undefined)) {
         console.log("Enriching Redux user with plan info from payment summary:", planId);
         dispatch(
           updateUser({
             plan_id: planId,
             plan_name: planName,
             plan_type: planType,
+            is_trial: isTrial,
+            target_plan: targetPlan,
+            target_plan_id: targetPlanId,
+            trial_days: trialDays,
           })
         );
       }
@@ -75,6 +94,10 @@ const PaymentSuccessPage = () => {
           plan_id: data.latest_payment?.plan?.id || freshUser.plan_id,
           plan_name: data.latest_payment?.plan?.name || freshUser.plan_name,
           plan_type: data.latest_payment?.plan?.plan_type || freshUser.plan_type,
+          is_trial: data.latest_payment?.is_trial ?? freshUser.is_trial,
+          target_plan: data.latest_payment?.target_plan ?? freshUser.target_plan,
+          target_plan_id: data.latest_payment?.target_plan_id ?? freshUser.target_plan_id,
+          trial_days: data.latest_payment?.trial_days ?? freshUser.trial_days,
         };
 
         console.log("Syncing user state with fresh data:", enrichedUser);
@@ -82,6 +105,32 @@ const PaymentSuccessPage = () => {
       }
     }
   }, [userData, data, dispatch]);
+
+  const getDashboardUrl = () => getDashboardPath(currentUser);
+
+  useEffect(() => {
+    if (
+      !token ||
+      isLoading ||
+      isUserLoading ||
+      isFetchingSummary ||
+      isFetchingUser
+    ) {
+      return;
+    }
+    if (data?.success) {
+      router.replace(getDashboardPath(currentUser));
+    }
+  }, [
+    token,
+    data,
+    currentUser,
+    isLoading,
+    isUserLoading,
+    isFetchingSummary,
+    isFetchingUser,
+    router,
+  ]);
 
   // We check isFetching as well to ensure we don't show the dashboard button
   // while the state enrichment/syncing is still in progress.
@@ -122,42 +171,6 @@ const PaymentSuccessPage = () => {
   }
 
   const { latest_payment, user: summaryUser } = data;
-
-  const getDashboardUrl = () => {
-    if (!currentUser) return "/user-dashboard";
-
-    const { role, profession_type, user_type } = currentUser;
-
-    const planType = latest_payment?.plan?.plan_type || currentUser?.plan_type || summaryUser?.plan_type;
-    const planName = latest_payment?.plan?.name || currentUser?.plan_name || summaryUser?.plan_name;
-
-    if (planType === "api" || (typeof planName === "string" && planName.toLowerCase().includes("api"))) {
-      return "/api-user";
-    }
-
-    if (role === "admin") return "/admin-dashboard/overview";
-
-    // Handle professional roles (consistency with ProtectedRoute)
-    const isProfessional =
-      role === "professional" ||
-      user_type === "professional" ||
-      role === "trainer_coach" ||
-      role === "supplement_supplier" ||
-      role === "nutritionist";
-
-    if (isProfessional) {
-      if (profession_type === "trainer_coach")
-        return "/trainer-dashboard/overview";
-      if (profession_type === "supplement_supplier")
-        return "/supplier-dashboard";
-      if (profession_type === "nutritionist")
-        return "/nutritionist-dashboard/overview";
-    }
-
-    if (role === "individual") return "/user-dashboard";
-
-    return "/user-dashboard";
-  };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-sans py-10">

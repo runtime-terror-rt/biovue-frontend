@@ -1284,7 +1284,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -1328,6 +1328,7 @@ import {
   Lock,
 } from "lucide-react";
 import { isInvitedAndAccepted, shouldBypassPayment } from "@/lib/inviteHelpers";
+import { isFreeTrialPlan, hasPaidPlan } from "@/lib/planType";
 
 const OnboardingStepsPage = () => {
   const [step, setStep] = useState(1);
@@ -1380,8 +1381,24 @@ const OnboardingStepsPage = () => {
   const plans = (plansData || []).filter(
     (p) => p.plan_type === "individual" && p.status,
   );
+  const paidPlans = useMemo(() => {
+    return plans
+      .filter((p) => {
+        const name = (p.name || "").toLowerCase();
+        return (
+          !name.includes("free trial") &&
+          !name.includes("free plan") &&
+          p.price !== "0.00" &&
+          p.price !== 0
+        );
+      })
+      .sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+  }, [plans]);
+  const [targetPlanId, setTargetPlanId] = useState<number | null>(null);
+
   const router = useRouter();
   const user = useSelector(selectCurrentUser);
+  const userHasPaid = hasPaidPlan(user);
   const [unitSystem, setUnitSystem] = useState<"imperial" | "metric">(
     "imperial",
   );
@@ -1511,25 +1528,60 @@ const OnboardingStepsPage = () => {
         // If a plan is selected, process payment (unless user is invited+accepted)
         if (formData.plan_id && !bypassPayment) {
           try {
-            const paymentRes = await processPayment({
-              plan_id: formData.plan_id,
-              billing: "monthly",
-              // card_info: {
-              //   number: formData.cardNumber,
-              //   expiry: formData.expiryDate,
-              //   cvv: formData.cvc,
-              //   name: formData.cardName,
-              // },
-            }).unwrap();
+            const selectedPlan = plans.find((p) => p.id === formData.plan_id);
+            const isTrial = isFreeTrialPlan(selectedPlan);
 
-            if (paymentRes.checkout_url) {
-              toast.info("Redirecting to payment...");
-              window.location.href = paymentRes.checkout_url;
-              return;
+            if (isTrial) {
+              if (userHasPaid) {
+                toast.error(
+                  "You already have an active paid plan (Plus/Premium) and cannot take the free trial.",
+                );
+                return;
+              }
+
+              const finalTargetPlanId = targetPlanId || paidPlans[0]?.id;
+              if (!finalTargetPlanId) {
+                toast.error("Please select a plan to continue after your trial.");
+                return;
+              }
+
+              const paymentRes = await processPayment({
+                plan_id: formData.plan_id,
+                billing: "monthly",
+                target_plan_id: Number(finalTargetPlanId),
+                is_trial: "1",
+              }).unwrap();
+
+              if (paymentRes.checkout_url) {
+                if (paymentRes.message) {
+                  toast.info(paymentRes.message);
+                } else {
+                  toast.info("Redirecting to start your free trial...");
+                }
+                window.location.href = paymentRes.checkout_url;
+                return;
+              }
+            } else {
+              const paymentRes = await processPayment({
+                plan_id: formData.plan_id,
+                billing: "monthly",
+              }).unwrap();
+
+              if (paymentRes.checkout_url) {
+                toast.info("Redirecting to payment...");
+                window.location.href = paymentRes.checkout_url;
+                return;
+              }
             }
-          } catch (paymentErr) {
+
+            toast.error("Failed to initiate payment. Please try again.");
+          } catch (paymentErr: any) {
             console.error("Payment processing error:", paymentErr);
-            toast.error("Profile saved, but failed to initiate payment.");
+            toast.error(
+              paymentErr?.data?.message ||
+                paymentErr?.message ||
+                "Profile saved, but failed to initiate payment.",
+            );
           }
         }
 
@@ -2340,75 +2392,173 @@ const OnboardingStepsPage = () => {
                 insights
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                {plans.map((plan) => (
-                  <div
-                    key={plan.id}
-                    onClick={() =>
-                      setFormData({ ...formData, plan_id: plan.id })
-                    }
-                    className={cn(
-                      "p-6 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden",
-                      formData.plan_id === plan.id
-                        ? "border-[#3A86FF] bg-[#F8FAFF]"
-                        : "border-gray-100 hover:border-[#3A86FF]/30",
-                    )}
-                  >
-                    {formData.plan_id === plan.id && (
-                      <div className="absolute top-0 right-0 bg-[#3A86FF] text-white px-3 py-1 text-[10px] font-bold rounded-bl-lg">
-                        SELECTED
-                      </div>
-                    )}
-                    <div className="flex flex-col gap-4">
-                      <div>
-                        <h3 className="text-[#041228] font-bold text-lg">
-                          {plan.name}
-                        </h3>
-                        <div className="flex items-baseline gap-1 mt-1">
-                          <span className="text-2xl font-bold text-[#3A86FF]">
-                            ${plan.price}
-                          </span>
-                          <span className="text-gray-400 text-xs font-medium">
-                            /month
-                          </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {plans.map((plan) => {
+                  const isTrial = isFreeTrialPlan(plan);
+                  const isTrialDisabled = isTrial && userHasPaid;
+                  const isSelected = formData.plan_id === plan.id;
+
+                  return (
+                    <div
+                      key={plan.id}
+                      onClick={() => {
+                        if (isTrialDisabled) {
+                          toast.error(
+                            "You already have an active paid plan (Plus/Premium) and cannot take the free trial.",
+                          );
+                          return;
+                        }
+                        setFormData({ ...formData, plan_id: plan.id });
+                        if (isTrial && !targetPlanId && paidPlans.length > 0) {
+                          setTargetPlanId(paidPlans[0].id);
+                        }
+                      }}
+                      className={cn(
+                        "p-6 rounded-2xl border-2 transition-all relative overflow-hidden",
+                        isTrialDisabled
+                          ? "opacity-50 cursor-not-allowed bg-gray-50 border-gray-200"
+                          : "cursor-pointer",
+                        !isTrialDisabled && isSelected
+                          ? "border-[#3A86FF] bg-[#F8FAFF]"
+                          : !isTrialDisabled
+                            ? "border-gray-100 hover:border-[#3A86FF]/30"
+                            : "",
+                      )}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-0 right-0 bg-[#3A86FF] text-white px-3 py-1 text-[10px] font-bold rounded-bl-lg">
+                          SELECTED
                         </div>
+                      )}
+                      {isTrialDisabled && (
+                        <div className="absolute top-0 right-0 bg-gray-400 text-white px-3 py-1 text-[10px] font-bold rounded-bl-lg">
+                          NOT ELIGIBLE
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-4">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-[#041228] font-bold text-lg">
+                              {plan.name}
+                            </h3>
+                          </div>
+                          <div className="flex items-baseline gap-1 mt-1">
+                            <span className="text-2xl font-bold text-[#3A86FF]">
+                              ${plan.price}
+                            </span>
+                            <span className="text-gray-400 text-xs font-medium">
+                              /month
+                            </span>
+                          </div>
+                          {isTrial && (
+                            <p className="text-xs text-[#0FA4A9] font-medium mt-1">
+                              7 days free • card details required for auto-bill
+                            </p>
+                          )}
+                        </div>
+                        <ul className="space-y-2">
+                          {plan.features?.slice(0, 4).map((feature, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-[13px] text-gray-500"
+                            >
+                              <CheckCircle
+                                size={14}
+                                className="text-[#0FA4A9] mt-0.5"
+                              />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <ul className="space-y-2">
-                        {plan.features?.slice(0, 4).map((feature, i) => (
-                          <li
-                            key={i}
-                            className="flex items-start gap-2 text-[13px] text-gray-500"
-                          >
-                            <CheckCircle
-                              size={14}
-                              className="text-[#0FA4A9] mt-0.5"
-                            />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              {/* Payment Info Placeholder */}
-              {formData.plan_id &&
-                plans.find((p) => p.id === formData.plan_id)?.price !==
-                  "0.00" && (
-                  <div className="mb-10 p-6 bg-[#F8FAFB] rounded-2xl border border-dashed border-gray-300">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Zap size={20} className="text-[#3A86FF]" />
-                      <h3 className="text-[#041228] font-bold text-[15px]">
-                        Secure Payment Information
-                      </h3>
+              {/* If Free Trial is selected, ask which plan to continue after 7 days */}
+              {isFreeTrialPlan(plans.find((p) => p.id === formData.plan_id)) && (
+                <div className="mb-8 p-6 bg-gradient-to-br from-[#F0F7FF] via-[#F8FAFF] to-[#E6F8F6] rounded-2xl border-2 border-[#3A86FF]/30 shadow-sm animate-in fade-in duration-300">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#3A86FF] bg-white px-2.5 py-0.5 rounded-full border border-[#3A86FF]/20 shadow-xs">
+                          7-Day Free Trial Setup
+                        </span>
+                      </div>
+                      <h4 className="text-lg font-bold text-[#1F2D2E]">
+                        Which plan should continue after your 7-day trial?
+                      </h4>
+                      <p className="text-xs text-[#5F6F73] mt-1">
+                        Start free for 7 days. $0.00 is due today. After 7 days, your card will automatically be billed for the plan you select below. You can cancel anytime.
+                      </p>
                     </div>
-                    <p className="text-gray-400 text-xs mb-4">
-                      You will be securely redirected to Stripe to provide your
-                      credit card information after saving your profile.
-                    </p>
                   </div>
-                )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+                    {paidPlans.map((pp) => {
+                      const isTarget = (targetPlanId || paidPlans[0]?.id) === pp.id;
+                      return (
+                        <div
+                          key={pp.id}
+                          onClick={() => setTargetPlanId(pp.id)}
+                          className={cn(
+                            "p-5 rounded-xl border-2 bg-white transition-all cursor-pointer flex items-center justify-between",
+                            isTarget
+                              ? "border-[#3A86FF] ring-2 ring-[#3A86FF]/15 shadow-md bg-white"
+                              : "border-gray-200 hover:border-[#3A86FF]/40 hover:shadow-xs",
+                          )}
+                        >
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-base text-[#1F2D2E]">
+                                {pp.name}
+                              </span>
+                              {isTarget && (
+                                <span className="text-[10px] font-bold uppercase text-[#3A86FF] bg-[#E8F1FF] px-2 py-0.5 rounded-full">
+                                  Selected
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-[#5F6F73] block mt-1">
+                              Auto-bills after 7 days
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xl font-bold text-[#3A86FF]">
+                              ${pp.price}
+                            </span>
+                            <span className="text-xs text-gray-400">/mo</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Info Banner */}
+              {formData.plan_id && (
+                <div className="mb-10 p-6 bg-[#F8FAFB] rounded-2xl border border-dashed border-gray-300">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Zap size={20} className="text-[#3A86FF]" />
+                    <h3 className="text-[#041228] font-bold text-[15px]">
+                      {isFreeTrialPlan(plans.find((p) => p.id === formData.plan_id))
+                        ? "7-Day Free Trial Verification"
+                        : "Secure Payment"}
+                    </h3>
+                  </div>
+                  <p className="text-gray-500 text-xs leading-relaxed">
+                    {isFreeTrialPlan(plans.find((p) => p.id === formData.plan_id)) ? (
+                      <>
+                        You will be securely redirected to Stripe to provide card details to start your 7-day free trial. <strong>$0.00 is due today</strong>. You will automatically be billed for your selected plan after 7 days unless cancelled.
+                      </>
+                    ) : (
+                      "You will be securely redirected to Stripe to provide your credit card information after saving your profile."
+                    )}
+                  </p>
+                </div>
+              )}
 
               <div className="flex justify-center flex-col md:flex-row items-center">
                 <button

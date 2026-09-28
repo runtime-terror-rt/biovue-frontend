@@ -46,6 +46,9 @@ import {
   Crown,
 } from "lucide-react";
 import { cn, getFullImageUrl } from "@/lib/utils";
+import FreeTrialPlanModal from "@/components/pricing/FreeTrialPlanModal";
+import { isFreeTrialPlan } from "@/lib/planType";
+import { useTrialCountdown } from "@/lib/hooks/useTrialCountdown";
 
 // --- Types ---
 type ViewState = "overview" | "profile" | "subscription";
@@ -1230,6 +1233,7 @@ const SubscriptionView = ({
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly",
   );
+  const [trialPlan, setTrialPlan] = useState<any | null>(null);
 
   const { data: plansData, isLoading: isLoadingPlans } =
     useGetSubscriptionPlansQuery({
@@ -1251,18 +1255,24 @@ const SubscriptionView = ({
       })
     : null;
 
-  const remainingDays = currentUser?.plan_duration
-    ? currentUser.plan_duration
-    : projectionLimitData?.expired_at
-    ? Math.max(
-        0,
-        Math.ceil(
-          (new Date(projectionLimitData.expired_at).getTime() -
-            new Date().getTime()) /
-            (1000 * 60 * 60 * 24),
-        ),
-      )
-    : null;
+  const { isTrial, remainingDays: trialRemainingDays, targetPlan } =
+    useTrialCountdown();
+
+  const remainingDays =
+    trialRemainingDays !== null
+      ? trialRemainingDays
+      : currentUser?.plan_duration
+      ? currentUser.plan_duration
+      : projectionLimitData?.expired_at
+      ? Math.max(
+          0,
+          Math.ceil(
+            (new Date(projectionLimitData.expired_at).getTime() -
+              new Date().getTime()) /
+              (1000 * 60 * 60 * 24),
+          ),
+        )
+      : null;
 
   console.log("Payment Summary:", paymentSummary);
 
@@ -1281,20 +1291,22 @@ const SubscriptionView = ({
     ACTIVE_STATUSES.includes(
       (paymentSummary.latest_payment.status ?? "").toLowerCase()
     )
-      ? paymentSummary.latest_payment.plan.id
+      ? paymentSummary.latest_payment.plan?.id
       : null);
 
   // Final active plan ID to use for UI highlights
   const activePlanId = activePlanFromSummary || currentUser?.plan_id;
-  const activePlanName =
-    paymentSummary?.latest_payment?.plan?.name ||
-    paymentSummary?.user?.plan_name ||
-    paymentSummary?.user?.plan_type ||
-    currentUser?.plan_name ||
-    (activePlanId ? "Active Plan" : "Free Trial");
+  const activePlanName = isTrial
+    ? "Free Trial"
+    : paymentSummary?.latest_payment?.plan?.name ||
+      paymentSummary?.user?.plan_name ||
+      paymentSummary?.user?.plan_type ||
+      currentUser?.plan_name ||
+      (activePlanId ? "Active Plan" : "Free Trial");
 
   const hasActiveOrTrial = Boolean(
-    activePlanId ||
+    isTrial ||
+      activePlanId ||
       currentUser?.plan_id ||
       (activePlanName || "").toLowerCase().includes("free trial") ||
       (currentUser?.plan_name || "").toLowerCase().includes("free trial"),
@@ -1390,28 +1402,47 @@ const SubscriptionView = ({
             </div>
             <div className="flex flex-col items-end gap-2">
               <span className="text-xs font-bold opacity-80 uppercase tracking-widest">
-                {currentUser?.plan_duration
-                  ? `${currentUser.plan_duration} Days Left`
-                  : activePlanId ? "Active Plan" : "No Active Plan"}
+                {remainingDays !== null
+                  ? isTrial
+                    ? `${remainingDays} Days Remaining (Trial)`
+                    : `${remainingDays} Days Remaining`
+                  : activePlanId
+                    ? "Active Plan"
+                    : isTrial
+                      ? "7 Days Free Trial"
+                      : "No Active Plan"}
               </span>
               <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full flex items-center gap-2">
                 <div
                   className={cn(
                     "w-2 h-2 rounded-full",
-                    activePlanId ? "bg-[#4ADE80]" : "bg-gray-400",
+                    activePlanId || isTrial ? "bg-[#4ADE80]" : "bg-gray-400",
                   )}
                 />
                 <span className="text-[10px] font-extrabold uppercase tracking-widest">
-                  {activePlanId ? "Active" : "Inactive"}
+                  {activePlanId || isTrial ? "Active" : "Inactive"}
                 </span>
               </div>
             </div>
           </div>
           <div className="h-px bg-white/20 w-full" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold opacity-80">
-              Plan: {activePlanName}
-            </span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-bold opacity-80">
+                Plan: {typeof activePlanName === "string" ? activePlanName : "Active Plan"}
+              </span>
+              {targetPlan && isTrial && (
+                <span className="text-[11px] font-medium text-white/90">
+                  Next plan:{" "}
+                  <strong className="font-bold underline decoration-white/40">
+                    {typeof targetPlan === "string"
+                      ? targetPlan
+                      : (targetPlan as any)?.name || "Plus"}
+                  </strong>{" "}
+                  (auto-bills after 7 days)
+                </span>
+              )}
+            </div>
             <div className="flex flex-col items-end gap-1">
               {/* Show cancel button for individuals; for others disable within 6 months */}
               {hasActiveOrTrial && (
@@ -1540,16 +1571,8 @@ const SubscriptionView = ({
                   }
 
                   // Free trial / zero price handling
-                  if (
-                    plan.price === "0.00" ||
-                    plan.price === 0 ||
-                    (plan.name || "").toLowerCase().includes("free trial")
-                  ) {
-                    if (token) {
-                      router.push("/user-dashboard");
-                    } else {
-                      router.push("/login");
-                    }
+                  if (isFreeTrialPlan(plan)) {
+                    setTrialPlan(plan);
                     return;
                   }
 
@@ -1681,6 +1704,15 @@ const SubscriptionView = ({
           Back To Settings
         </button>
       </div> */}
+
+      {trialPlan && (
+        <FreeTrialPlanModal
+          isOpen={!!trialPlan}
+          onClose={() => setTrialPlan(null)}
+          trialPlan={trialPlan}
+          defaultBilling={billingCycle}
+        />
+      )}
     </div>
   );
 };

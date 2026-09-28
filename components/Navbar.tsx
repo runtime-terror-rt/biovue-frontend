@@ -10,6 +10,7 @@ import { selectCurrentUser, logout } from "@/redux/features/slice/authSlice";
 import { useLogoutMutation } from "@/redux/features/api/auth/authApi";
 import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { motion, AnimatePresence } from "framer-motion";
+import TrialCountdownHeaderBadge from "@/components/dashboard/TrialCountdownHeaderBadge";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -149,7 +150,9 @@ const Navbar = () => {
           )}
 
           {user && (
-            <div className="relative" ref={dropdownRef}>
+            <div className="flex items-center gap-3">
+              <TrialCountdownHeaderBadge settingsHref={getDashboardPath()} />
+              <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsProfileOpen((prev) => !prev)}
                 className="flex items-center gap-3 p-1 pr-3 rounded-full hover:bg-gray-100 transition-all cursor-pointer group bg-white border border-gray-100 shadow-sm"
@@ -218,7 +221,8 @@ const Navbar = () => {
                 )}
               </AnimatePresence>
             </div>
-          )}
+          </div>
+        )}
         </div>
 
         {/* Mobile menu button */}

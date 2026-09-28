@@ -2,13 +2,20 @@ import { baseApi } from "./baseApi";
 
 export interface PaymentProcessResponse {
   success: boolean;
-  checkout_url: string;
-  session_id: string;
-  amount: number;
+  checkout_url?: string;
+  session_id?: string;
+  amount?: string | number;
+  is_trial?: boolean;
+  trial_days?: number;
+  target_plan?: string;
+  billing_type?: string;
+  message?: string;
 }
 export type RequestPayload = {
-  plan_id: number;
+  plan_id: number | string;
   billing: string;
+  target_plan_id?: number | string;
+  is_trial?: boolean | number | string;
   card_info?: {
     number: string;
     expiry: string;
@@ -18,29 +25,39 @@ export type RequestPayload = {
 };
 export interface PaymentSummaryResponse {
   success: boolean;
-  user: {
+  user?: {
     id: number;
     name: string;
     email: string;
     plan_type?: string;
     plan_name?: string;
+    plan_id?: number | null;
+    plan_duration?: number | null;
+    is_trial?: boolean | number | string;
+    target_plan?: string | null;
+    target_plan_id?: number | string | null;
   };
-  latest_payment: {
+  latest_payment?: {
     id: number;
-    transaction_id: string;
-    amount: string;
-    currency: string;
+    transaction_id?: string;
+    amount: string | number;
+    currency?: string;
     status: string;
+    plan_id?: number;
+    is_trial?: boolean | number | string;
+    trial_days?: number;
+    target_plan?: string;
+    target_plan_id?: number | string | null;
     created_at: string;
-    updated_at: string;
-    plan: {
+    updated_at?: string;
+    plan?: {
       id: number;
       name: string;
-      price: string;
+      price: string | number;
       plan_type?: string;
     };
   };
-  payment_history: Array<{
+  payment_history?: Array<{
     id: number;
     transaction_id: string;
     amount: string;
@@ -66,7 +83,7 @@ export interface Plan {
   member_limit: number | null;
   features: string[];
   status: boolean;
-  price: string;
+  price: string | number;
 }
 
 export interface PlansResponse {
@@ -84,12 +101,49 @@ export const paymentApi = baseApi.injectEndpoints({
       providesTags: ["Plans"],
     }),
     // processPayment: builder.mutation<PaymentProcessResponse, { plan_id: number; billing: string }>({
-    processPayment: builder.mutation<PaymentProcessResponse, RequestPayload>({
-      query: (body) => ({
-        url: "/payment/process",
-        method: "POST",
-        body,
-      }),
+    processPayment: builder.mutation<
+      PaymentProcessResponse,
+      RequestPayload | FormData
+    >({
+      query: (body) => {
+        if (body instanceof FormData) {
+          return {
+            url: "/payment/process",
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+            },
+            body,
+          };
+        }
+
+        const formData = new FormData();
+        formData.append("plan_id", String(body.plan_id));
+        formData.append("billing", body.billing);
+
+        if (body.target_plan_id != null) {
+          formData.append("target_plan_id", String(body.target_plan_id));
+        }
+
+        const isTrial =
+          body.is_trial === true ||
+          body.is_trial === 1 ||
+          body.is_trial === "1" ||
+          body.target_plan_id != null;
+
+        if (isTrial) {
+          formData.append("is_trial", "1");
+        }
+
+        return {
+          url: "/payment/process",
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+          },
+          body: formData,
+        };
+      },
     }),
     getPaymentSummary: builder.query<PaymentSummaryResponse, void>({
       query: () => "/payment/show",
