@@ -59,6 +59,8 @@ export interface PaymentSummaryResponse {
       name: string;
       price: string | number;
       plan_type?: string;
+      projection_limit?: number | null;
+      member_limit?: number | null;
     };
   };
   payment_history?: Array<{

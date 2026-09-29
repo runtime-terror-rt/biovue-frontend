@@ -1,6 +1,11 @@
 import { useSelector } from "react-redux";
-import { selectCurrentUser } from "@/redux/features/slice/authSlice";
+import {
+  selectCurrentToken,
+  selectCurrentUser,
+} from "@/redux/features/slice/authSlice";
 import { useGetProjectionLimitQuery } from "@/redux/features/api/userDashboard/Projection/ProjectionLimitAPI";
+import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
+import { hasPaidPlan } from "@/lib/planType";
 
 type SubscriptionStatus = {
   restricted: boolean;
@@ -16,73 +21,22 @@ type SubscriptionStatus = {
   projectionZero: boolean;
 };
 
-// export const useSubscriptionStatus = (): SubscriptionStatus => {
-//   const user = useSelector(selectCurrentUser);
-//   const userId = user?.id || user?.user_id;
-//   const { data: limitData, isLoading } = useGetProjectionLimitQuery(userId, {
-//     skip: !userId,
-//   });
-
-//   const restrictionState = (() => {
-//     if (!user?.created_at)
-//       return { restricted: false, reason: "", isLoading: true };
-//     if (isLoading) return { restricted: false, reason: "", isLoading: true };
-
-//     if (limitData) {
-//       const expiryDate = new Date(limitData.expired_at);
-//       const today = new Date();
-//       const diffDays = Math.ceil(
-//         (expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-//       );
-
-//       const isBlocked = limitData.projection_limit <= 0 || diffDays <= 0;
-//       const isSafe = limitData.projection_limit >= 2 && diffDays > 3;
-//       const isWarning = !isBlocked && !isSafe;
-
-//       return {
-//         restricted: isBlocked,
-//         isSafe,
-//         isWarning,
-//         reason: isBlocked
-//           ? "subscription_expired_or_no_credits"
-//           : isWarning
-//             ? "low_credits_or_expiring_soon"
-//             : "",
-//         isLoading: false,
-//         projection_limit: limitData.projection_limit,
-//         member_limit: limitData.member_limit,
-//         diffDays,
-//       };
-//     }
-
-//     const createdDate = new Date(user.created_at);
-//     const today = new Date();
-//     const diffInDays =
-//       (today.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
-
-//     const isTrialEnded = !user.plan_id && diffInDays > 7;
-//     return {
-//       restricted: isTrialEnded,
-//       isSafe: !isTrialEnded,
-//       isWarning: false,
-//       reason: isTrialEnded ? "trial_ended" : "",
-//       isLoading: false,
-//       projection_limit: 0,
-//       member_limit: 0,
-//       diffDays: 0,
-//     };
-//   })();
-
-//   return restrictionState;
-// };
 export const useSubscriptionStatus = (): SubscriptionStatus => {
   const user = useSelector(selectCurrentUser);
+  const token = useSelector(selectCurrentToken);
   const userId = user?.id || user?.user_id;
 
-  const { data: limitData, isLoading } =
-    useGetProjectionLimitQuery(userId, {
-      skip: !userId,
+  const { data: limitData, isLoading: isLimitLoading } =
+    useGetProjectionLimitQuery(undefined, {
+      skip: !token,
     });
+
+  const { data: paymentSummary, isLoading: isPaymentLoading } =
+    useGetPaymentSummaryQuery(undefined, {
+      skip: !token,
+    });
+
+  const isLoading = isLimitLoading || isPaymentLoading;
 
   // default safe object
   const base: SubscriptionStatus = {
@@ -102,29 +56,69 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
   if (!user?.created_at || isLoading) {
     return {
       ...base,
-      isLoading: true,
+      isLoading,
     };
   }
 
-  if (limitData) {
-    const expiryDate = new Date(limitData.expired_at);
-    const today = new Date();
+  const latestPayment = paymentSummary?.latest_payment;
+  const isPaid = hasPaidPlan(user, paymentSummary);
 
+  const projectionLimit =
+    typeof limitData?.projection_limit === "number"
+      ? limitData.projection_limit
+      : typeof latestPayment?.plan?.projection_limit === "number"
+      ? latestPayment.plan.projection_limit
+      : 0;
+
+  const memberLimit =
+    typeof limitData?.member_limit === "number"
+      ? limitData.member_limit
+      : typeof latestPayment?.plan?.member_limit === "number"
+      ? latestPayment.plan.member_limit
+      : 0;
+
+  // Resolve best expiry date:
+  // For paid users, prioritize latest_payment.end_date, or take the latest valid future date
+  let effectiveExpiryTime: number | null = null;
+
+  if (latestPayment?.end_date) {
+    const t = new Date(latestPayment.end_date).getTime();
+    if (!isNaN(t)) {
+      effectiveExpiryTime = t;
+    }
+  }
+
+  if (limitData?.expired_at) {
+    const t = new Date(limitData.expired_at).getTime();
+    if (!isNaN(t)) {
+      if (effectiveExpiryTime === null || t > effectiveExpiryTime) {
+        effectiveExpiryTime = t;
+      }
+    }
+  }
+
+  if (
+    effectiveExpiryTime === null &&
+    typeof user?.plan_duration === "number" &&
+    user.plan_duration > 0
+  ) {
+    effectiveExpiryTime = Date.now() + user.plan_duration * 24 * 60 * 60 * 1000;
+  }
+
+  const now = Date.now();
+
+  if (effectiveExpiryTime !== null) {
     const diffDays = Math.ceil(
-      (expiryDate.getTime() - today.getTime()) /
-        (1000 * 60 * 60 * 24),
+      (effectiveExpiryTime - now) / (1000 * 60 * 60 * 24),
     );
 
-    const projectionZero = limitData.projection_limit <= 0;
+    const projectionZero = projectionLimit <= 0;
     const expiryOver = diffDays <= 0;
 
-    const isSafe =
-      limitData.projection_limit >= 2 && diffDays > 3;
-
+    const isSafe = projectionLimit >= 2 && diffDays > 3;
     const isWarning = !projectionZero && !expiryOver && !isSafe;
 
     return {
-      // keep `restricted` reserved for full account restriction (e.g., trial ended)
       restricted: false,
       isSafe,
       isWarning,
@@ -136,35 +130,32 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
         ? "low_credits_or_expiring_soon"
         : "",
       isLoading: false,
-      projection_limit: limitData.projection_limit,
-      member_limit: limitData.member_limit,
+      projection_limit: projectionLimit,
+      member_limit: memberLimit,
       diffDays,
-      hasExpiry: !!limitData.expired_at,
+      hasExpiry: true,
       expiryOver,
       projectionZero,
     };
   }
 
   const createdDate = new Date(user.created_at);
-  const today = new Date();
-
   const diffInDays =
-    (today.getTime() - createdDate.getTime()) /
-    (1000 * 60 * 60 * 24);
+    (now - createdDate.getTime()) / (1000 * 60 * 60 * 24);
 
-  const isTrialEnded = !user.plan_id && diffInDays > 7;
+  const isTrialEnded = !isPaid && !user.plan_id && diffInDays > 7;
 
   return {
     restricted: isTrialEnded,
-    isSafe: !isTrialEnded,
+    isSafe: isPaid || !isTrialEnded,
     isWarning: false,
     reason: isTrialEnded ? "trial_ended" : "",
     isLoading: false,
-    projection_limit: 0,
-    member_limit: 0,
-    diffDays: 0,
+    projection_limit: projectionLimit,
+    member_limit: memberLimit,
+    diffDays: isPaid ? 30 : Math.max(0, Math.ceil(7 - diffInDays)),
     hasExpiry: false,
     expiryOver: false,
-    projectionZero: false,
+    projectionZero: projectionLimit <= 0,
   };
 };
