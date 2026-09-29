@@ -50,6 +50,10 @@ export interface PaymentSummaryResponse {
     target_plan_id?: number | string | null;
     created_at: string;
     updated_at?: string;
+    start_date?: string | null;
+    end_date?: string | null;
+    trial_ends_at?: string | null;
+    stripe_subscription_id?: string | null;
     plan?: {
       id: number;
       name: string;
@@ -144,6 +148,7 @@ export const paymentApi = baseApi.injectEndpoints({
           body: formData,
         };
       },
+      invalidatesTags: ["PaymentSummary", "Plans", "Profile"],
     }),
     getPaymentSummary: builder.query<PaymentSummaryResponse, void>({
       query: () => "/payment/show",

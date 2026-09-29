@@ -1247,8 +1247,13 @@ const SubscriptionView = ({
   const { data: paymentSummary } = useGetPaymentSummaryQuery();
   const { data: projectionLimitData } = useGetProjectionLimitQuery();
 
-  const expiryDateString = projectionLimitData?.expired_at
-    ? new Date(projectionLimitData.expired_at).toLocaleDateString("en-US", {
+  const paidEndDate =
+    paymentSummary?.latest_payment?.end_date ||
+    projectionLimitData?.expired_at ||
+    null;
+
+  const expiryDateString = paidEndDate
+    ? new Date(paidEndDate).toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -1261,17 +1266,16 @@ const SubscriptionView = ({
   const remainingDays =
     trialRemainingDays !== null
       ? trialRemainingDays
-      : currentUser?.plan_duration
-      ? currentUser.plan_duration
-      : projectionLimitData?.expired_at
+      : paidEndDate
       ? Math.max(
           0,
           Math.ceil(
-            (new Date(projectionLimitData.expired_at).getTime() -
-              new Date().getTime()) /
+            (new Date(paidEndDate).getTime() - new Date().getTime()) /
               (1000 * 60 * 60 * 24),
           ),
         )
+      : currentUser?.plan_duration
+      ? currentUser.plan_duration
       : null;
 
   console.log("Payment Summary:", paymentSummary);
@@ -1550,8 +1554,10 @@ const SubscriptionView = ({
             const isIdMatch =
               Boolean(activePlanId && plan.id) &&
               Number(activePlanId) === Number(plan.id);
-
-            const isActive = isNameMatch || isIdMatch;
+            // During free trial, paid plans are NOT yet active, so user can click to pay and activate immediately
+            const isActive = isTrial
+              ? isFreeTrialPlan(plan)
+              : (isNameMatch || isIdMatch);
             return (
               <div
                 key={plan.id}
@@ -1684,6 +1690,15 @@ const SubscriptionView = ({
                           </button>
                         )}
                       </div>
+                    )}
+                    {!isActive && isTrial && !isFreeTrialPlan(plan) && (
+                      <span className="text-[10px] font-bold text-[#0FA4A9] uppercase tracking-widest flex items-center gap-1 bg-[#E6F6F6] px-2.5 py-1 rounded-full border border-[#0FA4A9]/30 mt-2">
+                        {Number(currentUser?.target_plan_id) === Number(plan.id) ||
+                        (typeof targetPlan === "string" &&
+                          targetPlan.toLowerCase() === plan.name?.toLowerCase())
+                          ? "Next Plan • Click to Pay Now"
+                          : "Click to Pay & Activate"}
+                      </span>
                     )}
                   </div>
                 </div>
