@@ -95,7 +95,11 @@ function SupplierDashboardContent({ children }: { children: React.ReactNode }) {
       console.error("Logout failed:", error);
     } finally {
       dispatch(logout());
-      router.push("/login");
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      } else {
+        router.push("/login");
+      }
     }
   };
 
