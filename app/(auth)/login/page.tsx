@@ -497,6 +497,9 @@ import { getRecaptchaToken } from "@/lib/recaptcha";
 import { isInvitedAndAccepted } from "@/lib/inviteHelpers";
 import { useProcessPaymentMutation } from "@/redux/features/api/paymentApi";
 import { resumePendingTrial } from "@/lib/trialPayment";
+import { baseApi } from "@/redux/features/api/baseApi";
+import { projectionApi } from "@/redux/features/api/userDashboard/Projection/projectionApi";
+import { AiApi } from "@/redux/features/api/SupplierDashboard/AiApi";
 
 
 // ─── Role options ──────────────────────────────────────────────────────────────
@@ -680,6 +683,9 @@ const LoginPage = () => {
             token: res?.data?.token,
           })
         );
+        dispatch(baseApi.util.resetApiState());
+        dispatch(projectionApi.util.resetApiState());
+        dispatch(AiApi.util.resetApiState());
 
         const userData = res?.data?.user;
         const trialHandled = await resumePendingTrial({
@@ -696,8 +702,16 @@ const LoginPage = () => {
         const professionType = userData?.profession_type;
         const isProfileCompleted = userData?.is_profile_completed;
 
+        const navigateTo = (path: string) => {
+          if (typeof window !== "undefined") {
+            window.location.href = path;
+          } else {
+            router.push(path);
+          }
+        };
+
         if (userRole === "admin") {
-          router.push("/admin-dashboard/overview");
+          navigateTo("/admin-dashboard/overview");
         } else if (
           userType === "professional" ||
           userRole === "professional" ||
@@ -708,52 +722,60 @@ const LoginPage = () => {
         ) {
           const userId = userData?.id || userData?.user_id;
 
-            if (professionType === "trainer_coach") {
-            updateTrainerUserRecommendations({ trainer_id: userId });
+          if (professionType === "trainer_coach") {
+            try {
+              await updateTrainerUserRecommendations({ trainer_id: userId });
+            } catch (e) {}
             if (isProfileCompleted === "Your profile is complete.") {
-                // If no plan, show plans modal before letting them continue
-                if (!userData?.plan_id && !invitedAndAccepted)
-                  router.push("/register/business/choose-plan");
-                else router.push("/trainer-dashboard/overview");
+              if (!userData?.plan_id && !invitedAndAccepted)
+                navigateTo("/register/business/choose-plan");
+              else navigateTo("/trainer-dashboard/overview");
             } else {
-              router.push("/trainer-profile");
+              navigateTo("/trainer-profile");
             }
           } else if (professionType === "supplement_supplier") {
-            updateSupplierUserRecommendations({ supplier_id: userId });
+            try {
+              await updateSupplierUserRecommendations({ supplier_id: userId });
+            } catch (e) {}
             if (isProfileCompleted === "Your profile is complete.") {
-                if (!userData?.plan_id && !invitedAndAccepted)
-                  router.push("/register/business/choose-plan");
-                else router.push("/supplier-dashboard");
+              if (!userData?.plan_id && !invitedAndAccepted)
+                navigateTo("/register/business/choose-plan");
+              else navigateTo("/supplier-dashboard");
             } else {
-              router.push("/register/business/profile-setup");
+              navigateTo("/register/business/profile-setup");
             }
           } else if (professionType === "nutritionist") {
-            updateNutritionistUserRecommendations({ nutritionist_id: userId });
-            // Nutritionists should also choose a professional plan before using the dashboard
-                if (!userData?.plan_id && !invitedAndAccepted)
-                  router.push("/register/business/choose-plan");
-                else router.push("/nutritionist-dashboard/overview");
+            try {
+              await updateNutritionistUserRecommendations({ nutritionist_id: userId });
+            } catch (e) {}
+            if (!userData?.plan_id && !invitedAndAccepted)
+              navigateTo("/register/business/choose-plan");
+            else navigateTo("/nutritionist-dashboard/overview");
           } else {
-            router.push("/personalize-journey/onboarding");
+            navigateTo("/personalize-journey/onboarding");
           }
         } else if (userRole === "individual") {
           const userId = userData?.id || userData?.user_id;
-          updateAiSuggestedTarget({ user_id: userId });
-          updateProfessionalRecommendations({ user_id: userId });
+          try {
+            await Promise.allSettled([
+              updateAiSuggestedTarget({ user_id: userId }),
+              updateProfessionalRecommendations({ user_id: userId }),
+            ]);
+          } catch (e) {}
 
           if (userType === "api") {
             if (!userData?.plan_id && !invitedAndAccepted) {
-              router.push("/register/api-service/choose-plan");
+              navigateTo("/register/api-service/choose-plan");
             } else {
-              router.push("/api-user");
+              navigateTo("/api-user");
             }
           } else if (isProfileCompleted === "Your profile is complete.") {
-            router.push("/user-dashboard");
+            navigateTo("/user-dashboard");
           } else {
-            router.push(`/welcome?email=${formData.email}`);
+            navigateTo(`/welcome?email=${encodeURIComponent(formData.email)}`);
           }
         } else {
-          router.push("/personalize-journey/onboarding");
+          navigateTo("/personalize-journey/onboarding");
         }
       } else {
         toast.error(

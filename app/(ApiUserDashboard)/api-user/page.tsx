@@ -43,7 +43,11 @@ export default function ApiUserDashboard() {
 
   const handleLogout = () => {
     dispatch(logout());
-    router.push("/login");
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    } else {
+      router.push("/login");
+    }
   };
 
   const displayName =

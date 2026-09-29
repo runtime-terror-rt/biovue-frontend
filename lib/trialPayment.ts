@@ -79,7 +79,11 @@ export async function startTrialCheckout({
       toast.success(
         response?.message || "Free trial activated successfully.",
       );
-      router.push(getDashboardPath(user));
+      if (typeof window !== "undefined") {
+        window.location.href = getDashboardPath(user);
+      } else {
+        router.push(getDashboardPath(user));
+      }
       return true;
     }
 

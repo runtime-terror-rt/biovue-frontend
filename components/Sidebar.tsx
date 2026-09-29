@@ -68,7 +68,11 @@ export default function Sidebar({ role }: SidebarProps) {
 
   const handleLogout = () => {
     dispatch(logout());
-    router.push("/login");
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    } else {
+      router.push("/login");
+    }
   };
 
   const toggleSubmenu = (label: string, e: React.MouseEvent) => {
