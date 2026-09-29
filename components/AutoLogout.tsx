@@ -20,7 +20,11 @@ export default function AutoLogout() {
       toast.error("Session expired due to inactivity. Please login again.", {
         id: "auto-logout-toast",
       });
-      router.push("/login");
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      } else {
+        router.push("/login");
+      }
     }
   }, [dispatch, token, router]);
 

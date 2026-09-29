@@ -1,8 +1,30 @@
 import { baseApi } from '../features/api/baseApi'
 import { projectionApi } from '../features/api/userDashboard/Projection/projectionApi'
-import { configureStore } from '@reduxjs/toolkit'
+import { configureStore, createListenerMiddleware } from '@reduxjs/toolkit'
 import { AiApi } from '../features/api/SupplierDashboard/AiApi'
-import authReducer from '../features/slice/authSlice'
+import authReducer, { logout, setCredentials } from '../features/slice/authSlice'
+
+const authListenerMiddleware = createListenerMiddleware();
+
+// Reset all RTK Query API caches whenever user logs out
+authListenerMiddleware.startListening({
+  actionCreator: logout,
+  effect: async (_action, listenerApi) => {
+    listenerApi.dispatch(baseApi.util.resetApiState());
+    listenerApi.dispatch(projectionApi.util.resetApiState());
+    listenerApi.dispatch(AiApi.util.resetApiState());
+  },
+});
+
+// Reset all RTK Query API caches whenever user logs in or switches credentials
+authListenerMiddleware.startListening({
+  actionCreator: setCredentials,
+  effect: async (_action, listenerApi) => {
+    listenerApi.dispatch(baseApi.util.resetApiState());
+    listenerApi.dispatch(projectionApi.util.resetApiState());
+    listenerApi.dispatch(AiApi.util.resetApiState());
+  },
+});
 
 export const makeStore = () => {
   return configureStore({
@@ -13,7 +35,9 @@ export const makeStore = () => {
       auth: authReducer,
     },
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(baseApi.middleware, projectionApi.middleware, AiApi.middleware),
+      getDefaultMiddleware()
+        .prepend(authListenerMiddleware.middleware)
+        .concat(baseApi.middleware, projectionApi.middleware, AiApi.middleware),
   })
 }
 

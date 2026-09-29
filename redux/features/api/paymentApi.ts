@@ -150,7 +150,7 @@ export const paymentApi = baseApi.injectEndpoints({
           body: formData,
         };
       },
-      invalidatesTags: ["PaymentSummary", "Plans", "Profile"],
+      invalidatesTags: ["PaymentSummary", "Plans", "Profile", "Projection"],
     }),
     getPaymentSummary: builder.query<PaymentSummaryResponse, void>({
       query: () => "/payment/show",
@@ -164,7 +164,7 @@ export const paymentApi = baseApi.injectEndpoints({
         url: "/payment/cancel",
         method: "POST",
       }),
-      invalidatesTags: ["PaymentSummary", "Plans", "Profile"],
+      invalidatesTags: ["PaymentSummary", "Plans", "Profile", "Projection"],
     }),
   }),
   overrideExisting: false,
