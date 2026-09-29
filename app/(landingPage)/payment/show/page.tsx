@@ -16,7 +16,7 @@ import {
   selectCurrentUser,
   updateUser,
 } from "@/redux/features/slice/authSlice";
-import { getDashboardPath } from "@/lib/planType";
+import { getDashboardPath, isTrialFlag } from "@/lib/planType";
 
 const PaymentSuccessPage = () => {
   const dispatch = useDispatch();
@@ -49,7 +49,7 @@ const PaymentSuccessPage = () => {
   useEffect(() => {
     if (data?.success) {
       console.log("Payment successful, invalidating tags...");
-      dispatch(baseApi.util.invalidateTags(["Projection", "Profile"]));
+      dispatch(baseApi.util.invalidateTags(["PaymentSummary", "Plans", "Profile", "Projection"]));
     }
   }, [data, dispatch]);
 
@@ -61,13 +61,26 @@ const PaymentSuccessPage = () => {
       const planId = data.latest_payment?.plan?.id;
       const planName = data.latest_payment?.plan?.name;
       const planType = data.latest_payment?.plan?.plan_type;
-      const isTrial = data.latest_payment?.is_trial;
-      const targetPlan = data.latest_payment?.target_plan;
-      const targetPlanId = data.latest_payment?.target_plan_id;
-      const trialDays = data.latest_payment?.trial_days;
+      const paymentAmount = Number(data.latest_payment?.amount || 0);
+      const planPrice = Number(data.latest_payment?.plan?.price || 0);
+      const pNameLower = String(planName || "").toLowerCase();
 
-      if (planId && (currentUser.plan_id !== planId || isTrial !== undefined)) {
-        console.log("Enriching Redux user with plan info from payment summary:", planId);
+      const isPaidPayment =
+        !isTrialFlag(data.latest_payment?.is_trial) &&
+        !pNameLower.includes("trial") &&
+        !pNameLower.includes("free plan") &&
+        (paymentAmount > 0 ||
+          planPrice > 0 ||
+          pNameLower.includes("plus") ||
+          pNameLower.includes("premium"));
+
+      const isTrial = isPaidPayment ? 0 : data.latest_payment?.is_trial;
+      const targetPlan = isPaidPayment ? null : data.latest_payment?.target_plan;
+      const targetPlanId = isPaidPayment ? null : data.latest_payment?.target_plan_id;
+      const trialDays = isPaidPayment ? null : data.latest_payment?.trial_days;
+
+      if (planId) {
+        console.log("Enriching Redux user with plan info from payment summary:", planId, "isPaid:", isPaidPayment);
         dispatch(
           updateUser({
             plan_id: planId,
@@ -88,16 +101,31 @@ const PaymentSuccessPage = () => {
     if (userData?.success && data?.success) {
       const freshUser = userData.data?.user || userData.data;
       if (freshUser) {
+        const planId = data.latest_payment?.plan?.id || freshUser.plan_id;
+        const planName = data.latest_payment?.plan?.name || freshUser.plan_name;
+        const planType = data.latest_payment?.plan?.plan_type || freshUser.plan_type;
+        const paymentAmount = Number(data.latest_payment?.amount || 0);
+        const planPrice = Number(data.latest_payment?.plan?.price || 0);
+        const pNameLower = String(planName || "").toLowerCase();
+
+        const isPaidPayment =
+          !isTrialFlag(data.latest_payment?.is_trial) &&
+          !pNameLower.includes("trial") &&
+          !pNameLower.includes("free plan") &&
+          (paymentAmount > 0 ||
+            planPrice > 0 ||
+            pNameLower.includes("plus") ||
+            pNameLower.includes("premium"));
+
         const enrichedUser = {
           ...freshUser,
-          // Prefer plan info from payment summary if available
-          plan_id: data.latest_payment?.plan?.id || freshUser.plan_id,
-          plan_name: data.latest_payment?.plan?.name || freshUser.plan_name,
-          plan_type: data.latest_payment?.plan?.plan_type || freshUser.plan_type,
-          is_trial: data.latest_payment?.is_trial ?? freshUser.is_trial,
-          target_plan: data.latest_payment?.target_plan ?? freshUser.target_plan,
-          target_plan_id: data.latest_payment?.target_plan_id ?? freshUser.target_plan_id,
-          trial_days: data.latest_payment?.trial_days ?? freshUser.trial_days,
+          plan_id: planId,
+          plan_name: planName,
+          plan_type: planType,
+          is_trial: isPaidPayment ? 0 : (data.latest_payment?.is_trial ?? freshUser.is_trial),
+          target_plan: isPaidPayment ? null : (data.latest_payment?.target_plan ?? freshUser.target_plan),
+          target_plan_id: isPaidPayment ? null : (data.latest_payment?.target_plan_id ?? freshUser.target_plan_id),
+          trial_days: isPaidPayment ? null : (data.latest_payment?.trial_days ?? freshUser.trial_days),
         };
 
         console.log("Syncing user state with fresh data:", enrichedUser);

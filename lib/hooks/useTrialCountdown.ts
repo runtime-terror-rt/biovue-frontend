@@ -1,15 +1,18 @@
-import { useSelector } from "react-redux";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   selectCurrentToken,
   selectCurrentUser,
+  updateUser,
 } from "@/redux/features/slice/authSlice";
 import { useGetProjectionLimitQuery } from "@/redux/features/api/userDashboard/Projection/ProjectionLimitAPI";
 import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
-import { hasPaidPlan, isTrialFlag } from "@/lib/planType";
+import { hasPaidPlan, isTrialFlag, isFreeTrialPlan } from "@/lib/planType";
 
 const TRIAL_DAYS = 7;
 
 export function useTrialCountdown() {
+  const dispatch = useDispatch();
   const token = useSelector(selectCurrentToken);
   const user = useSelector(selectCurrentUser);
   const userId = user?.id || user?.user_id;
@@ -35,13 +38,40 @@ export function useTrialCountdown() {
 
   // 1. If user has an active paid plan (and not a trial), they are NOT on trial
   const isPaid = hasPaidPlan(user, summaryData);
+
+  // If user has a confirmed paid plan, automatically sanitize Redux state so stale trial flags are cleared
+  useEffect(() => {
+    if (
+      isPaid &&
+      (isTrialFlag(user?.is_trial) ||
+        user?.target_plan_id != null ||
+        user?.target_plan != null ||
+        user?.trial_days != null)
+    ) {
+      dispatch(
+        updateUser({
+          is_trial: 0,
+          target_plan: null,
+          target_plan_id: null,
+          trial_days: null,
+        }),
+      );
+    }
+  }, [isPaid, user, dispatch]);
+
   if (isPaid) {
+    const activePaidPlanName =
+      latestPayment?.plan?.name ||
+      summaryData?.user?.plan_name ||
+      user?.plan_name ||
+      "Paid Plan";
+
     return {
       isTrial: false,
       remainingDays: null,
       totalDays: TRIAL_DAYS,
       isLoading: isLimitLoading || isSummaryLoading,
-      planName: latestPayment?.plan?.name || user?.plan_name || "Paid Plan",
+      planName: activePaidPlanName,
       targetPlan: null,
     };
   }
@@ -73,21 +103,21 @@ export function useTrialCountdown() {
     userRole === "member";
 
   const hasExplicitTrialSignal =
-    isTrialFlag(user?.is_trial) ||
-    isTrialFlag(latestPayment?.is_trial) ||
-    isTrialFlag(summaryData?.user?.is_trial) ||
-    latestPayment?.target_plan_id != null ||
-    latestPayment?.target_plan != null ||
-    user?.target_plan_id != null ||
-    user?.target_plan != null ||
-    planName.includes("trial") ||
-    planName.includes("free") ||
-    user?.plan_id === 3 ||
-    latestPayment?.plan_id === 3 ||
-    latestPayment?.plan?.id === 3;
+    !isPaid &&
+    (isTrialFlag(user?.is_trial) ||
+      isTrialFlag(latestPayment?.is_trial) ||
+      isTrialFlag(summaryData?.user?.is_trial) ||
+      (latestPayment?.target_plan_id != null && Number(latestPayment?.amount || 0) === 0) ||
+      (user?.target_plan_id != null && (!user?.plan_id || isFreeTrialPlan(user?.plan))) ||
+      planName.includes("trial") ||
+      planName.includes("free"));
 
-  // On individual dashboard, any non-paid user is on the Free Trial
-  const isTrial = hasExplicitTrialSignal || (isIndividualUser && !isPaid);
+  // On individual dashboard, any non-paid user with a trial signal or free plan is on the Free Trial
+  const isTrial =
+    !isPaid &&
+    (hasExplicitTrialSignal ||
+      (isIndividualUser &&
+        (!planName || planName.includes("free") || planName.includes("trial"))));
 
   if (!isTrial) {
     return {
@@ -169,6 +199,11 @@ export function useTrialCountdown() {
     remainingDays = TRIAL_DAYS;
   }
 
+  // Free trial remaining days can NEVER exceed TRIAL_DAYS (7 days)
+  if (remainingDays !== null) {
+    remainingDays = Math.max(0, Math.min(TRIAL_DAYS, remainingDays));
+  }
+
   // 5. Resolve Target Plan (post-trial plan to be activated)
   const rawTargetPlan =
     latestPayment?.target_plan ||
@@ -196,10 +231,8 @@ export function useTrialCountdown() {
     const targetPlanId = Number(rawTargetPlanId);
     if (targetPlanId === 2) {
       targetPlan = "Plus";
-    } else if (targetPlanId === 1) {
-      targetPlan = "Premium";
     } else if (targetPlanId === 3) {
-      targetPlan = "Free Trial";
+      targetPlan = "Premium";
     }
   }
 
