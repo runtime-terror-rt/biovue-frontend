@@ -37,13 +37,16 @@ const UpgradePage = () => {
           </div>
 
           <h2 className="text-2xl font-bold text-[#1F2D2E] mb-4">
-            Upgrade to connect
+            Upgrade Plan
           </h2>
+          <p className="text-[#5F6F73] mb-6 leading-relaxed">
+            Complete your setup to unlock future features
+          </p>
 
-          <p className="text-[#5F6F73] mb-10 leading-relaxed">
+          {/* <p className="text-[#5F6F73] mb-10 leading-relaxed">
             Connecting with a coach requires a Plus or Premium plan. Get
             personalized guidance tailored to your data.
-          </p>
+          </p> */}
 
           <div className="flex flex-col gap-4 w-full">
             <button

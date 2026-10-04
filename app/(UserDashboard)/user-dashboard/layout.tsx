@@ -70,9 +70,9 @@ export default function UserDashboardLayout({
             <div className="flex items-center gap-2 sm:gap-4 md:gap-6 ml-auto">
               <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
                 <TrialCountdownHeaderBadge />
-                <div className="hidden sm:flex items-center gap-2 sm:gap-4 md:gap-6">
+                <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
                   <ProjectionLimitIndicator />
-                  {/* <ExpiryIndicator /> */}
+                  <ExpiryIndicator />
                 </div>
               </div>
               <NotificationBell />

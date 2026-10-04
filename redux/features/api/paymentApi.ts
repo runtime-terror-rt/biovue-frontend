@@ -23,8 +23,23 @@ export type RequestPayload = {
     name?: string;
   };
 };
+
+export interface CancelSubscriptionResponse {
+  success: boolean;
+  status?: string;
+  can_cancel?: boolean;
+  cancel_requested?: boolean;
+  access_until?: string;
+  message?: string;
+}
+
 export interface PaymentSummaryResponse {
   success: boolean;
+  status?: string;
+  can_cancel?: boolean;
+  cancel_requested?: boolean;
+  access_until?: string;
+  message?: string;
   user?: {
     id: number;
     name: string;
@@ -36,6 +51,9 @@ export interface PaymentSummaryResponse {
     is_trial?: boolean | number | string;
     target_plan?: string | null;
     target_plan_id?: number | string | null;
+    status?: string;
+    cancel_requested?: boolean;
+    access_until?: string;
   };
   latest_payment?: {
     id: number;
@@ -54,6 +72,8 @@ export interface PaymentSummaryResponse {
     end_date?: string | null;
     trial_ends_at?: string | null;
     stripe_subscription_id?: string | null;
+    cancel_requested?: boolean;
+    access_until?: string;
     plan?: {
       id: number;
       name: string;
@@ -152,12 +172,15 @@ export const paymentApi = baseApi.injectEndpoints({
       },
       invalidatesTags: ["PaymentSummary", "Plans", "Profile", "Projection"],
     }),
-    getPaymentSummary: builder.query<PaymentSummaryResponse, void>({
-      query: () => "/payment/show",
+    getPaymentSummary: builder.query<PaymentSummaryResponse, string | void>({
+      query: (sessionId) =>
+        sessionId
+          ? `/payment/show?session_id=${encodeURIComponent(sessionId)}`
+          : "/payment/show",
       providesTags: ["PaymentSummary"],
     }),
     cancelSubscription: builder.mutation<
-      { success: boolean; message: string },
+      CancelSubscriptionResponse,
       void
     >({
       query: () => ({
