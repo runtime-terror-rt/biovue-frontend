@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useGetAllUsersForSupplierQuery } from "@/redux/features/api/SupplierDashboard/AllUsers";
 import ClientTable from "@/components/SupplierDashboard/ClientTable";
-import { Loader2, Users } from "lucide-react";
+import WalkInClientModal from "@/components/SupplierDashboard/WalkInClientModal";
+import { Loader2, Users, UserPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function SupplierClientPage() {
   const { data, isLoading, isError } = useGetAllUsersForSupplierQuery();
+  const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -49,18 +53,35 @@ export default function SupplierClientPage() {
 
   return (
     <div className="mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Breadcrumb / Section Title */}
-      <div className="flex items-center gap-3 mb-10">
-        <div className="p-3 bg-white rounded-2xl border border-[#D9E6FF] shadow-sm">
-          <Users className="text-[#0FA4A9]" size={24} strokeWidth={2} />
+      {/* Breadcrumb / Section Title & Top Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-white rounded-2xl border border-[#D9E6FF] shadow-sm">
+            <Users className="text-[#0FA4A9]" size={24} strokeWidth={2} />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-[#041228] tracking-tight">Clients</h1>
+            <p className="text-sm font-bold text-[#94A3B8] uppercase tracking-widest">
+              Directory & AI Insights
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-black text-[#041228] tracking-tight">Clients</h1>
-          <p className="text-sm font-bold text-[#94A3B8] uppercase tracking-widest">Directory & AI Insights</p>
-        </div>
+
+        <Button
+          onClick={() => setIsWalkInModalOpen(true)}
+          className="bg-[#0FA4A9] hover:bg-[#0D9488] text-white px-6 py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-[#0FA4A9]/20 flex items-center gap-2.5 cursor-pointer active:scale-95 self-start sm:self-auto h-auto text-sm"
+        >
+          <UserPlus size={18} strokeWidth={2.2} />
+          Add Walk-in Client
+        </Button>
       </div>
 
       <ClientTable users={users} />
+
+      <WalkInClientModal
+        isOpen={isWalkInModalOpen}
+        onClose={() => setIsWalkInModalOpen(false)}
+      />
     </div>
   );
 }

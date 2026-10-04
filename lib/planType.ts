@@ -77,8 +77,22 @@ export function isFreeTrialPlan(plan?: any): boolean {
   );
 }
 
-export function hasPaidPlan(user?: any, paymentSummary?: any): boolean {
-  if (!user && !paymentSummary) return false;
+export function hasPaidPlan(user?: any, paymentSummary?: any, profileData?: any): boolean {
+  if (!user && !paymentSummary && !profileData) return false;
+
+  // 0. Check profile data plan_id or user.plan_id directly (2: Plus, 3: Premium)
+  const planId = Number(
+    profileData?.plan_id ??
+    profileData?.profile?.plan_id ??
+    user?.plan_id ??
+    paymentSummary?.user?.plan_id ??
+    paymentSummary?.latest_payment?.plan_id ??
+    null
+  );
+
+  if (planId === 2 || planId === 3) {
+    return true;
+  }
 
   const latestPayment = paymentSummary?.latest_payment;
 

@@ -13,10 +13,7 @@ import NotificationBell from "@/components/dashboard/NotificationBell";
 import ProfileDropdown from "@/components/dashboard/ProfileDropdown";
 import { usePathname } from "next/navigation";
 import React, { useState, useEffect } from "react";
-
-import { useSelector } from "react-redux";
-import { selectCurrentUser } from "@/redux/features/slice/authSlice";
-import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
+import { useDynamicUserPlan } from "@/lib/hooks/useDynamicUserPlan";
 
 export default function UserDashboardLayout({
   children,
@@ -26,34 +23,11 @@ export default function UserDashboardLayout({
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
-  const currentUser = useSelector(selectCurrentUser);
-  const { data: paymentSummary } = useGetPaymentSummaryQuery();
-  console.log("paymentSummary", paymentSummary)
+  const { isFree, isPlus, isPremium } = useDynamicUserPlan();
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
-  const activePlanFromSummary =
-    paymentSummary?.latest_payment &&
-      ACTIVE_STATUSES.includes(
-        (paymentSummary.latest_payment.status ?? "").toLowerCase()
-      )
-      ? paymentSummary.latest_payment.plan
-      : null;
-
-  const activePlanName = (
-    paymentSummary?.latest_payment?.plan?.name ||
-    activePlanFromSummary?.name ||
-    paymentSummary?.user?.plan_name ||
-    paymentSummary?.user?.plan_type ||
-    currentUser?.plan_name ||
-    (currentUser as any)?.plan?.name ||
-    ""
-  ).toLowerCase();
-
-  const isPremium = activePlanName.includes("premium");
 
   const getPageTitle = () => {
     if (!mounted) return "Dashboard";
@@ -105,23 +79,36 @@ export default function UserDashboardLayout({
               <div className="flex items-center gap-1 sm:gap-3 md:pr-2">
                 <ProfileDropdown roleLabel="User" settingsHref="/user-dashboard/settings" />
               </div>
-              {mounted && !isPremium && (
-                <Link href="/user-dashboard/upgrade">
-                  <div className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
-                    <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span>Premium</span>
-                  </div>
-                </Link>
-              )
-                // : (
-                //   <Link href="/user-dashboard/upgrade">
-                //     <button className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
-                //       <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5" />
-                //       <span className="hidden sm:inline">Upgrade</span>
-                //     </button>
-                //   </Link>
-                // )
-              }
+              {mounted && (
+                <>
+                  {isPremium ? (
+                    <div className="flex items-center gap-1.5 bg-[#FFF4E5] text-[#E65100] border border-[#FFE0B2] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold shadow-xs select-none">
+                      <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF8A00]" />
+                      <span>Premium</span>
+                    </div>
+                  ) : isPlus ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 bg-[#E6F8F6] text-[#0FA4A9] border border-[#0FA4A9]/30 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold shadow-xs select-none">
+                        <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-[#0FA4A9]" />
+                        <span>Plus</span>
+                      </div>
+                      <Link href="/user-dashboard/upgrade">
+                        <button className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] hover:bg-[#0D8E92] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
+                          <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <span>Upgrade</span>
+                        </button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <Link href="/user-dashboard/upgrade">
+                      <button className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] hover:bg-[#0D8E92] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
+                        <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span>Start Paid Plan</span>
+                      </button>
+                    </Link>
+                  )}
+                </>
+              )}
             </div>
           </header>
 

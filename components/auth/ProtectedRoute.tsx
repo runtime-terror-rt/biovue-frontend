@@ -24,6 +24,7 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
     }
 
     const { role, profession_type, plan_id, plan_name, plan_type } = user;
+    const userRole = String(role || user.user_type || "individual").toLowerCase();
 
     // Check if the user has an API plan
     const isApiPlan = plan_type === "api" || (typeof plan_name === "string" && plan_name.toLowerCase().includes("api"));
@@ -37,21 +38,27 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
       return;
     }
 
-    // Check if the user's role is allowed
-    const isRoleAllowed = allowedRoles.includes(role);
-
-    // Check if the user's profession is allowed (if professions are specified)
-    const isProfessionAllowed = allowedProfessions 
-      ? allowedProfessions.includes(profession_type ?? null)
-      : true;
-
-    // FOR PROFESSIONALS: Ensure they have a plan_id before allowing access to dashboard
+    // Check if the user is a professional user
     const isProfessionalUser = 
       role === "professional" || 
       user.user_type === "professional" ||
       ["trainer_coach", "supplement_supplier", "nutritionist"].includes(role) ||
       ["trainer_coach", "supplement_supplier", "nutritionist"].includes(profession_type);
 
+    // Check if the user's role is allowed
+    const isIndividualAllowed = allowedRoles.includes("individual") || allowedRoles.includes("user");
+    const isRoleAllowed =
+      allowedRoles.includes(role) ||
+      allowedRoles.includes(userRole) ||
+      (isIndividualAllowed && ["individual", "user", "member", ""].includes(userRole));
+
+    // Check if the user's profession is allowed (if professions are specified)
+    const normalizedProfession = profession_type ? String(profession_type).toLowerCase() : null;
+    const isProfessionAllowed = allowedProfessions 
+      ? allowedProfessions.includes(normalizedProfession) || (isIndividualAllowed && !isProfessionalUser)
+      : true;
+
+    // FOR PROFESSIONALS: Ensure they have a plan_id before allowing access to dashboard
     if (isProfessionalUser && !plan_id && isRoleAllowed && isProfessionAllowed) {
       console.log("Professional user missing plan_id, redirecting to choose-plan");
       router.replace("/register/business/choose-plan");
@@ -63,11 +70,13 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
     } else {
       // User is logged in but unauthorized for this specific dashboard
       // Redirect them to their proper dashboard based on their role
-      if (role === "admin") {
+      if (userRole === "admin") {
         router.replace("/admin-dashboard/overview");
-      } else if (role === "individual") {
+      } else if (userRole === "individual" || userRole === "user" || userRole === "member") {
         router.replace("/user-dashboard");
-      } else if (role === "professional" || user.user_type === "professional") {
+      } else if (userRole === "api") {
+        router.replace("/api-user");
+      } else if (isProfessionalUser) {
         if (profession_type === "trainer_coach") {
           router.replace("/trainer-dashboard/overview");
         } else if (profession_type === "supplement_supplier") {
@@ -78,7 +87,7 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
           router.replace("/login");
         }
       } else {
-        router.replace("/login");
+        router.replace("/user-dashboard");
       }
     }
   }, [user, router, allowedRoles, allowedProfessions]);

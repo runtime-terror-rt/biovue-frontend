@@ -674,33 +674,66 @@ const LoginPage = () => {
 
       const res = await login(payload).unwrap();
 
-      if (res?.success || res?.status === "success") {
+      if (res?.success || res?.status === "success" || res?.token || res?.data?.token) {
         toast.success(res?.message || "Login successful!");
+
+        const userData =
+          res?.data?.user ||
+          res?.user ||
+          res?.data?.data?.user ||
+          (res?.data && !res?.data?.token && !res?.data?.access_token ? res.data : null);
+
+        const authToken =
+          res?.data?.token ||
+          res?.token ||
+          res?.data?.access_token ||
+          res?.access_token ||
+          res?.data?.data?.token;
 
         dispatch(
           setCredentials({
-            user: res?.data?.user,
-            token: res?.data?.token,
+            user: userData,
+            token: authToken,
           })
         );
         dispatch(baseApi.util.resetApiState());
         dispatch(projectionApi.util.resetApiState());
         dispatch(AiApi.util.resetApiState());
 
-        const userData = res?.data?.user;
-        const trialHandled = await resumePendingTrial({
-          processPayment,
-          token: res?.data?.token,
-          user: userData,
-          router,
-        });
-        if (trialHandled) return;
+        // Check if there's a pending trial checkout that needs handling
+        try {
+          const trialHandled = await resumePendingTrial({
+            processPayment,
+            token: authToken,
+            user: userData,
+            router,
+          });
+          if (trialHandled) return;
+        } catch (e) {
+          console.warn("resumePendingTrial error:", e);
+        }
 
         const invitedAndAccepted = isInvitedAndAccepted(userData);
-        const userRole = userData?.role;
-        const userType = userData?.user_type;
-        const professionType = userData?.profession_type;
-        const isProfileCompleted = userData?.is_profile_completed;
+        const userRole = String(userData?.role || userData?.user_type || selectedRole || "").toLowerCase();
+        const userType = String(userData?.user_type || userData?.role || "").toLowerCase();
+        const professionType = String(userData?.profession_type || "").toLowerCase();
+
+        // Fire-and-forget background sync for recommendations so navigation is not blocked
+        const userId = userData?.id || userData?.user_id;
+        if (userId) {
+          if (professionType === "trainer_coach") {
+            updateTrainerUserRecommendations({ trainer_id: userId }).catch(() => {});
+          } else if (professionType === "supplement_supplier") {
+            updateSupplierUserRecommendations({ supplier_id: userId }).catch(() => {});
+          } else if (professionType === "nutritionist") {
+            updateNutritionistUserRecommendations({ nutritionist_id: userId }).catch(() => {});
+          } else {
+            Promise.allSettled([
+              updateAiSuggestedTarget({ user_id: userId }),
+              updateProfessionalRecommendations({ user_id: userId }),
+            ]).catch(() => {});
+          }
+        }
 
         const navigateTo = (path: string) => {
           if (typeof window !== "undefined") {
@@ -715,67 +748,32 @@ const LoginPage = () => {
         } else if (
           userType === "professional" ||
           userRole === "professional" ||
-          (professionType &&
-            ["trainer_coach", "supplement_supplier", "nutritionist"].includes(
-              professionType
-            ))
+          ["trainer_coach", "supplement_supplier", "nutritionist"].includes(professionType)
         ) {
-          const userId = userData?.id || userData?.user_id;
-
           if (professionType === "trainer_coach") {
-            try {
-              await updateTrainerUserRecommendations({ trainer_id: userId });
-            } catch (e) {}
-            if (isProfileCompleted === "Your profile is complete.") {
-              if (!userData?.plan_id && !invitedAndAccepted)
-                navigateTo("/register/business/choose-plan");
-              else navigateTo("/trainer-dashboard/overview");
-            } else {
-              navigateTo("/trainer-profile");
-            }
+            if (!userData?.plan_id && !invitedAndAccepted)
+              navigateTo("/register/business/choose-plan");
+            else navigateTo("/trainer-dashboard/overview");
           } else if (professionType === "supplement_supplier") {
-            try {
-              await updateSupplierUserRecommendations({ supplier_id: userId });
-            } catch (e) {}
-            if (isProfileCompleted === "Your profile is complete.") {
-              if (!userData?.plan_id && !invitedAndAccepted)
-                navigateTo("/register/business/choose-plan");
-              else navigateTo("/supplier-dashboard");
-            } else {
-              navigateTo("/register/business/profile-setup");
-            }
+            if (!userData?.plan_id && !invitedAndAccepted)
+              navigateTo("/register/business/choose-plan");
+            else navigateTo("/supplier-dashboard");
           } else if (professionType === "nutritionist") {
-            try {
-              await updateNutritionistUserRecommendations({ nutritionist_id: userId });
-            } catch (e) {}
             if (!userData?.plan_id && !invitedAndAccepted)
               navigateTo("/register/business/choose-plan");
             else navigateTo("/nutritionist-dashboard/overview");
           } else {
-            navigateTo("/personalize-journey/onboarding");
+            navigateTo("/trainer-dashboard/overview");
           }
-        } else if (userRole === "individual") {
-          const userId = userData?.id || userData?.user_id;
-          try {
-            await Promise.allSettled([
-              updateAiSuggestedTarget({ user_id: userId }),
-              updateProfessionalRecommendations({ user_id: userId }),
-            ]);
-          } catch (e) {}
-
-          if (userType === "api") {
-            if (!userData?.plan_id && !invitedAndAccepted) {
-              navigateTo("/register/api-service/choose-plan");
-            } else {
-              navigateTo("/api-user");
-            }
-          } else if (isProfileCompleted === "Your profile is complete.") {
-            navigateTo("/user-dashboard");
+        } else if (userType === "api" || userRole === "api") {
+          if (!userData?.plan_id && !invitedAndAccepted) {
+            navigateTo("/register/api-service/choose-plan");
           } else {
-            navigateTo(`/welcome?email=${encodeURIComponent(formData.email)}`);
+            navigateTo("/api-user");
           }
         } else {
-          navigateTo("/personalize-journey/onboarding");
+          // Individual user / member -> directly to /user-dashboard
+          navigateTo("/user-dashboard");
         }
       } else {
         toast.error(

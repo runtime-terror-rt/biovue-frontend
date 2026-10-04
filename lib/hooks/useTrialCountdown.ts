@@ -7,6 +7,7 @@ import {
 } from "@/redux/features/slice/authSlice";
 import { useGetProjectionLimitQuery } from "@/redux/features/api/userDashboard/Projection/ProjectionLimitAPI";
 import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
+import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { hasPaidPlan, isTrialFlag, isFreeTrialPlan } from "@/lib/planType";
 
 const TRIAL_DAYS = 7;
@@ -17,6 +18,9 @@ export function useTrialCountdown() {
   const user = useSelector(selectCurrentUser);
   const userId = user?.id || user?.user_id;
 
+  const { data: profileResponse, isLoading: isProfileLoading } =
+    useGetProfileQuery(userId as string | number, { skip: !userId });
+
   // Query projection limit without skipping on userId since it takes void endpoint
   const { data: limitData, isLoading: isLimitLoading } =
     useGetProjectionLimitQuery(undefined, { skip: !token });
@@ -25,6 +29,17 @@ export function useTrialCountdown() {
     useGetPaymentSummaryQuery(undefined, { skip: !token });
 
   const latestPayment = summaryData?.latest_payment;
+  const profileData = profileResponse?.data || profileResponse;
+
+  const rawPlanId =
+    profileData?.plan_id ??
+    profileData?.profile?.plan_id ??
+    user?.plan_id ??
+    null;
+  const planId =
+    rawPlanId !== null && rawPlanId !== undefined && rawPlanId !== ""
+      ? Number(rawPlanId)
+      : null;
 
   const summaryPlanName = String(
     latestPayment?.plan?.name ||
@@ -37,7 +52,7 @@ export function useTrialCountdown() {
   const planName = summaryPlanName || userPlanName;
 
   // 1. If user has an active paid plan (and not a trial), they are NOT on trial
-  const isPaid = hasPaidPlan(user, summaryData);
+  const isPaid = hasPaidPlan(user, summaryData, profileData);
 
   // If user has a confirmed paid plan, automatically sanitize Redux state so stale trial flags are cleared
   useEffect(() => {
@@ -61,6 +76,7 @@ export function useTrialCountdown() {
 
   if (isPaid) {
     const activePaidPlanName =
+      (planId === 3 ? "Premium" : planId === 2 ? "Plus" : null) ||
       latestPayment?.plan?.name ||
       summaryData?.user?.plan_name ||
       user?.plan_name ||
@@ -70,7 +86,7 @@ export function useTrialCountdown() {
       isTrial: false,
       remainingDays: null,
       totalDays: TRIAL_DAYS,
-      isLoading: isLimitLoading || isSummaryLoading,
+      isLoading: isLimitLoading || isSummaryLoading || isProfileLoading,
       planName: activePaidPlanName,
       targetPlan: null,
     };

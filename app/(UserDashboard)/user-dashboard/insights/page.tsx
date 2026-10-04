@@ -17,6 +17,8 @@ import {
   Loader2,
   Crown,
   Download,
+  Lock,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetInsightsQuery, useGetFutureInsightsQuery, useFetchInsightsMutation, useFetchFutureInsightsMutation } from "@/redux/features/api/userDashboard/insightsApi";
@@ -28,8 +30,7 @@ import SubscriptionGuard from "@/components/common/SubscriptionGuard";
 import { useSubscriptionStatus } from "@/lib/hooks/useSubscriptionStatus";
 import { useGetProjectionGalleryQuery } from "@/redux/features/api/userDashboard/Projection/GalleryAPI";
 import { generateInsightsPdf } from "@/lib/pdf/generateInsightsPdf";
-
-// Mock data removed in favor of API integration
+import { useDynamicUserPlan } from "@/lib/hooks/useDynamicUserPlan";
 
 export default function InsightsPage() {
   const [activeTab, setActiveTab] = useState<"5-year" | "current">("current");
@@ -38,28 +39,7 @@ export default function InsightsPage() {
   const currentUser = useSelector(selectCurrentUser);
   const userId = currentUser?.id || currentUser?.user_id;
 
-  const { data: paymentSummary } = useGetPaymentSummaryQuery();
-
-  const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
-  const activePlanFromSummary =
-    paymentSummary?.latest_payment &&
-    ACTIVE_STATUSES.includes(
-      (paymentSummary.latest_payment.status ?? "").toLowerCase()
-    )
-      ? paymentSummary.latest_payment.plan
-      : null;
-
-  const activePlanName = (
-    activePlanFromSummary?.name ||
-    currentUser?.plan_name ||
-    ""
-  ).toLowerCase();
-
-  const isPremium = Boolean(
-    activePlanFromSummary
-      ? activePlanName.includes("premium")
-      : currentUser?.plan_id && activePlanName.includes("premium")
-  );
+  const { isPremium, isPlus } = useDynamicUserPlan();
 
   useEffect(() => {
     if (!isPremium && activeTab === "5-year") {
@@ -100,7 +80,11 @@ export default function InsightsPage() {
 
   const handleTabChange = (tab: "current" | "5-year") => {
     if (tab === "5-year" && !isPremium) {
-      toast.error("5-Year Health Insights are available exclusively on the Premium plan. Please upgrade to access.");
+      toast.error(
+        isPlus
+          ? "5-Year Health Insights are unavailable on the Plus plan. Upgrade to Premium to generate 5-year insights and download reports."
+          : "5-Year Health Insights are available exclusively on the Premium plan. Please upgrade to access."
+      );
       return;
     }
     setActiveTab(tab);
@@ -109,7 +93,9 @@ export default function InsightsPage() {
   const handleDownloadReport = async () => {
     if (!isPremium) {
       toast.error(
-        "Downloadable reports are available exclusively on the Premium plan. Please upgrade to download."
+        isPlus
+          ? "Downloadable reports are unavailable on the Plus plan. Please upgrade to Premium to download PDF reports."
+          : "Downloadable reports are available exclusively on the Premium plan. Please upgrade to download."
       );
       return;
     }
@@ -144,21 +130,60 @@ export default function InsightsPage() {
     }
   };
 
+  const handleGenerateFutureInsights = async () => {
+    if (!isPremium) {
+      toast.error(
+        isPlus
+          ? "5-Year Health Insights generation is unavailable on the Plus plan. Upgrade to Premium to generate 5-year forecasts."
+          : "5-Year Health Insights are available exclusively on the Premium plan. Please upgrade to access."
+      );
+      return;
+    }
+    if (!userId) {
+      toast.error("User ID not found");
+      return;
+    }
+    const toastId = toast.loading("Generating 5-Year Health Insights...");
+    try {
+      await updateFutureInsights({ user_id: userId, timeframe: "5 years" }).unwrap();
+      toast.dismiss(toastId);
+      toast.success("5-Year Health Insights generated successfully!");
+    } catch (error) {
+      toast.dismiss(toastId);
+      toast.error("Failed to generate 5-Year Health Insights");
+      console.error("Generate Future Insights Error", error);
+    }
+  };
+
   const handleRefreshInsights = async () => {
     if (!userId) {
       toast.error("User ID not found");
       return;
     }
     try {
-      if (isPremium) {
-        await Promise.all([
-          updateCurrentInsights({ user_id: userId }).unwrap(),
-          updateFutureInsights({ user_id: userId, timeframe: "5 years" }).unwrap()
-        ]);
+      if (activeTab === "5-year") {
+        if (!isPremium) {
+          toast.error(
+            isPlus
+              ? "5-Year Health Insights generation is unavailable on the Plus plan. Upgrade to Premium."
+              : "5-Year Health Insights are exclusive to Premium."
+          );
+          return;
+        }
+        await updateFutureInsights({ user_id: userId, timeframe: "5 years" }).unwrap();
+        toast.success("5-Year Health Insights refreshed successfully");
       } else {
-        await updateCurrentInsights({ user_id: userId }).unwrap();
+        if (isPremium) {
+          await Promise.all([
+            updateCurrentInsights({ user_id: userId }).unwrap(),
+            updateFutureInsights({ user_id: userId, timeframe: "5 years" }).unwrap()
+          ]);
+        } else {
+          // Plus and other non-premium plans only refresh Current Insights
+          await updateCurrentInsights({ user_id: userId }).unwrap();
+        }
+        toast.success("Insights refreshed successfully");
       }
-      toast.success("Insights refreshed successfully");
     } catch (error) {
       toast.error("Failed to refresh insights");
       console.error("Refresh Insights Error", error);
@@ -202,8 +227,7 @@ export default function InsightsPage() {
       {/* Top Navigation */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-1 bg-[#E6F6F6] p-1 rounded-lg border border-[#BDE8E8]">
-
-         <button
+          <button
             onClick={() => handleTabChange("current")}
             className={cn(
               "px-4 py-2 text-sm font-semibold rounded-md transition-all cursor-pointer",
@@ -212,44 +236,60 @@ export default function InsightsPage() {
                 : "text-[#5F6F73] hover:text-[#1F2D2E]",
             )}
           >
-            Current Projection
+            Current Insights
           </button>
           <button
             onClick={() => handleTabChange("5-year")}
             className={cn(
-              "px-4 py-2 text-sm font-semibold rounded-md transition-all flex items-center gap-1.5 cursor-pointer",
+              "px-4 py-2 text-sm font-semibold rounded-md transition-all flex items-center gap-1.5",
               activeTab === "5-year"
-                ? "bg-[#0FA4A9] text-white shadow-sm"
+                ? "bg-[#0FA4A9] text-white shadow-sm cursor-pointer"
                 : isPremium
-                ? "text-[#5F6F73] hover:text-[#1F2D2E]"
-                : "text-gray-400 bg-gray-100/70 border border-gray-200 cursor-not-allowed opacity-75",
+                ? "text-[#5F6F73] hover:text-[#1F2D2E] cursor-pointer"
+                : "text-gray-400 bg-gray-100/80 border border-gray-200 cursor-not-allowed opacity-60 shadow-none hover:bg-gray-100",
             )}
+            title={
+              !isPremium
+                ? isPlus
+                  ? "5-Year Health Insights are unavailable on the Plus plan (Premium feature)"
+                  : "5-Year Health Insights are available exclusively on the Premium plan"
+                : "5-Year Health Insights"
+            }
           >
-            <span>5 - Year Projection</span>
+            <span className="flex items-center gap-1.5">
+              {!isPremium && <Lock size={12} className="text-gray-400" />}
+              5-Year Health Insights
+            </span>
             {!isPremium && (
               <span className="text-[10px] font-bold bg-amber-500/15 text-amber-600 border border-amber-500/30 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                <Crown size={10} fill="currentColor" /> Premium
+                <Crown size={10} fill="currentColor" /> Premium Only
               </span>
             )}
           </button>
-         
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
           <button
             onClick={handleDownloadReport}
             className={cn(
-              "flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
+              "flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all",
               isPremium
-                ? "bg-[#0FA4A9] text-white hover:bg-[#0d8d91] shadow-xs"
-                : "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed opacity-75"
+                ? "bg-[#0FA4A9] text-white hover:bg-[#0d8d91] shadow-xs cursor-pointer"
+                : "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed opacity-60 shadow-none hover:bg-gray-100"
             )}
+            title={
+              !isPremium
+                ? isPlus
+                  ? "Downloadable reports are unavailable on the Plus plan. Upgrade to Premium."
+                  : "Downloadable reports are available exclusively on the Premium plan."
+                : "Download PDF Report"
+            }
           >
-            <Download size={14} />
+            {!isPremium ? <Lock size={13} className="text-gray-400" /> : <Download size={14} />}
             Download Report
             {!isPremium && (
               <span className="text-[10px] font-bold bg-amber-500/15 text-amber-600 border border-amber-500/30 px-1.5 py-0.5 rounded flex items-center gap-0.5 ml-0.5">
-                <Crown size={10} fill="currentColor" /> Premium
+                <Crown size={10} fill="currentColor" /> Premium Only
               </span>
             )}
           </button>
@@ -260,7 +300,11 @@ export default function InsightsPage() {
             className="flex items-center gap-2 px-3 py-1.5 bg-[#E6F6F6] text-[#0FA4A9] border border-[#BDE8E8] rounded-md text-xs font-semibold hover:bg-[#d0f0f0] transition-colors cursor-pointer disabled:opacity-50"
           >
             <RefreshCcw size={14} className={cn(isUpdating && "animate-spin")} />
-            {isUpdating ? "Refreshing..." : "Refresh Insights"}
+            {isUpdating
+              ? "Refreshing..."
+              : activeTab === "5-year"
+              ? "Refresh 5-Year Insights"
+              : "Refresh Insights"}
           </button>
           
           <button
@@ -278,6 +322,33 @@ export default function InsightsPage() {
           <div className="flex items-center justify-center min-h-[400px]">
             <Loader2 className="w-8 h-8 animate-spin text-[#0FA4A9]" />
           </div>
+        ) : activeTab === "5-year" && !isPremium ? (
+          <motion.div
+            key="5-year-locked"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-2xl p-10 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center text-center max-w-xl mx-auto my-12"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mb-4">
+              <Crown size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-[#1F2D2E] mb-2">
+              5-Year Health Insights is Premium Only
+            </h2>
+            <p className="text-sm text-[#5F6F73] mb-6 max-w-md leading-relaxed">
+              {isPlus
+                ? "5-Year Health Insights and downloadable reports are unavailable on your Plus plan. Upgrade to Premium to generate long-term predictive health forecasting and download detailed reports."
+                : "5-Year Health Insights and downloadable reports are available exclusively on the Premium plan. Please upgrade to unlock."}
+            </p>
+            <Link href="/user-dashboard/upgrade">
+              <button className="bg-[#0FA4A9] text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-[#0d8d91] transition-all flex items-center gap-2 cursor-pointer shadow-sm">
+                <Crown size={16} fill="currentColor" />
+                Upgrade to Premium
+              </button>
+            </Link>
+          </motion.div>
         ) : activeTab === "5-year" ? (
           <motion.div
             key="5-year"
@@ -287,84 +358,127 @@ export default function InsightsPage() {
             transition={{ duration: 0.3 }}
             className="flex flex-col"
           >
-            <div className="text-center mb-10">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#0FA4A9] mb-3">
-                Future Wellness Outlook(5-Year Projection)
-              </h1>
-              <p className="text-[#5F6F73] max-w-2xl mx-auto">
-                Based on your current habits and lifestyle patterns if no
-                changes are made over the next 5 years.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-[#0FA4A9] mb-2">
+                  Future Wellness Outlook (5-Year Health Insights)
+                </h1>
+                <p className="text-[#5F6F73] max-w-2xl text-sm">
+                  Based on your current habits and lifestyle patterns if no
+                  changes are made over the next 5 years.
+                </p>
+              </div>
+              {futureInsights.length > 0 && (
+                <button
+                  onClick={handleGenerateFutureInsights}
+                  disabled={isUpdatingFuture}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E6F6F6] text-[#0FA4A9] border border-[#BDE8E8] rounded-md text-xs font-semibold hover:bg-[#d0f0f0] transition-colors cursor-pointer disabled:opacity-50 shrink-0 w-fit"
+                >
+                  <RefreshCcw size={13} className={cn(isUpdatingFuture && "animate-spin")} />
+                  {isUpdatingFuture ? "Generating..." : "Regenerate 5-Year Insights"}
+                </button>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {futureInsights.map((proj: any, idx: number) => {
-                const styles = getFutureStyles(proj.priority);
-                return (
-                  <div
-                    key={idx}
-                    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div
-                        className={cn(
-                          "w-10 h-10 rounded-xl flex items-center justify-center bg-[#FDE68A]/30",
-                        )}
-                      >
-                        {getCategoryIcon(proj.category)}
+            {futureInsights.length === 0 ? (
+              <div className="bg-white rounded-2xl p-10 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center text-center max-w-xl mx-auto my-8">
+                <div className="w-16 h-16 rounded-2xl bg-[#E6F6F6] text-[#0FA4A9] flex items-center justify-center mb-4">
+                  <Sparkles size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-[#1F2D2E] mb-2">
+                  Generate Your 5-Year Health Insights
+                </h3>
+                <p className="text-sm text-[#5F6F73] mb-6 max-w-md leading-relaxed">
+                  As a Premium member, generate your personalized 5-year wellness forecasts, lifestyle trajectory models, and download associated comprehensive reports.
+                </p>
+                <button
+                  onClick={handleGenerateFutureInsights}
+                  disabled={isUpdatingFuture}
+                  className="bg-[#0FA4A9] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#0d8d91] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shadow-md shadow-[#0FA4A9]/20"
+                >
+                  {isUpdatingFuture ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Generating 5-Year Insights...
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={16} />
+                      Generate 5-Year Health Insights
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {futureInsights.map((proj: any, idx: number) => {
+                  const styles = getFutureStyles(proj.priority);
+                  return (
+                    <div
+                      key={idx}
+                      className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div
+                          className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center bg-[#FDE68A]/30",
+                          )}
+                        >
+                          {getCategoryIcon(proj.category)}
+                        </div>
+                        <span
+                          className={cn(
+                            "px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                            styles.bg,
+                            styles.text,
+                            styles.bg
+                              .replace("bg-", "border-")
+                              .replace("100", "200"),
+                          )}
+                        >
+                          {proj.priority?.toUpperCase()} IMPACT
+                        </span>
                       </div>
-                      <span
-                        className={cn(
-                          "px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
-                          styles.bg,
-                          styles.text,
-                          styles.bg
-                            .replace("bg-", "border-")
-                            .replace("100", "200"),
-                        )}
-                      >
-                        {proj.priority?.toUpperCase()} IMPACT
-                      </span>
-                    </div>
 
-                    <div className="flex flex-col mt-2">
-                      <h3 className="text-[#1F2D2E] font-medium text-[15px]">
-                        {proj.insight}
-                      </h3>
-                      <p className="text-[#5F6F73] text-[10px] uppercase font-bold tracking-wider mt-1">
-                        {proj.timeline || "PROJECTED OVER 5 YEARS"}
-                      </p>
-                    </div>
+                      <div className="flex flex-col mt-2">
+                        <h3 className="text-[#1F2D2E] font-medium text-[15px]">
+                          {proj.insight}
+                        </h3>
+                        <p className="text-[#5F6F73] text-[10px] uppercase font-bold tracking-wider mt-1">
+                          {proj.timeline || "PROJECTED OVER 5 YEARS"}
+                        </p>
+                      </div>
 
-                    <ul className="flex flex-col gap-2.5 mt-2">
-                      {(proj.expected_changes || []).map((bullet: string, bIdx: number) => (
-                        <li key={bIdx} className="flex items-start gap-3">
-                          <div className="mt-0.5 relative shrink-0">
-                            <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center text-[#3A86FF]">
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                              </svg>
+                      <ul className="flex flex-col gap-2.5 mt-2">
+                        {(proj.expected_changes || []).map((bullet: string, bIdx: number) => (
+                          <li key={bIdx} className="flex items-start gap-3">
+                            <div className="mt-0.5 relative shrink-0">
+                              <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center text-[#3A86FF]">
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              </div>
                             </div>
-                          </div>
-                          <span className="text-[#5F6F73] text-[13px]">
-                            {bullet}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
+                            <span className="text-[#5F6F73] text-[13px]">
+                              {bullet}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -375,7 +489,37 @@ export default function InsightsPage() {
             transition={{ duration: 0.3 }}
             className="flex flex-col gap-6"
           >
-            {currentInsights.map((proj: any, idx: number) => {
+            {currentInsights.length === 0 ? (
+              <div className="bg-white rounded-2xl p-10 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center text-center max-w-xl mx-auto my-8">
+                <div className="w-16 h-16 rounded-2xl bg-[#E6F6F6] text-[#0FA4A9] flex items-center justify-center mb-4">
+                  <Sparkles size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-[#1F2D2E] mb-2">
+                  No Current Health Insights Yet
+                </h3>
+                <p className="text-sm text-[#5F6F73] mb-6 max-w-md leading-relaxed">
+                  Refresh your insights to analyze your latest lifestyle data, habits, and health markers.
+                </p>
+                <button
+                  onClick={handleRefreshInsights}
+                  disabled={isUpdatingCurrent}
+                  className="bg-[#0FA4A9] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#0d8d91] transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 shadow-md shadow-[#0FA4A9]/20"
+                >
+                  {isUpdatingCurrent ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Refreshing Insights...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCcw size={16} />
+                      Refresh Insights
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : (
+              currentInsights.map((proj: any, idx: number) => {
               const priorityBg = getPriorityStyles(proj.priority);
               const categoryBg = getCategoryStyles(proj.category);
               return (
@@ -514,7 +658,7 @@ export default function InsightsPage() {
                   </div>
                 </div>
               );
-            })}
+            }))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -590,6 +734,3 @@ export default function InsightsPage() {
     </SubscriptionGuard>
   );
 }
-
-
-// dfsfljsda;lf

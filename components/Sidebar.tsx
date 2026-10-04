@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout, selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { useSubscriptionStatus } from "@/lib/hooks/useSubscriptionStatus";
 import { useTrialCountdown } from "@/lib/hooks/useTrialCountdown";
+import { useDynamicUserPlan } from "@/lib/hooks/useDynamicUserPlan";
 
 type Role = "user" | "trainer" | "admin" | "nutritionist";
 
@@ -31,11 +32,13 @@ export default function Sidebar({ role }: SidebarProps) {
   const [openSubmenus, setOpenSubmenus] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
+  const { isFree, isPlus, isPremium } = useDynamicUserPlan();
   const { isTrial } = useTrialCountdown();
   const restrictionState = useSubscriptionStatus();
-  const isTrialRestricted = role === "user" && isTrial;
+  const isPaidUser = isPlus || isPremium || !isFree;
+  const isTrialRestricted = role === "user" && !isPaidUser && isTrial;
   const isRestricted =
-    role === "user" ? isTrial || restrictionState.restricted : false;
+    role === "user" ? (!isPaidUser && (isTrial || restrictionState.restricted)) : false;
 
   const restrictedLabels = [
     "projections",

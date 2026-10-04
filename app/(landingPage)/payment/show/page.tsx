@@ -1,16 +1,15 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Home, LayoutDashboard, Loader2, Receipt } from "lucide-react";
 import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
 import { useGetCurrentUserQuery } from "@/redux/features/api/auth/authApi";
-import { cn } from "@/lib/utils";
 import { useDispatch, useSelector } from "react-redux";
 import { baseApi } from "@/redux/features/api/baseApi";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import {
   selectCurrentToken,
   selectCurrentUser,
@@ -18,9 +17,10 @@ import {
 } from "@/redux/features/slice/authSlice";
 import { getDashboardPath, isTrialFlag } from "@/lib/planType";
 
-const PaymentSuccessPage = () => {
+const PaymentSuccessContent = () => {
   const dispatch = useDispatch();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const currentUser = useSelector(selectCurrentUser);
   const token = useSelector(selectCurrentToken);
 
@@ -136,7 +136,29 @@ const PaymentSuccessPage = () => {
 
   const getDashboardUrl = () => getDashboardPath(currentUser);
 
+  const isCanceledParam =
+    searchParams.get("canceled") === "true" ||
+    searchParams.get("cancel") === "true" ||
+    searchParams.get("status") === "cancel" ||
+    searchParams.get("status") === "canceled" ||
+    searchParams.get("redirect_status") === "failed" ||
+    searchParams.get("redirect_status") === "canceled";
+
+  const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
+  const paymentStatus = (data?.latest_payment?.status ?? "").toLowerCase();
+  const isPaymentComplete = Boolean(data?.success && ACTIVE_STATUSES.includes(paymentStatus));
+
+  // If user canceled Stripe checkout, redirect to upgrade page immediately
   useEffect(() => {
+    if (isCanceledParam) {
+      toast.info("Payment was cancelled. You can choose a plan to upgrade anytime.");
+      router.replace("/user-dashboard/upgrade");
+    }
+  }, [isCanceledParam, router]);
+
+  useEffect(() => {
+    if (isCanceledParam) return;
+
     if (
       !token ||
       isLoading ||
@@ -146,8 +168,13 @@ const PaymentSuccessPage = () => {
     ) {
       return;
     }
-    if (data?.success) {
+
+    if (isPaymentComplete) {
       router.replace(getDashboardPath(currentUser));
+    } else if (data && !isPaymentComplete) {
+      // Payment did not complete or was not active
+      toast.error("Payment could not be completed.");
+      router.replace("/user-dashboard/upgrade");
     }
   }, [
     token,
@@ -157,6 +184,8 @@ const PaymentSuccessPage = () => {
     isUserLoading,
     isFetchingSummary,
     isFetchingUser,
+    isPaymentComplete,
+    isCanceledParam,
     router,
   ]);
 
@@ -189,10 +218,10 @@ const PaymentSuccessPage = () => {
           completed a payment, it might take a moment to reflect.
         </p>
         <Link
-          href="/"
+          href="/user-dashboard/upgrade"
           className="bg-[#0FA4A9] text-white px-8 py-3 rounded-full font-bold hover:bg-opacity-90 transition-all shadow-md"
         >
-          Return Home
+          Go to Upgrade
         </Link>
       </div>
     );
@@ -314,4 +343,16 @@ const PaymentSuccessPage = () => {
   );
 };
 
-export default PaymentSuccessPage;
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFB]">
+          <Loader2 className="w-10 h-10 animate-spin text-[#0FA4A9]" />
+        </div>
+      }
+    >
+      <PaymentSuccessContent />
+    </Suspense>
+  );
+}
