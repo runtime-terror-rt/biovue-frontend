@@ -11,6 +11,7 @@ import { useLogoutMutation } from "@/redux/features/api/auth/authApi";
 import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { motion, AnimatePresence } from "framer-motion";
 import TrialCountdownHeaderBadge from "@/components/dashboard/TrialCountdownHeaderBadge";
+import { isInvitedAndAccepted } from "@/lib/inviteHelpers";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -72,7 +73,19 @@ const Navbar = () => {
       return "/personalize-journey/onboarding";
     }
 
-    if (userRole === "individual") return "/user-dashboard";
+    if (userRole === "individual") {
+      const rawPlanId = user?.plan_id ?? user?.profile?.plan_id;
+      const hasPlan =
+        rawPlanId !== null &&
+        rawPlanId !== undefined &&
+        rawPlanId !== "" &&
+        Number(rawPlanId) > 0;
+
+      if (!hasPlan && !isInvitedAndAccepted(user)) {
+        return "/personalize-journey/onboarding/steps";
+      }
+      return "/user-dashboard";
+    }
 
     return "/personalize-journey/onboarding";
   };

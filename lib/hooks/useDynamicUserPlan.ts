@@ -111,30 +111,31 @@ export function useDynamicUserPlan(): DynamicUserPlanResult {
 
   const nameLower = resolvedName.toLowerCase();
 
-  const isPremium = nameLower.includes("premium") || planId === 3;
-  const isPlus = !isPremium && (nameLower.includes("plus") || planId === 2);
+  const hasPlan = planId !== null && planId !== undefined && planId !== 0;
+
+  const isPremium = hasPlan && (nameLower.includes("premium") || planId === 3);
+  const isPlus = hasPlan && !isPremium && (nameLower.includes("plus") || planId === 2);
   const isFree =
+    hasPlan &&
     !isPremium &&
     !isPlus &&
-    (planId === null ||
-      planId === 1 ||
-      planId === 0 ||
+    (planId === 1 ||
       nameLower.includes("free") ||
       Number(currentPlan?.price || 0) === 0);
 
-  const isPaid = !isFree;
+  const isPaid = isPlus || isPremium;
 
   const planName = isPremium
     ? "Premium"
     : isPlus
     ? "Plus"
     : isFree
-    ? "Free"
-    : resolvedName || "Free";
+    ? (resolvedName || "Free")
+    : "";
 
   // Keep Redux currentUser synced with the latest plan from profile
   useEffect(() => {
-    if (planId !== null && planId !== undefined) {
+    if (hasPlan && planId !== null && planId !== undefined) {
       if (
         currentUser?.plan_id !== planId ||
         (planName && currentUser?.plan_name !== planName)
@@ -147,7 +148,7 @@ export function useDynamicUserPlan(): DynamicUserPlanResult {
         );
       }
     }
-  }, [planId, planName, currentUser?.plan_id, currentUser?.plan_name, dispatch]);
+  }, [hasPlan, planId, planName, currentUser?.plan_id, currentUser?.plan_name, dispatch]);
 
   return {
     userId,

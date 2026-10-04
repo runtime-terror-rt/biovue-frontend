@@ -16,6 +16,8 @@ import {
   Sparkles,
   User,
   Crown,
+  Lock,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +51,7 @@ type TimeHorizon = "6 months" | "1 year" | "5 years";
 
 const ProjectionsPage = () => {
   const [step, setStep] = useState<Step>("input");
-  const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>("6 months");
+  const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>("1 year");
   const [resolution, setResolution] = useState<"1k" | "2k" | "4k">("1k");
   const [quality, setQuality] = useState<"fast" | "ultra">("fast");
   const [projectionImage, setProjectionImage] = useState<File | null>(null);
@@ -64,13 +66,29 @@ const ProjectionsPage = () => {
   });
   const userProfile = profileResponse?.data?.profile;
   const router = useRouter();
-  const { isPremium } = useDynamicUserPlan();
+  const { isPremium, isPaid, isFree } = useDynamicUserPlan();
+
+  useEffect(() => {
+    if (!isPaid && (timeHorizon === "6 months" || timeHorizon === "5 years")) {
+      setTimeHorizon("1 year");
+    }
+  }, [isPaid, timeHorizon]);
 
   useEffect(() => {
     if (!isPremium && resolution === "2k") {
       setResolution("1k");
     }
   }, [isPremium, resolution]);
+
+  const handleSelectTimeHorizon = (time: TimeHorizon) => {
+    if (!isPaid && (time === "6 months" || time === "5 years")) {
+      toast.info(
+        `${time === "6 months" ? "6-month" : "5-year"} projection is available on paid plans. Free trial is only available for the 1-year option.`
+      );
+      return;
+    }
+    setTimeHorizon(time);
+  };
 
   const handleSelectResolution = (res: "1k" | "2k" | "4k") => {
     if (res === "2k" && !isPremium) {
@@ -184,12 +202,14 @@ const ProjectionsPage = () => {
       return;
     }
 
+    const effectiveTimeframe = !isPaid ? "1 year" : timeHorizon;
+
     try {
       await Promise.all([
         updateCurrentInsights({ user_id: user.id.toString() }).unwrap(),
         updateFutureInsights({
           user_id: user.id.toString(),
-          timeframe: timeHorizon,
+          timeframe: effectiveTimeframe,
         }).unwrap(),
       ]);
     } catch (e) {
@@ -212,11 +232,13 @@ const ProjectionsPage = () => {
 
     setStep("loading");
 
+    const effectiveTimeframe = !isPaid ? "1 year" : timeHorizon;
+
     try {
       const response = await combinedProjection({
         user_id: user.id.toString(),
         image: projectionImage as File,
-        timeframe: timeHorizon,
+        timeframe: effectiveTimeframe,
         resolution: resolution.toUpperCase(),
       }).unwrap();
 
@@ -259,33 +281,71 @@ const ProjectionsPage = () => {
 
         {/* Time Horizon Selector */}
         <div className="bg-white rounded-xl p-6 border border-[#3A86FF]/25 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#E4EFFF] rounded-lg flex items-center justify-center">
-              <Calendar className="text-[#3A86FF]" size={20} />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#E4EFFF] rounded-lg flex items-center justify-center">
+                <Calendar className="text-[#3A86FF]" size={20} />
+              </div>
+              <span className="font-bold text-[#041228]">
+                Choose a time horizon
+              </span>
             </div>
-            <span className="font-bold text-[#041228]">
-              Choose a time horizon
-            </span>
-          </div>
-
-          <div className="flex p-1 bg-[#F8FAFF] border border-gray-200 rounded-xl w-full">
-            {(["6 months", "1 year", "5 years"] as TimeHorizon[]).map(
-              (time) => (
-                <button
-                  key={time}
-                  onClick={() => setTimeHorizon(time)}
-                  className={cn(
-                    "flex-1 py-3 rounded-lg text-sm font-bold transition-all cursor-pointer",
-                    timeHorizon === time
-                      ? "bg-[#3A86FF]/20 text-[#3A86FF]"
-                      : "text-gray-500 hover:text-[#041228]",
-                  )}
-                >
-                  {time}
-                </button>
-              ),
+            {!isPaid && (
+              <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full flex items-center gap-1 shadow-xs">
+                <Lock size={11} /> 1-Year on Free Trial
+              </span>
             )}
           </div>
+
+          <div className="flex p-1 bg-[#F8FAFF] border border-gray-200 rounded-xl w-full gap-1">
+            {(["6 months", "1 year", "5 years"] as TimeHorizon[]).map(
+              (time) => {
+                const isOptionDisabled =
+                  !isPaid && (time === "6 months" || time === "5 years");
+                const isSelected = timeHorizon === time;
+
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    onClick={() => handleSelectTimeHorizon(time)}
+                    className={cn(
+                      "flex-1 py-3 px-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5",
+                      isOptionDisabled
+                        ? "bg-gray-100/80 text-gray-400 opacity-60 cursor-not-allowed select-none border border-dashed border-gray-200"
+                        : isSelected
+                        ? "bg-[#3A86FF]/20 text-[#3A86FF] cursor-pointer shadow-xs"
+                        : "text-gray-500 hover:text-[#041228] cursor-pointer",
+                    )}
+                    title={
+                      isOptionDisabled
+                        ? "Available on paid plans. Free trial is only available for the 1-year option."
+                        : undefined
+                    }
+                  >
+                    {isOptionDisabled && (
+                      <Lock size={12} className="text-gray-400 shrink-0" />
+                    )}
+                    <span>{time}</span>
+                    {isOptionDisabled && (
+                      <span className="hidden sm:inline-block text-[9px] font-bold uppercase bg-gray-200/80 text-gray-500 px-1.5 py-0.5 rounded">
+                        Paid
+                      </span>
+                    )}
+                  </button>
+                );
+              },
+            )}
+          </div>
+
+          {!isPaid && (
+            <p className="text-xs text-[#5F6F73] flex items-center gap-1.5 pt-1">
+              <Info size={13} className="text-[#3A86FF] shrink-0" />
+              <span>
+                Free trial is only available for the <strong>1-year</strong> option. Upgrade to Plus or Premium to unlock 6-month and 5-year projections.
+              </span>
+            </p>
+          )}
         </div>
 
         {/* Render Settings */}
