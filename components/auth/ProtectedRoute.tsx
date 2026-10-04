@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
+import { shouldBypassPayment } from "@/lib/inviteHelpers";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -65,6 +66,34 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
       return;
     }
 
+    const isIndividualUser =
+      !isProfessionalUser &&
+      ["individual", "user", "member", ""].includes(userRole);
+    const bypassPayment = shouldBypassPayment(user);
+    const rawPlanId = user?.plan_id ?? user?.profile?.plan_id;
+    const hasPlan =
+      rawPlanId !== null &&
+      rawPlanId !== undefined &&
+      rawPlanId !== "" &&
+      Number(rawPlanId) > 0;
+
+    // FOR INDIVIDUALS: Ensure they have a plan before allowing access to user dashboard (unless invited & accepted)
+    if (isIndividualUser && isIndividualAllowed && !hasPlan && !bypassPayment) {
+      console.log("Individual user missing plan, redirecting to onboarding steps / choose plan");
+      const isProfileCompleted =
+        user?.is_profile_completed === true ||
+        user?.is_profile_completed === "true" ||
+        user?.is_profile_completed === "Your profile is complete." ||
+        Boolean(user?.profile?.id);
+
+      if (isProfileCompleted) {
+        router.replace("/personalize-journey/onboarding/steps?step=6");
+      } else {
+        router.replace("/personalize-journey/onboarding/steps");
+      }
+      return;
+    }
+
     if (isRoleAllowed && isProfessionAllowed) {
       setIsAuthorized(true);
     } else {
@@ -73,7 +102,11 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
       if (userRole === "admin") {
         router.replace("/admin-dashboard/overview");
       } else if (userRole === "individual" || userRole === "user" || userRole === "member") {
-        router.replace("/user-dashboard");
+        if (!hasPlan && !bypassPayment) {
+          router.replace("/personalize-journey/onboarding/steps");
+        } else {
+          router.replace("/user-dashboard");
+        }
       } else if (userRole === "api") {
         router.replace("/api-user");
       } else if (isProfessionalUser) {
@@ -87,7 +120,11 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
           router.replace("/login");
         }
       } else {
-        router.replace("/user-dashboard");
+        if (!hasPlan && !bypassPayment) {
+          router.replace("/personalize-journey/onboarding/steps");
+        } else {
+          router.replace("/user-dashboard");
+        }
       }
     }
   }, [user, router, allowedRoles, allowedProfessions]);

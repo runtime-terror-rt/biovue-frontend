@@ -1284,12 +1284,15 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useCreateUpdateProfileMutation } from "@/redux/features/api/profileApi";
+import {
+  useCreateUpdateProfileMutation,
+  useGetProfileQuery,
+} from "@/redux/features/api/profileApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { toast } from "sonner";
@@ -1331,7 +1334,27 @@ import { isInvitedAndAccepted, shouldBypassPayment } from "@/lib/inviteHelpers";
 import { isFreeTrialPlan, hasPaidPlan } from "@/lib/planType";
 
 const OnboardingStepsPage = () => {
-  const [step, setStep] = useState(1);
+  const searchParams = useSearchParams();
+  const stepParam = searchParams.get("step");
+  const [step, setStep] = useState(() => {
+    if (stepParam) {
+      const parsed = parseInt(stepParam, 10);
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 6) {
+        return parsed;
+      }
+    }
+    return 1;
+  });
+
+  useEffect(() => {
+    if (stepParam) {
+      const parsed = parseInt(stepParam, 10);
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 6) {
+        setStep(parsed);
+      }
+    }
+  }, [stepParam]);
+
   const [totalSteps] = useState(6);
   const [agreed, setAgreed] = useState(false);
 
@@ -1408,6 +1431,43 @@ const OnboardingStepsPage = () => {
     setUnitSystem(newUnit);
   };
   console.log(user, "user");
+
+  const { data: profileResponse } = useGetProfileQuery(user?.id, {
+    skip: !user?.id,
+  });
+
+  useEffect(() => {
+    const profile = profileResponse?.data?.profile;
+    if (profile) {
+      setFormData((prev) => ({
+        ...prev,
+        age: profile.age ? String(profile.age) : prev.age,
+        sex: profile.sex ? String(profile.sex).toLowerCase() : prev.sex,
+        height: profile.height ? String(profile.height) : prev.height,
+        weight: profile.weight ? String(profile.weight) : prev.weight,
+        bodyFat: profile.body_fat ? String(profile.body_fat) : prev.bodyFat,
+        location: profile.location || prev.location,
+        zipcode: profile.zipcode || prev.zipcode,
+        smoking: profile.smoking || prev.smoking,
+        alcohol: profile.alcohol || prev.alcohol,
+        steps: profile.daily_step ? String(profile.daily_step) : prev.steps,
+        workout: profile.workout_week ? String(profile.workout_week) : prev.workout,
+        strength: profile.strength_training_week ? String(profile.strength_training_week) : prev.strength,
+        sleep: profile.sleep_hour ? String(profile.sleep_hour) : prev.sleep,
+        diet: profile.overall_diet_quality || prev.diet,
+        fastFood: profile.fast_food_frequency || prev.fastFood,
+        stress: profile.stress_level ? String(profile.stress_level) : prev.stress,
+        water: profile.water_consumption_week ? String(profile.water_consumption_week) : prev.water,
+        notes: profile.notes || prev.notes,
+      }));
+      if (profile.unit || profile.unit_system) {
+        setUnitSystem(profile.unit || profile.unit_system);
+      }
+      if (profile.agreed_terms) {
+        setAgreed(true);
+      }
+    }
+  }, [profileResponse]);
 
   const handleSubmit = async () => {
     try {
@@ -1575,6 +1635,7 @@ const OnboardingStepsPage = () => {
             }
 
             toast.error("Failed to initiate payment. Please try again.");
+            return;
           } catch (paymentErr: any) {
             console.error("Payment processing error:", paymentErr);
             toast.error(
@@ -1582,6 +1643,7 @@ const OnboardingStepsPage = () => {
                 paymentErr?.message ||
                 "Profile saved, but failed to initiate payment.",
             );
+            return;
           }
         }
 
@@ -1591,7 +1653,9 @@ const OnboardingStepsPage = () => {
           return;
         }
 
-        router.push("/personalize-journey/onboarding?completed=true");
+        // Without a plan selection or invitation, do not allow proceeding to dashboard
+        toast.error("Please choose a plan to complete your onboarding.");
+        return;
       }
     } catch (error: any) {
       console.error("Profile submission error:", error);
@@ -2750,4 +2814,16 @@ const OnboardingStepsPage = () => {
   );
 };
 
-export default OnboardingStepsPage;
+export default function OnboardingStepsPageWrapper() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFB]">
+          <Loader2 className="w-8 h-8 animate-spin text-[#0FA4A9]" />
+        </div>
+      }
+    >
+      <OnboardingStepsPage />
+    </Suspense>
+  );
+}

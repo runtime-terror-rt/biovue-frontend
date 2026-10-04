@@ -1,3 +1,5 @@
+import { isInvitedAndAccepted } from "@/lib/inviteHelpers";
+
 export type PlanAudience = "individual" | "professional" | "api";
 
 export function getUserPlanType(
@@ -57,6 +59,17 @@ export function getDashboardPath(user?: any): string {
     if (user.profession_type === "nutritionist") {
       return "/nutritionist-dashboard/overview";
     }
+  }
+
+  // Individual user
+  const rawPlanId = user?.plan_id ?? user?.profile?.plan_id;
+  const hasPlan =
+    rawPlanId !== null &&
+    rawPlanId !== undefined &&
+    rawPlanId !== "" &&
+    Number(rawPlanId) > 0;
+  if (!hasPlan && !isInvitedAndAccepted(user)) {
+    return "/personalize-journey/onboarding/steps";
   }
 
   return "/user-dashboard";

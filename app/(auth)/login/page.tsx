@@ -772,8 +772,29 @@ const LoginPage = () => {
             navigateTo("/api-user");
           }
         } else {
-          // Individual user / member -> directly to /user-dashboard
-          navigateTo("/user-dashboard");
+          // Individual user / member
+          const rawPlanId = userData?.plan_id ?? userData?.profile?.plan_id;
+          const hasPlan =
+            rawPlanId !== null &&
+            rawPlanId !== undefined &&
+            rawPlanId !== "" &&
+            Number(rawPlanId) > 0;
+
+          const isProfileCompleted =
+            userData?.is_profile_completed === true ||
+            userData?.is_profile_completed === "true" ||
+            userData?.is_profile_completed === "Your profile is complete." ||
+            Boolean(userData?.profile?.id);
+
+          if (!hasPlan && !invitedAndAccepted) {
+            if (isProfileCompleted) {
+              navigateTo("/personalize-journey/onboarding/steps?step=6");
+            } else {
+              navigateTo("/personalize-journey/onboarding/steps");
+            }
+          } else {
+            navigateTo("/user-dashboard");
+          }
         }
       } else {
         toast.error(

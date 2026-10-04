@@ -119,7 +119,7 @@ export default function ProjectionLimitIndicator() {
                   Credits
                 </span>
                 <span className="text-[13px] font-black leading-none mt-1">
-                  {projection_limit}
+                  {projection_limit }
                 </span>
               </div>
             </motion.div>

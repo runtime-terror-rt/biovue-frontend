@@ -40,7 +40,16 @@ export default function Sidebar({ role }: SidebarProps) {
   const isRestricted =
     role === "user" ? (!isPaidUser && (isTrial || restrictionState.restricted)) : false;
 
-  const restrictedLabels = [
+  // Items restricted during active free trial (Projections and Projection Galary are unlocked for free trial)
+  const trialRestrictedLabels = [
+    "insights",
+    "habits",
+    "support",
+    "message",
+  ];
+
+  // Items restricted when trial period ends completely and account is unpaid
+  const fullRestrictedLabels = [
     "projections",
     "projection galary",
     "insights",
@@ -48,6 +57,15 @@ export default function Sidebar({ role }: SidebarProps) {
     "support",
     "message",
   ];
+
+  const checkIsItemRestricted = (label: string) => {
+    if (!isRestricted) return false;
+    const labelLower = label.toLowerCase().trim();
+    if (isTrialRestricted) {
+      return trialRestrictedLabels.includes(labelLower);
+    }
+    return fullRestrictedLabels.includes(labelLower);
+  };
 
   const getTooltipMessage = (reason: string) => {
     if (isTrialRestricted) {
@@ -168,9 +186,7 @@ export default function Sidebar({ role }: SidebarProps) {
 
             const hasChildren = item.children && item.children.length > 0;
             const isOpen = openSubmenus.includes(item.label);
-            const isItemRestricted =
-              isRestricted &&
-              restrictedLabels.includes(item.label.toLowerCase().trim());
+            const isItemRestricted = checkIsItemRestricted(item.label);
 
             return (
               <div key={item.label} className="w-full">
@@ -225,9 +241,7 @@ export default function Sidebar({ role }: SidebarProps) {
                       {item.children?.map((child) => {
                         const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : "");
                         const isChildActive = fullPath === child.href;
-                        const isChildRestricted =
-                          isRestricted &&
-                          restrictedLabels.includes(child.label.toLowerCase().trim());
+                        const isChildRestricted = checkIsItemRestricted(child.label);
 
                         if (isChildRestricted) {
                           return (
