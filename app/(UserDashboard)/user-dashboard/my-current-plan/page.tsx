@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useGetPlanQuery } from "@/redux/features/api/adminDashboard/plan";
+import { useDynamicUserPlan } from "@/lib/hooks/useDynamicUserPlan";
 import {
   CheckCircle2,
   Crown,
@@ -17,7 +18,26 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 const MyCurrentPlanPage = () => {
-  const { data: plan, isLoading, isError } = useGetPlanQuery(2);
+  const {
+    planId,
+    currentPlan: matchedPlan,
+    isFree,
+    isPlus,
+    isPremium,
+    planName,
+    isLoading: isProfileLoading,
+  } = useDynamicUserPlan();
+
+  const {
+    data: planData,
+    isLoading: isPlanLoading,
+    isError,
+  } = useGetPlanQuery(planId as number, {
+    skip: !planId,
+  });
+
+  const plan = planData || matchedPlan;
+  const isLoading = isProfileLoading || (Boolean(planId) && isPlanLoading);
 
   if (isLoading) {
     return (
@@ -30,22 +50,22 @@ const MyCurrentPlanPage = () => {
     );
   }
 
-  if (isError || !plan) {
+  if (isFree || !plan) {
     return (
       <div className="p-4 md:p-8 max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 mb-6">
           <Info size={40} />
         </div>
         <h2 className="text-2xl font-bold text-[#1F2D2E] mb-2">
-          No Active Plan Found
+          Current Plan: Free
         </h2>
         <p className="text-[#5F6F73] mb-8 max-w-md">
-          It looks like you don&apos;t have an active subscription at the
-          moment. Explore our plans to unlock premium features and AI insights.
+          You are currently on the Free plan. Upgrade to Plus or Premium to unlock
+          higher projection limits, AI insights, and personalized guidance.
         </p>
         <Link href="/user-dashboard/upgrade">
-          <button className="bg-[#0FA4A9] text-white px-8 py-3 rounded-xl font-bold hover:bg-opacity-90 transition-all shadow-lg shadow-[#0FA4A9]/20 flex items-center gap-2">
-            View Subscription Plans
+          <button className="bg-[#0FA4A9] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#0D8E92] transition-all shadow-lg shadow-[#0FA4A9]/20 flex items-center gap-2 cursor-pointer active:scale-95">
+            Start Paid Plan
             <ArrowRight size={18} />
           </button>
         </Link>
@@ -69,12 +89,22 @@ const MyCurrentPlanPage = () => {
           </div>
           <span className="font-semibold text-sm">Settings</span>
         </Link>
-        <div className="bg-[#EAFBF7] px-4 py-1.5 rounded-full flex items-center gap-2 border border-[#0FA4A9]/10">
-          <div className="w-2 h-2 rounded-full bg-[#0FA4A9] animate-pulse" />
-          <span className="text-[10px] font-bold text-[#0FA4A9] uppercase tracking-widest">
-            System Operational
-          </span>
-        </div>
+
+        {isPremium ? (
+          <div className="bg-[#FFF4E5] border border-[#FFE0B2] text-[#E65100] px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xs">
+            <Crown size={14} fill="currentColor" className="text-[#FF8A00]" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">
+              Premium Tier
+            </span>
+          </div>
+        ) : (
+          <Link href="/user-dashboard/upgrade">
+            <button className="bg-[#0FA4A9] text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-[#0D8E92] transition-all flex items-center gap-1.5 cursor-pointer">
+              <Crown size={14} fill="currentColor" />
+              <span>Upgrade Plan</span>
+            </button>
+          </Link>
+        )}
       </motion.div>
 
       <motion.div
@@ -88,15 +118,27 @@ const MyCurrentPlanPage = () => {
           <div className="relative p-8 md:p-12">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
               <div className="flex items-center gap-6">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-linear-to-br from-[#0FA4A9] to-[#3A86FF] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                  <Crown size={32} />
+                <div
+                  className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center text-white shadow-lg ${
+                    isPremium
+                      ? "bg-gradient-to-br from-[#FF8A00] to-[#FF5722] shadow-orange-500/20"
+                      : "bg-gradient-to-br from-[#0FA4A9] to-[#3A86FF] shadow-blue-500/20"
+                  }`}
+                >
+                  <Crown size={32} fill="currentColor" />
                 </div>
                 <div>
                   <div className="flex items-center gap-3 mb-1">
                     <h1 className="text-3xl md:text-4xl font-extrabold text-[#1F2D2E]">
-                      {plan.name}
+                      {plan.name || planName}
                     </h1>
-                    <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border bg-emerald-50 border-emerald-200 text-emerald-600">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
+                        isPremium
+                          ? "bg-[#FFF4E5] border-[#FFE0B2] text-[#E65100]"
+                          : "bg-emerald-50 border-emerald-200 text-emerald-600"
+                      }`}
+                    >
                       Active
                     </span>
                   </div>
@@ -160,6 +202,15 @@ const MyCurrentPlanPage = () => {
                     </div>
                   </div>
                 </div>
+
+                {isPlus && (
+                  <Link href="/user-dashboard/upgrade" className="block">
+                    <button className="w-full bg-[#0FA4A9] hover:bg-[#0D8E92] text-white py-3 rounded-xl font-bold transition-all shadow-md shadow-[#0FA4A9]/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                      <Crown size={16} fill="currentColor" />
+                      Upgrade to Premium
+                    </button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -168,8 +219,7 @@ const MyCurrentPlanPage = () => {
         <div className="mt-8 flex items-center gap-4 bg-[#F8FAFB] p-4 rounded-xl border border-gray-100">
           <Info size={16} className="text-[#0FA4A9] shrink-0" />
           <p className="text-[10px] font-bold text-[#5F6F73] uppercase tracking-wider leading-relaxed">
-            Subscription changes might take a few minutes to reflect in your
-            dashboard. For billing issues, please contact our support team.
+            Subscription changes reflect according to your profile plan status.
           </p>
         </div>
       </motion.div>

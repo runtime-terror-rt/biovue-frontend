@@ -29,6 +29,7 @@ import { useSaveCurrentProjectionMutation } from "@/redux/features/api/userDashb
 import { useSaveFutureGoalMutation } from "@/redux/features/api/userDashboard/Projection/SaveFutureGoal";
 import { useGetFutureGoalProjectionQuery } from "@/redux/features/api/userDashboard/Projection/GetFutureGoal";
 import { useGetProfileQuery } from "@/redux/features/api/profileApi";
+import { useDynamicUserPlan } from "@/lib/hooks/useDynamicUserPlan";
 
 import {
   useCombinedProjectionMutation,
@@ -63,27 +64,7 @@ const ProjectionsPage = () => {
   });
   const userProfile = profileResponse?.data?.profile;
   const router = useRouter();
-
-  const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
-  const activePlanFromSummary =
-    paymentSummary?.latest_payment &&
-    ACTIVE_STATUSES.includes(
-      (paymentSummary.latest_payment.status ?? "").toLowerCase()
-    )
-      ? paymentSummary.latest_payment.plan
-      : null;
-
-  const activePlanName = (
-    activePlanFromSummary?.name ||
-    user?.plan_name ||
-    ""
-  ).toLowerCase();
-
-  const isPremium = Boolean(
-    activePlanFromSummary
-      ? activePlanName.includes("premium")
-      : user?.plan_id && activePlanName.includes("premium")
-  );
+  const { isPremium } = useDynamicUserPlan();
 
   useEffect(() => {
     if (!isPremium && resolution === "2k") {

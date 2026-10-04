@@ -119,18 +119,18 @@ export default function ClientTable({ users }: ClientTableProps) {
           </p>
         </div>
 
-        <div className="relative w-full md:w-80 group">
-          <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8] group-focus-within:text-[#0FA4A9] transition-colors"
-            size={20}
-          />
-          <input
-            type="text"
-            placeholder="Search by name or email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-6 py-3 bg-[#F8FBFA] border border-[#D9E6FF] rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0FA4A9]/20 focus:border-[#0FA4A9] transition-all"
-          />
+          <div className="relative w-full md:w-80 group">
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8] group-focus-within:text-[#0FA4A9] transition-colors"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-6 py-3 bg-[#F8FBFA] border border-[#D9E6FF] rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0FA4A9]/20 focus:border-[#0FA4A9] transition-all"
+            />
         </div>
       </div>
 

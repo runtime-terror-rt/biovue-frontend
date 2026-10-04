@@ -8,17 +8,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useGetActiveAdsQuery } from "@/redux/features/api/activeAds";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
+import { useDynamicUserPlan } from "@/lib/hooks/useDynamicUserPlan";
 
 const DashboardBanner = () => {
   const currentUser = useSelector(selectCurrentUser);
+  const { isFree } = useDynamicUserPlan();
   const { data: adsData } = useGetActiveAdsQuery();
   const [isVisible, setIsVisible] = useState(true);
   const [activeDot, setActiveDot] = useState(0);
 
-  // Only show banner for users on a free plan (no plan_id or plan name contains "free")
-  const isFreePlan =
-    !currentUser?.plan_id ||
-    currentUser?.plan_name?.toLowerCase().includes("free");
+  // Only show banner for users on a free plan (checked dynamically from profile data)
+  const isFreePlan = isFree;
 
   // Filter ads for Free Dashboard placement
   const ads = adsData?.filter(ad => ad.placement.includes("Home Screen Top") || ad.placement.includes("Free Dashboard")) || [];

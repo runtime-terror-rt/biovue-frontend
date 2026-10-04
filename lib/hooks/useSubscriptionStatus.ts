@@ -5,6 +5,7 @@ import {
 } from "@/redux/features/slice/authSlice";
 import { useGetProjectionLimitQuery } from "@/redux/features/api/userDashboard/Projection/ProjectionLimitAPI";
 import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
+import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { hasPaidPlan } from "@/lib/planType";
 
 type SubscriptionStatus = {
@@ -26,6 +27,11 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
   const token = useSelector(selectCurrentToken);
   const userId = user?.id || user?.user_id;
 
+  const { data: profileResponse, isLoading: isProfileLoading } =
+    useGetProfileQuery(userId as string | number, {
+      skip: !userId,
+    });
+
   const { data: limitData, isLoading: isLimitLoading } =
     useGetProjectionLimitQuery(undefined, {
       skip: !token,
@@ -36,7 +42,7 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
       skip: !token,
     });
 
-  const isLoading = isLimitLoading || isPaymentLoading;
+  const isLoading = isLimitLoading || isPaymentLoading || isProfileLoading;
 
   // default safe object
   const base: SubscriptionStatus = {
@@ -60,8 +66,22 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
     };
   }
 
+  const profileData = profileResponse?.data || profileResponse;
+  const rawPlanId =
+    profileData?.plan_id ??
+    profileData?.profile?.plan_id ??
+    user?.plan_id ??
+    null;
+  const planId =
+    rawPlanId !== null && rawPlanId !== undefined && rawPlanId !== ""
+      ? Number(rawPlanId)
+      : null;
+
   const latestPayment = paymentSummary?.latest_payment;
-  const isPaid = hasPaidPlan(user, paymentSummary);
+  const isPaid =
+    planId === 2 ||
+    planId === 3 ||
+    hasPaidPlan(user, paymentSummary, profileData);
 
   const projectionLimit =
     typeof limitData?.projection_limit === "number"
@@ -143,7 +163,7 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
   const diffInDays =
     (now - createdDate.getTime()) / (1000 * 60 * 60 * 24);
 
-  const isTrialEnded = !isPaid && !user.plan_id && diffInDays > 7;
+  const isTrialEnded = !isPaid && !planId && diffInDays > 7;
 
   return {
     restricted: isTrialEnded,

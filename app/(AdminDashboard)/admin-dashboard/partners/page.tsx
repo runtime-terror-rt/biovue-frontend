@@ -203,10 +203,10 @@ export default function PartnersManagementPage() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
-                        {partner.image_url ? (
+                        {partner.image_url && partner.image_url.trim() !== "" ? (
                           <Image
-                            src={partner.image_url || "/images/placeholder.png"}
-                            alt={partner.name}
+                            src={partner.image_url}
+                            alt={partner.name || "Partner"}
                             fill
                             className="object-cover"
                           />
@@ -317,7 +317,7 @@ export default function PartnersManagementPage() {
                 <Label className="text-sm font-semibold">Partner Logo/Image</Label>
                 <div className="flex items-center gap-4">
                   <div className="relative w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
-                    {imagePreview ? (
+                    {imagePreview && imagePreview.trim() !== "" ? (
                       <Image src={imagePreview} alt="Preview" fill className="object-cover" />
                     ) : (
                       <Plus size={24} className="text-gray-300" />

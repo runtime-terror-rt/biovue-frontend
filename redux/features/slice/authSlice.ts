@@ -5,9 +5,27 @@ interface AuthState {
   token: string | null;
 }
 
+const getStoredUser = (): any | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw || raw === "undefined" || raw === "null") return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const getStoredToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  const token = localStorage.getItem("token");
+  if (!token || token === "undefined" || token === "null") return null;
+  return token;
+};
+
 const initialState: AuthState = {
-  user: typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "null") : null,
-  token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
+  user: getStoredUser(),
+  token: getStoredToken(),
 };
 
 const authSlice = createSlice({
@@ -19,10 +37,18 @@ const authSlice = createSlice({
       action: PayloadAction<{ user: any; token: string }>
     ) => {
       const { user, token } = action.payload;
-      state.user = user;
-      state.token = token;
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("token", token);
+      state.user = user ?? null;
+      state.token = token ?? null;
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      } else {
+        localStorage.removeItem("user");
+      }
+      if (token) {
+        localStorage.setItem("token", token);
+      } else {
+        localStorage.removeItem("token");
+      }
     },
     logout: (state) => {
       state.user = null;

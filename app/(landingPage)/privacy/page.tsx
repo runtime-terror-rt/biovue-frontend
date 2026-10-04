@@ -101,9 +101,10 @@ const PrivacyPage = () => {
                           </h2>
                         </div>
 
-                        <p className="text-[#5f6f73] leading-relaxed text-lg whitespace-pre-line">
-                          {sec.content}
-                        </p>
+                        <div
+                          className="text-[#5f6f73] leading-relaxed text-base md:text-lg [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-[#1f2d2e] [&_h1]:my-2 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-[#1f2d2e] [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-[#1f2d2e] [&_h3]:my-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-2 [&_blockquote]:border-l-4 [&_blockquote]:border-[#0fa4a9] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-[#5f6f73] [&_blockquote]:my-2 [&_a]:text-[#0fa4a9] [&_a]:underline"
+                          dangerouslySetInnerHTML={{ __html: sec.content }}
+                        />
                       </section>
                     ))
                   )}

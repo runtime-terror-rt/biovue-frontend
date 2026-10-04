@@ -24,6 +24,7 @@ import { useGetProjectionLimitQuery } from "@/redux/features/api/userDashboard/P
 import FreeTrialPlanModal from "@/components/pricing/FreeTrialPlanModal";
 import { isFreeTrialPlan, hasPaidPlan } from "@/lib/planType";
 import { useTrialCountdown } from "@/lib/hooks/useTrialCountdown";
+import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 
 interface SubscriptionManagementProps {
   onBack?: () => void;
@@ -55,6 +56,11 @@ const SubscriptionManagement = ({
       billing: billingCycle,
       type: role || currentUser?.role || "individual",
     });
+
+  const userId = currentUser?.id || (currentUser as any)?.user_id;
+  const { data: profileResponse } = useGetProfileQuery(userId as string | number, {
+    skip: !userId,
+  });
 
   const { data: paymentSummary } = useGetPaymentSummaryQuery();
   const { data: projectionLimitData } = useGetProjectionLimitQuery();
@@ -91,32 +97,45 @@ const SubscriptionManagement = ({
 
   const plans = plansData?.data || [];
 
-  // Determine active plan ID - source of truth is either the summary (if active status) or the auth user data
-  const ACTIVE_STATUSES = [
-    "active",
-    "succeeded",
-    "paid",
-    "complete",
-    "completed",
-  ];
-  const activePlanFromSummary =
-    paymentSummary?.latest_payment?.plan?.id ||
-    (paymentSummary?.latest_payment &&
+  const profileData = profileResponse?.data || profileResponse;
+  const rawProfilePlanId =
+    profileData?.plan_id !== undefined && profileData?.plan_id !== null
+      ? profileData.plan_id
+      : profileData?.profile?.plan_id !== undefined && profileData?.profile?.plan_id !== null
+      ? profileData.profile.plan_id
+      : currentUser?.plan_id;
+
+  const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
+  const isSummaryPaymentPaid =
+    paymentSummary?.latest_payment &&
     ACTIVE_STATUSES.includes(
       (paymentSummary.latest_payment.status ?? "").toLowerCase(),
-    )
-      ? paymentSummary.latest_payment.plan?.id
-      : null);
+    );
 
-  // Final active plan ID to use for UI highlights
-  const activePlanId = activePlanFromSummary || currentUser?.plan_id;
-  const activePlanName = isTrial
+  const activePlanId =
+    rawProfilePlanId !== null && rawProfilePlanId !== undefined
+      ? Number(rawProfilePlanId)
+      : (isSummaryPaymentPaid ? paymentSummary?.latest_payment?.plan?.id : null);
+
+  const matchedPlan = plans.find((p: any) => Number(p.id) === Number(activePlanId));
+
+  const isUserOnPaidPlan =
+    activePlanId === 2 ||
+    activePlanId === 3 ||
+    (matchedPlan && !isFreeTrialPlan(matchedPlan) && Number(matchedPlan.price || 0) > 0);
+
+  const effectiveIsTrial = isTrial && !isUserOnPaidPlan;
+
+  const activePlanName = effectiveIsTrial
     ? "Free Trial"
-    : paymentSummary?.latest_payment?.plan?.name ||
-      paymentSummary?.user?.plan_name ||
-      paymentSummary?.user?.plan_type ||
-      currentUser?.plan_name ||
-      (activePlanId ? "Active Plan" : "Free Trial");
+    : matchedPlan?.name ||
+      (activePlanId === 3
+        ? "Premium"
+        : activePlanId === 2
+        ? "Plus"
+        : activePlanId === 1
+        ? "Free Trial"
+        : currentUser?.plan_name || (activePlanId ? "Active Plan" : "Free Trial"));
 
 
   // Calculate if the subscription is more than 6 months old
@@ -350,9 +369,9 @@ const SubscriptionManagement = ({
               Number(activePlanId) === Number(plan.id);
 
             // During free trial, paid plans are NOT yet active, so user can click to pay and activate immediately
-            const isActive = isTrial
+            const isActive = effectiveIsTrial
               ? isFreeTrialPlan(plan)
-              : (isNameMatch || isIdMatch);
+              : isIdMatch || (isNameMatch && !effectiveIsTrial);
             const isTrialIneligible =
               isFreeTrialPlan(plan) && hasPaidPlan(currentUser, paymentSummary);
 

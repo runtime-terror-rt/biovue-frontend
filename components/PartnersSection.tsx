@@ -4,6 +4,56 @@ import React, { useState } from "react";
 import { useGetPartnersQuery } from "@/redux/features/api/partnersApi";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { Building2 } from "lucide-react";
+
+interface PartnerItem {
+  id?: string | number;
+  _id?: string | number;
+  name?: string;
+  company?: string;
+  image_url?: string;
+  email?: string;
+}
+
+const PartnerLogo = ({ partner }: { partner: PartnerItem }) => {
+  const [imageError, setImageError] = useState(false);
+  const imageUrl = partner?.image_url?.trim();
+
+  if (!imageUrl || imageError) {
+    const fallbackText = partner?.company
+      ? partner.company
+          .split(" ")
+          .filter(Boolean)
+          .map((w: string) => w[0])
+          .slice(0, 2)
+          .join("")
+          .toUpperCase()
+      : partner?.name
+      ? partner.name.slice(0, 2).toUpperCase()
+      : null;
+
+    return (
+      <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-[#0fa4a9]/10 text-[#0fa4a9] font-bold text-lg md:text-xl flex items-center justify-center select-none shadow-xs group-hover:bg-[#0fa4a9]/20 transition-colors">
+        {fallbackText ? fallbackText : <Building2 className="w-6 h-6 text-[#0fa4a9]" />}
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={imageUrl}
+      alt={partner?.company || partner?.name || "Partner logo"}
+      fill
+      onError={() => setImageError(true)}
+      className="
+        object-contain p-2
+        grayscale-30 opacity-80
+        group-hover:grayscale-0 group-hover:opacity-100
+        transition-all duration-500
+      "
+    />
+  );
+};
 
 const PartnersSection = () => {
   const { data, isLoading } = useGetPartnersQuery({});
@@ -84,7 +134,7 @@ const PartnersSection = () => {
             >
               {displayPartners.map((partner: any, index: number) => (
                 <motion.div
-                  key={`${partner.id}-${index}`}
+                  key={`${partner.id || partner._id || index}-${index}`}
                   whileHover={{
                     scale: 1.06,
                     y: -4,
@@ -104,17 +154,7 @@ const PartnersSection = () => {
                 >
                   {/* Logo */}
                   <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center z-10">
-                    <Image
-                      src={partner.image_url}
-                      alt={partner.company}
-                      fill
-                      className="
-        object-contain p-2
-        grayscale-30 opacity-80
-        group-hover:grayscale-0 group-hover:opacity-100
-        transition-all duration-500
-      "
-                    />
+                    <PartnerLogo partner={partner} />
                   </div>
 
                   {/* Company Name (hidden → slide up) */}
@@ -128,7 +168,7 @@ const PartnersSection = () => {
       transition-all duration-500
     "
                   >
-                    {partner.company}
+                    {partner.company || partner.name}
                   </p>
                 </motion.div>
               ))}
