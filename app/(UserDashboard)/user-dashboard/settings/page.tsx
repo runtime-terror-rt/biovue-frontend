@@ -49,6 +49,7 @@ import { cn, getFullImageUrl } from "@/lib/utils";
 import FreeTrialPlanModal from "@/components/pricing/FreeTrialPlanModal";
 import { isFreeTrialPlan } from "@/lib/planType";
 import { useTrialCountdown } from "@/lib/hooks/useTrialCountdown";
+import { useSubscriptionStatus } from "@/lib/hooks/useSubscriptionStatus";
 
 // --- Types ---
 type ViewState = "overview" | "profile" | "subscription";
@@ -1343,6 +1344,32 @@ const SubscriptionView = ({
       (currentUser?.plan_name || "").toLowerCase().includes("free trial"),
   );
 
+  const { isCancelled: subStatusCancelled, accessUntil: subStatusAccessUntil } =
+    useSubscriptionStatus();
+
+  const isCancelled = Boolean(
+    subStatusCancelled ||
+    paymentSummary?.can_cancel === false ||
+    (paymentSummary as any)?.data?.can_cancel === false ||
+    paymentSummary?.status === "pending_cancellation" ||
+    (paymentSummary as any)?.data?.status === "pending_cancellation" ||
+    paymentSummary?.latest_payment?.status === "pending_cancellation" ||
+    paymentSummary?.cancel_requested === true ||
+    (paymentSummary as any)?.data?.cancel_requested === true ||
+    paymentSummary?.latest_payment?.cancel_requested === true ||
+    currentUser?.cancel_requested === true ||
+    currentUser?.cancellation_status === "pending_cancellation" ||
+    currentUser?.can_cancel === false
+  );
+
+  const accessUntil =
+    subStatusAccessUntil ||
+    paymentSummary?.access_until ||
+    (paymentSummary as any)?.data?.access_until ||
+    paymentSummary?.latest_payment?.access_until ||
+    currentUser?.access_until ||
+    paidEndDate;
+
   // Logic to help the user find their plan if it's on a different cycle
   useEffect(() => {
     if (activePlanId && plans.length > 0) {
@@ -1358,6 +1385,7 @@ const SubscriptionView = ({
 
   // Calculate if the subscription is more than 6 months old
   const canCancel = useMemo(() => {
+    if (isCancelled) return false;
     // If no summary available yet, default to allowing cancel if they have a plan_id (or as per business logic)
     if (!paymentSummary?.latest_payment) return true; 
     
@@ -1366,9 +1394,22 @@ const SubscriptionView = ({
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     return createdAt <= sixMonthsAgo;
-  }, [paymentSummary]);
+  }, [paymentSummary, isCancelled]);
 
   const handleCancelSubscription = async () => {
+    if (isCancelled) {
+      toast.error("NO Active Plan Found");
+      await Swal.fire({
+        title: "NO Active Plan Found",
+        text: accessUntil
+          ? `Your subscription has already been cancelled. Access remains active until ${accessUntil}.`
+          : "No active renewable subscription was found for this account.",
+        icon: "info",
+        confirmButtonColor: "#0FA4A9",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
     let expiryInfo = "";
     if (expiryDateString && remainingDays !== null && remainingDays > 0) {
       expiryInfo = `<p class="mt-2 text-sm text-gray-600">Your subscription will remain active until <strong class="text-[#0FA4A9]">${expiryDateString}</strong> (${remainingDays} days left).</p>`;
@@ -1391,9 +1432,19 @@ const SubscriptionView = ({
 
     if (result.isConfirmed) {
       try {
-        await cancelSubscription().unwrap();
-        dispatch(updateUser({ plan_id: null, plan_name: null, plan_duration: null }));
-        toast.success("Subscription cancelled successfully");
+        const res: any = await cancelSubscription().unwrap();
+        dispatch(
+          updateUser({
+            cancel_requested: true,
+            cancellation_status: res?.status || "pending_cancellation",
+            access_until: res?.access_until,
+            can_cancel: false,
+          })
+        );
+        toast.success(
+          res?.message ||
+            `Cancellation requested. Full access retained until ${res?.access_until || "the end of your billing cycle"}.`
+        );
       } catch (error: any) {
         toast.error(error?.data?.message || "Failed to cancel subscription");
       }
@@ -1433,7 +1484,9 @@ const SubscriptionView = ({
             </div>
             <div className="flex flex-col items-end gap-2">
               <span className="text-xs font-bold opacity-80 uppercase tracking-widest">
-                {remainingDays !== null
+                {isCancelled && accessUntil
+                  ? `Expires on ${accessUntil}`
+                  : remainingDays !== null
                   ? isTrial
                     ? `${remainingDays} Days Remaining (Trial)`
                     : `${remainingDays} Days Remaining`
@@ -1475,7 +1528,6 @@ const SubscriptionView = ({
               )}
             </div>
             <div className="flex flex-col items-end gap-1">
-              {/* Show cancel button for individuals; for others disable within 6 months */}
               {hasActiveOrTrial && (
                 <>
                   {currentUser?.user_type === "individual" || currentUser?.role === "individual" ? (
@@ -1495,18 +1547,18 @@ const SubscriptionView = ({
                     <div className="flex flex-col items-end">
                       <button
                         onClick={handleCancelSubscription}
-                        disabled={!canCancel || isCancelling}
+                        disabled={(!canCancel && !isCancelled) || isCancelling}
                         className={cn(
                           "text-[10px] font-extrabold uppercase tracking-widest border px-4 py-1.5 rounded-lg transition-all",
-                          (!canCancel || isCancelling)
+                          ((!canCancel && !isCancelled) || isCancelling)
                             ? "border-white/20 text-white/40 cursor-not-allowed opacity-50 grayscale"
                             : "border-white/40 hover:bg-white/10 cursor-pointer",
                         )}
-                        title={!canCancel ? "You cannot disable within 6 months" : "Cancel subscription"}
+                        title={!canCancel && !isCancelled ? "You cannot disable within 6 months" : "Cancel subscription"}
                       >
                         {isCancelling ? "Cancelling..." : "Cancel Subscription"}
                       </button>
-                      {!canCancel && activePlanId && (
+                      {!canCancel && !isCancelled && activePlanId && (
                         <span className="text-[8px] font-bold text-white/50 uppercase tracking-tighter">
                           YOU CANNOT DISABLE WITHIN 6 MONTHS
                         </span>
@@ -1514,6 +1566,11 @@ const SubscriptionView = ({
                     </div>
                   )}
                 </>
+              )}
+              {isCancelled && (
+                <span className="text-[9px] font-bold text-amber-200 uppercase tracking-wider">
+                  Cancellation Pending
+                </span>
               )}
             </div>
           </div>
@@ -1700,21 +1757,23 @@ const SubscriptionView = ({
                         <span className="text-[10px] font-bold text-[#0FA4A9] uppercase tracking-widest flex items-center gap-1">
                           <Check size={10} /> Active Plan
                         </span>
-                        {currentUser?.user_type !== "individual" && currentUser?.role !== "individual" && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCancelSubscription();
-                            }}
-                            disabled={!canCancel || isCancelling}
-                            className={cn(
-                              "text-[10px] font-bold text-red-500 hover:text-red-600 uppercase tracking-widest flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition-all",
-                              (!canCancel || isCancelling) &&
-                                "opacity-50 cursor-not-allowed",
-                            )}
-                          >
-                            <Trash2 size={10} /> Cancel
-                          </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancelSubscription();
+                          }}
+                          disabled={isCancelling}
+                          className={cn(
+                            "text-[10px] font-bold text-red-500 hover:text-red-600 uppercase tracking-widest flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition-all cursor-pointer",
+                            isCancelling && "opacity-50 cursor-not-allowed",
+                          )}
+                        >
+                          <Trash2 size={10} /> Cancel
+                        </button>
+                        {isCancelled && (
+                          <span className="text-[9px] font-bold text-amber-700 uppercase tracking-widest flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                            Cancellation Pending
+                          </span>
                         )}
                       </div>
                     )}

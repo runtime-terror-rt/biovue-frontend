@@ -8,7 +8,7 @@ import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
 import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { hasPaidPlan } from "@/lib/planType";
 
-type SubscriptionStatus = {
+export type SubscriptionStatus = {
   restricted: boolean;
   isSafe: boolean;
   isWarning: boolean;
@@ -20,6 +20,10 @@ type SubscriptionStatus = {
   hasExpiry: boolean;
   expiryOver: boolean;
   projectionZero: boolean;
+  isCancelled: boolean;
+  cancelRequested: boolean;
+  accessUntil: string | null;
+  expiryTimestamp: number | null;
 };
 
 export const useSubscriptionStatus = (): SubscriptionStatus => {
@@ -57,6 +61,10 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
     hasExpiry: false,
     expiryOver: false,
     projectionZero: false,
+    isCancelled: false,
+    cancelRequested: false,
+    accessUntil: null,
+    expiryTimestamp: null,
   };
 
   if (!user?.created_at || isLoading) {
@@ -97,11 +105,45 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
       ? latestPayment.plan.member_limit
       : 0;
 
+  // Cancellation state detection
+  const isCancelled = Boolean(
+    paymentSummary?.status === "pending_cancellation" ||
+    (paymentSummary as any)?.data?.status === "pending_cancellation" ||
+    latestPayment?.status === "pending_cancellation" ||
+    paymentSummary?.cancel_requested === true ||
+    (paymentSummary as any)?.data?.cancel_requested === true ||
+    latestPayment?.cancel_requested === true ||
+    user?.cancel_requested === true ||
+    user?.cancellation_status === "pending_cancellation"
+  );
+
+  const rawAccessUntil =
+    paymentSummary?.access_until ||
+    (paymentSummary as any)?.data?.access_until ||
+    latestPayment?.access_until ||
+    user?.access_until ||
+    (latestPayment?.end_date
+      ? new Date(latestPayment.end_date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+        })
+      : null);
+
+  const accessUntil = rawAccessUntil ? String(rawAccessUntil) : null;
+
   // Resolve best expiry date:
   // For paid users, prioritize latest_payment.end_date, or take the latest valid future date
   let effectiveExpiryTime: number | null = null;
 
-  if (latestPayment?.end_date) {
+  if (accessUntil) {
+    const t = new Date(accessUntil).getTime();
+    if (!isNaN(t)) {
+      effectiveExpiryTime = t;
+    }
+  }
+
+  if (effectiveExpiryTime === null && latestPayment?.end_date) {
     const t = new Date(latestPayment.end_date).getTime();
     if (!isNaN(t)) {
       effectiveExpiryTime = t;
@@ -135,14 +177,16 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
     const projectionZero = projectionLimit <= 0;
     const expiryOver = diffDays <= 0;
 
-    const isSafe = projectionLimit >= 2 && diffDays > 3;
-    const isWarning = !projectionZero && !expiryOver && !isSafe;
+    const isSafe = !isCancelled && projectionLimit >= 2 && diffDays > 3;
+    const isWarning = isCancelled || (!projectionZero && !expiryOver && !isSafe);
 
     return {
       restricted: false,
       isSafe,
       isWarning,
-      reason: projectionZero
+      reason: isCancelled
+        ? "cancellation_pending"
+        : projectionZero
         ? "no_credits"
         : expiryOver
         ? "subscription_expired"
@@ -156,6 +200,10 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
       hasExpiry: true,
       expiryOver,
       projectionZero,
+      isCancelled,
+      cancelRequested: isCancelled,
+      accessUntil,
+      expiryTimestamp: effectiveExpiryTime,
     };
   }
 
@@ -168,14 +216,22 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
   return {
     restricted: isTrialEnded,
     isSafe: isPaid || !isTrialEnded,
-    isWarning: false,
-    reason: isTrialEnded ? "trial_ended" : "",
+    isWarning: isCancelled,
+    reason: isCancelled
+      ? "cancellation_pending"
+      : isTrialEnded
+      ? "trial_ended"
+      : "",
     isLoading: false,
     projection_limit: projectionLimit,
     member_limit: memberLimit,
     diffDays: isPaid ? 30 : Math.max(0, Math.ceil(7 - diffInDays)),
-    hasExpiry: false,
+    hasExpiry: isCancelled,
     expiryOver: false,
     projectionZero: projectionLimit <= 0,
+    isCancelled,
+    cancelRequested: isCancelled,
+    accessUntil,
+    expiryTimestamp: isCancelled && effectiveExpiryTime ? effectiveExpiryTime : null,
   };
 };

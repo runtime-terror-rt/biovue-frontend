@@ -260,7 +260,7 @@ const UserDashboard = () => {
             {
               label: "Sleep Hours",
               value: healthOverview?.sleep_hours?.current || 0,
-              unit: "hrs",
+              // unit: "hrs",
               status: "Coach Plan",
               desc: healthOverview?.sleep_hours?.coach_plan || "N/A",
               color: "text-[#3A86FF]",
@@ -268,9 +268,9 @@ const UserDashboard = () => {
             {
               label: "Hydration",
               value: healthOverview?.hydration?.current_glasses || 0,
-              unit: "Ounces",
+              // unit: "Ounces",
               status: "Target",
-              desc: (healthOverview?.hydration?.target || "N/A").replace(/glasses/gi, "Ounces"),
+              desc: (healthOverview?.hydration?.target || "N/A"),
               color: "text-[#3A86FF]",
             },
             {

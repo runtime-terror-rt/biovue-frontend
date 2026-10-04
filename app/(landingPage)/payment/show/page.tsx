@@ -1,15 +1,15 @@
 "use client";
 
-import Link from "next/link";
+import React, { useEffect, useRef, useMemo, Suspense } from "react";
 import Image from "next/image";
-import { Home, LayoutDashboard, Loader2, Receipt } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { CheckCircle2, Loader2, ArrowRight, LayoutDashboard } from "lucide-react";
+import { toast } from "sonner";
 import { useGetPaymentSummaryQuery } from "@/redux/features/api/paymentApi";
 import { useGetCurrentUserQuery } from "@/redux/features/api/auth/authApi";
-import { useDispatch, useSelector } from "react-redux";
 import { baseApi } from "@/redux/features/api/baseApi";
-import { useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
 import {
   selectCurrentToken,
   selectCurrentUser,
@@ -22,119 +22,40 @@ const PaymentSuccessContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentUser = useSelector(selectCurrentUser);
-  const token = useSelector(selectCurrentToken);
+  const reduxToken = useSelector(selectCurrentToken);
 
-  const {
-    data,
-    isLoading,
-    isFetching: isFetchingSummary,
-    isError,
-  } = useGetPaymentSummaryQuery(undefined, { skip: !token });
-
-  const {
-    data: userData,
-    isLoading: isUserLoading,
-    isFetching: isFetchingUser,
-  } = useGetCurrentUserQuery(undefined, {
-    skip: !data?.success,
-  });
-
-  useEffect(() => {
-    if (!token) {
-      router.replace("/login");
-    }
-  }, [token, router]);
-
-  // 1. Invalidate tags once payment is confirmed
-  useEffect(() => {
-    if (data?.success) {
-      console.log("Payment successful, invalidating tags...");
-      dispatch(baseApi.util.invalidateTags(["PaymentSummary", "Plans", "Profile", "Projection"]));
-    }
-  }, [data, dispatch]);
-
-  // 2. Proactively update Redux state with plan info from the payment summary
-  // This ensures that even if /user/me is slow or stale, the local state
-  // has the plan_id needed to pass ProtectedRoute checks.
-  useEffect(() => {
-    if (data?.success && currentUser) {
-      const planId = data.latest_payment?.plan?.id;
-      const planName = data.latest_payment?.plan?.name;
-      const planType = data.latest_payment?.plan?.plan_type;
-      const paymentAmount = Number(data.latest_payment?.amount || 0);
-      const planPrice = Number(data.latest_payment?.plan?.price || 0);
-      const pNameLower = String(planName || "").toLowerCase();
-
-      const isPaidPayment =
-        !isTrialFlag(data.latest_payment?.is_trial) &&
-        !pNameLower.includes("trial") &&
-        !pNameLower.includes("free plan") &&
-        (paymentAmount > 0 ||
-          planPrice > 0 ||
-          pNameLower.includes("plus") ||
-          pNameLower.includes("premium"));
-
-      const isTrial = isPaidPayment ? 0 : data.latest_payment?.is_trial;
-      const targetPlan = isPaidPayment ? null : data.latest_payment?.target_plan;
-      const targetPlanId = isPaidPayment ? null : data.latest_payment?.target_plan_id;
-      const trialDays = isPaidPayment ? null : data.latest_payment?.trial_days;
-
-      if (planId) {
-        console.log("Enriching Redux user with plan info from payment summary:", planId, "isPaid:", isPaidPayment);
-        dispatch(
-          updateUser({
-            plan_id: planId,
-            plan_name: planName,
-            plan_type: planType,
-            is_trial: isTrial,
-            target_plan: targetPlan,
-            target_plan_id: targetPlanId,
-            trial_days: trialDays,
-          })
-        );
+  // Check token from Redux or localStorage directly for reliability after external redirect
+  const effectiveToken = useMemo(() => {
+    if (reduxToken) return reduxToken;
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("token");
+        if (stored && stored !== "null" && stored !== "undefined") return stored;
+      } catch {
+        return null;
       }
     }
-  }, [data, currentUser, dispatch]);
+    return null;
+  }, [reduxToken]);
 
-  // 3. Sync full user data once /user/me re-fetches
-  useEffect(() => {
-    if (userData?.success && data?.success) {
-      const freshUser = userData.data?.user || userData.data;
-      if (freshUser) {
-        const planId = data.latest_payment?.plan?.id || freshUser.plan_id;
-        const planName = data.latest_payment?.plan?.name || freshUser.plan_name;
-        const planType = data.latest_payment?.plan?.plan_type || freshUser.plan_type;
-        const paymentAmount = Number(data.latest_payment?.amount || 0);
-        const planPrice = Number(data.latest_payment?.plan?.price || 0);
-        const pNameLower = String(planName || "").toLowerCase();
-
-        const isPaidPayment =
-          !isTrialFlag(data.latest_payment?.is_trial) &&
-          !pNameLower.includes("trial") &&
-          !pNameLower.includes("free plan") &&
-          (paymentAmount > 0 ||
-            planPrice > 0 ||
-            pNameLower.includes("plus") ||
-            pNameLower.includes("premium"));
-
-        const enrichedUser = {
-          ...freshUser,
-          plan_id: planId,
-          plan_name: planName,
-          plan_type: planType,
-          is_trial: isPaidPayment ? 0 : (data.latest_payment?.is_trial ?? freshUser.is_trial),
-          target_plan: isPaidPayment ? null : (data.latest_payment?.target_plan ?? freshUser.target_plan),
-          target_plan_id: isPaidPayment ? null : (data.latest_payment?.target_plan_id ?? freshUser.target_plan_id),
-          trial_days: isPaidPayment ? null : (data.latest_payment?.trial_days ?? freshUser.trial_days),
-        };
-
-        console.log("Syncing user state with fresh data:", enrichedUser);
-        dispatch(updateUser(enrichedUser));
+  // Target dashboard path
+  const targetDashboardUrl = useMemo(() => {
+    let user = currentUser;
+    if (!user && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored && stored !== "null" && stored !== "undefined") {
+          user = JSON.parse(stored);
+        }
+      } catch {
+        // fallback
       }
     }
-  }, [userData, data, dispatch]);
+    const path = getDashboardPath(user);
+    return path === "/login" ? "/user-dashboard" : path;
+  }, [currentUser]);
 
-  const getDashboardUrl = () => getDashboardPath(currentUser);
+  const sessionId = searchParams.get("session_id") || undefined;
 
   const isCanceledParam =
     searchParams.get("canceled") === "true" ||
@@ -144,201 +65,162 @@ const PaymentSuccessContent = () => {
     searchParams.get("redirect_status") === "failed" ||
     searchParams.get("redirect_status") === "canceled";
 
-  const ACTIVE_STATUSES = ["active", "succeeded", "paid", "complete", "completed"];
-  const paymentStatus = (data?.latest_payment?.status ?? "").toLowerCase();
-  const isPaymentComplete = Boolean(data?.success && ACTIVE_STATUSES.includes(paymentStatus));
+  const { data: paymentSummary, isSuccess: isSummarySuccess } =
+    useGetPaymentSummaryQuery(sessionId, {
+      skip: !effectiveToken || isCanceledParam,
+    });
 
-  // If user canceled Stripe checkout, redirect to upgrade page immediately
+  const { data: userData } = useGetCurrentUserQuery(undefined, {
+    skip: !effectiveToken || isCanceledParam,
+  });
+
+  const hasRedirectedRef = useRef(false);
+  const hasEnrichedRef = useRef(false);
+
+  // If user canceled Stripe checkout
   useEffect(() => {
-    if (isCanceledParam) {
+    if (isCanceledParam && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
       toast.info("Payment was cancelled. You can choose a plan to upgrade anytime.");
       router.replace("/user-dashboard/upgrade");
     }
   }, [isCanceledParam, router]);
 
+  // Invalidate cached state so dashboard gets fresh plan info
+  useEffect(() => {
+    if (isSummarySuccess) {
+      dispatch(
+        baseApi.util.invalidateTags([
+          "PaymentSummary",
+          "Plans",
+          "Profile",
+          "Projection",
+        ])
+      );
+    }
+  }, [isSummarySuccess, dispatch]);
+
+  // Safely enrich Redux user once without triggering re-render infinite loops
+  useEffect(() => {
+    if (hasEnrichedRef.current) return;
+
+    const payment =
+      paymentSummary?.latest_payment ||
+      (paymentSummary as any)?.data?.latest_payment;
+
+    if (payment?.plan?.id) {
+      hasEnrichedRef.current = true;
+      const planId = payment.plan.id;
+      const planName = payment.plan.name;
+      const planType = payment.plan.plan_type;
+      const paymentAmount = Number(payment.amount || 0);
+      const planPrice = Number(payment.plan.price || 0);
+      const pNameLower = String(planName || "").toLowerCase();
+
+      const isPaidPayment =
+        !isTrialFlag(payment.is_trial) &&
+        !pNameLower.includes("trial") &&
+        !pNameLower.includes("free plan") &&
+        (paymentAmount > 0 ||
+          planPrice > 0 ||
+          pNameLower.includes("plus") ||
+          pNameLower.includes("premium"));
+
+      dispatch(
+        updateUser({
+          plan_id: planId,
+          plan_name: planName,
+          plan_type: planType,
+          is_trial: isPaidPayment ? 0 : payment.is_trial,
+          target_plan: isPaidPayment ? null : payment.target_plan,
+          target_plan_id: isPaidPayment ? null : payment.target_plan_id,
+          trial_days: isPaidPayment ? null : payment.trial_days,
+        })
+      );
+    }
+  }, [paymentSummary, dispatch]);
+
+  // Sync user profile once if returned
+  useEffect(() => {
+    if (userData?.success && userData?.data) {
+      const freshUser = userData.data.user || userData.data;
+      if (freshUser?.id) {
+        dispatch(updateUser(freshUser));
+      }
+    }
+  }, [userData, dispatch]);
+
+  // Redirect to dashboard after brief display to give user a smooth confirmation
   useEffect(() => {
     if (isCanceledParam) return;
 
-    if (
-      !token ||
-      isLoading ||
-      isUserLoading ||
-      isFetchingSummary ||
-      isFetchingUser
-    ) {
-      return;
-    }
+    const timer = setTimeout(() => {
+      if (!hasRedirectedRef.current) {
+        hasRedirectedRef.current = true;
+        toast.success("Payment successful! Welcome to your updated plan.", {
+          id: "payment-success-toast",
+        });
+        router.replace(targetDashboardUrl);
+      }
+    }, 1200);
 
-    if (isPaymentComplete) {
-      router.replace(getDashboardPath(currentUser));
-    } else if (data && !isPaymentComplete) {
-      // Payment did not complete or was not active
-      toast.error("Payment could not be completed.");
-      router.replace("/user-dashboard/upgrade");
-    }
-  }, [
-    token,
-    data,
-    currentUser,
-    isLoading,
-    isUserLoading,
-    isFetchingSummary,
-    isFetchingUser,
-    isPaymentComplete,
-    isCanceledParam,
-    router,
-  ]);
-
-  // We check isFetching as well to ensure we don't show the dashboard button
-  // while the state enrichment/syncing is still in progress.
-  if (isLoading || isUserLoading || isFetchingSummary || isFetchingUser) {
-    return (
-      <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center justify-center p-6">
-        <Loader2 className="w-12 h-12 text-[#0FA4A9] animate-spin mb-4" />
-        <p className="text-[#5F6F73] font-medium animate-pulse">
-          {isLoading || isFetchingSummary
-            ? "Confirming your transaction..."
-            : "Syncing your account..."}
-        </p>
-      </div>
-    );
-  }
-
-  if (isError || !data?.success || !data?.latest_payment) {
-    return (
-      <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
-          <Receipt className="w-10 h-10 text-red-500" />
-        </div>
-        <h1 className="text-2xl font-bold text-[#1F2D2E] mb-2">
-          Something went wrong
-        </h1>
-        <p className="text-[#5F6F73] max-w-md mb-8">
-          We couldn&apos;t retrieve your payment details. If you&apos;ve just
-          completed a payment, it might take a moment to reflect.
-        </p>
-        <Link
-          href="/user-dashboard/upgrade"
-          className="bg-[#0FA4A9] text-white px-8 py-3 rounded-full font-bold hover:bg-opacity-90 transition-all shadow-md"
-        >
-          Go to Upgrade
-        </Link>
-      </div>
-    );
-  }
-
-  const { latest_payment, user: summaryUser } = data;
+    return () => clearTimeout(timer);
+  }, [isCanceledParam, router, targetDashboardUrl]);
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] font-sans py-10">
-      {/* Header */}
-      <header className="container mx-auto px-6 py-6 flex items-center justify-center">
+    <div className="min-h-screen bg-[#F8FAFB] flex flex-col items-center justify-center p-6 text-center select-none">
+      {/* Brand Logo */}
+      <div className="mb-8">
         <Link href="/">
           <Image
             src="/images/logo.png"
             alt="BioVue Logo"
-            width={120}
+            width={130}
             height={60}
-            className="w-24 md:w-[120px] object-contain"
+            priority
+            className="w-28 md:w-32 object-contain mx-auto"
           />
         </Link>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-6  flex flex-col items-center">
-        {/* Success Icon & Heading */}
-        <div className="text-center mb-10 animate-in fade-in zoom-in duration-700">
-          <h1 className="text-4xl md:text-5xl font-bold text-[#1F2D2E] mb-3">
-            Subscription Confirmed!
-          </h1>
-          <p className="text-[#5F6F73] text-lg">
-            Thank you,{" "}
-            <span className="text-[#1F2D2E] font-semibold">
-              {summaryUser?.name || currentUser?.name || "Customer"}
-            </span>
-            . Your {latest_payment?.plan?.name || "Subscription"} plan is now
-            active.
-          </p>
+      {/* Confirmation Card */}
+      <div className="bg-white rounded-3xl border border-[#E5E9EA] shadow-[0_12px_40px_rgba(15,164,169,0.08)] p-8 md:p-12 max-w-md w-full flex flex-col items-center animate-in fade-in zoom-in-95 duration-500">
+        <div className="w-18 h-18 bg-[#E6F6F6] text-[#0FA4A9] rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+          <CheckCircle2 className="w-10 h-10 text-[#0FA4A9] animate-bounce" />
         </div>
 
-        {/* Transaction Details Card */}
-        <div className="w-full max-w-2xl bg-white rounded-3xl border border-[#E5E9EA] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-10 animate-in slide-in-from-bottom-8 duration-700 delay-150">
-          <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-50">
-            <div>
-              <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-1">
-                Transaction ID
-              </p>
-              <p className="text-[#1F2D2E] font-mono text-sm break-all">
-                {latest_payment?.transaction_id || "N/A"}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-1">
-                Status
-              </p>
-              <span className="bg-[#E6F6F6] text-[#0FA4A9] text-xs font-bold px-3 py-1 rounded-full border border-[#B2E2E3]">
-                {(latest_payment?.status || "Active").toUpperCase()}
-              </span>
-            </div>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-[#1F2D2E] mb-2 tracking-tight">
+          Payment Successful!
+        </h1>
+
+        <p className="text-sm md:text-base text-[#5F6F73] mb-8 leading-relaxed">
+          Your transaction has been processed. We are redirecting you to your dashboard now...
+        </p>
+
+        {/* Loading Spinner & Manual Button */}
+        <div className="flex flex-col items-center gap-4 w-full">
+          <div className="flex items-center gap-2.5 text-xs font-semibold text-[#0FA4A9]">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Redirecting...</span>
           </div>
 
-          <div className="space-y-6 mb-10">
-            <div className="flex justify-between items-center px-4 py-5 bg-[#F9FAFB] rounded-2xl border border-gray-50">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center border border-gray-100">
-                  <div className="w-3 h-3 rounded-full bg-[#3A86FF]" />
-                </div>
-                <div>
-                  <p className="font-bold text-[#1F2D2E]">
-                    {latest_payment?.plan?.name || "Membership"} Plan
-                  </p>
-                  <p className="text-xs text-[#5F6F73] font-medium">
-                    Billed {(latest_payment?.currency || "USD").toUpperCase()}
-                  </p>
-                </div>
-              </div>
-              <p className="text-xl font-bold text-[#1F2D2E]">
-                ${latest_payment?.amount || "0.00"}
-              </p>
-            </div>
-
-            <div className="flex justify-between items-center text-sm px-2">
-              <span className="text-[#5F6F73] font-medium">Subtotal</span>
-              <span className="text-[#1F2D2E] font-semibold">
-                ${latest_payment?.amount || "0.00"}
-              </span>
-            </div>
-
-            <div className="pt-4 border-t border-gray-50 flex justify-between items-center px-2">
-              <span className="text-base font-bold text-[#1F2D2E]">
-                Total Amount Paid
-              </span>
-              <span className="text-2xl font-black text-[#0FA4A9]">
-                ${latest_payment?.amount || "0.00"}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link
-              href={getDashboardUrl()}
-              className="flex items-center justify-center gap-2 bg-primary text-white py-4 rounded-2xl font-bold  transition-all group"
-            >
-              <LayoutDashboard
-                size={20}
-                className="group-hover:scale-110 transition-transform"
-              />
-              Go To Dashboard
-            </Link>
-            <Link
-              href="/user-dashboard/settings"
-              className="flex items-center justify-center gap-2 bg-[#E6F6F6] text-[#0FA4A9] py-4 rounded-2xl font-bold hover:bg-[#D9EFEF] transition-all border border-[#B2E2E3]"
-            >
-              <Home size={20} />
-              Back 
-            </Link>
-          </div>
+          <Link
+            href={targetDashboardUrl}
+            onClick={() => {
+              hasRedirectedRef.current = true;
+            }}
+            className="w-full flex items-center justify-center gap-2 bg-[#0FA4A9] hover:bg-[#0c8d92] text-white py-3.5 px-6 rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg group mt-2"
+          >
+            <LayoutDashboard size={16} />
+            <span>Go to Dashboard Now</span>
+            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
-      </main>
+      </div>
+
+      <p className="mt-8 text-xs text-[#94A3B8]">
+        BioVue Digital Wellness &copy; {new Date().getFullYear()}
+      </p>
     </div>
   );
 };
@@ -347,8 +229,9 @@ export default function PaymentSuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFB]">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFB] gap-3">
           <Loader2 className="w-10 h-10 animate-spin text-[#0FA4A9]" />
+          <p className="text-xs font-semibold text-[#5F6F73]">Loading...</p>
         </div>
       }
     >
