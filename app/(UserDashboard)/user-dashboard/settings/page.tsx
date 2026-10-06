@@ -1666,9 +1666,15 @@ const SubscriptionView = ({
                     return;
                   }
 
-                  // If not authenticated (unlikely on settings), redirect to register with plan
-                  if (!token) {
-                    router.push(`/register?plan_id=${plan.id}`);
+                  const effectiveToken =
+                    token ||
+                    (typeof window !== "undefined"
+                      ? localStorage.getItem("token")
+                      : null);
+
+                  // If not authenticated, redirect to login
+                  if (!effectiveToken) {
+                    router.push("/login");
                     return;
                   }
 

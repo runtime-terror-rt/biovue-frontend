@@ -79,19 +79,24 @@ const PricingPage = () => {
 
 
   const handlePlanSelection = async (plan: Plan) => {
-    // Enterprise and Custom plan special handling
-    // if (
-    //   plan.name?.toLowerCase().includes("enterprise") ||
-    //   (plan.plan_type === "professional" &&
-    //     (plan.price === "0.00" || plan.price === 0))
-    // ) {
-    //   setContactEmail(user?.email || "");
-    //   setIsContactModalOpen(true);
-    //   return;
-    // }
+    const effectiveToken =
+      token ||
+      (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+
+    let effectiveUser = user;
+    if (!effectiveUser && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored && stored !== "null" && stored !== "undefined") {
+          effectiveUser = JSON.parse(stored);
+        }
+      } catch {
+        // ignore
+      }
+    }
 
     if (isFreeTrialPlan(plan)) {
-      if (userHasPaid) {
+      if (hasPaidPlan(effectiveUser)) {
         toast.error(
           "You already have an active paid plan (Plus/Premium) and cannot take the free trial.",
         );
@@ -101,7 +106,7 @@ const PricingPage = () => {
       return;
     }
 
-    if (!token) {
+    if (!effectiveToken) {
       // If not logged in, redirect to register with plan_id
       router.push(`/register?plan_id=${plan.id}`);
       return;

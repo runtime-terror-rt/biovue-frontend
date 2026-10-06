@@ -1,16 +1,39 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User, Building2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getDashboardPath } from "@/lib/planType";
 
 const SelectAccountTypeContent = () => {
   const [selectedType, setSelectedType] = useState<"individual" | "business" | "api_service" | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const planId = searchParams.get("plan_id");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storedToken = localStorage.getItem("token");
+    let storedUser: any = null;
+    try {
+      const rawUser = localStorage.getItem("user");
+      if (rawUser && rawUser !== "null" && rawUser !== "undefined") {
+        storedUser = JSON.parse(rawUser);
+      }
+    } catch {
+      // ignore
+    }
+
+    if (storedToken) {
+      let dest = storedUser ? getDashboardPath(storedUser) : "/user-dashboard";
+      if (!dest || dest === "/login") {
+        dest = "/user-dashboard";
+      }
+      router.replace(dest);
+    }
+  }, [router]);
 
   const handleNext = () => {
     const query = planId ? `?plan_id=${planId}` : "";

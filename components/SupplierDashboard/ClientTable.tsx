@@ -9,10 +9,12 @@ import {
   User as UserIcon,
   Calendar,
   Target,
+  Bell,
 } from "lucide-react";
 import { User } from "@/redux/features/api/SupplierDashboard/AllUsers";
 import SupplementMatchModal from "./SupplementMatchModal";
 import TargetGoalsModal from "./TargetGoalsModal";
+import NotifyClientModal from "./NotifyClientModal";
 
 const getSafeImageSrc = (src: string | null | undefined) => {
   if (!src) return null;
@@ -65,6 +67,8 @@ export default function ClientTable({ users }: ClientTableProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTargetGoalsModalOpen, setIsTargetGoalsModalOpen] = useState(false);
   const [matchingUserId, setMatchingUserId] = useState<number | null>(null);
+  const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
+  const [notifyUser, setNotifyUser] = useState<User | null>(null);
 
   const [findMatch, { isLoading: isMatching }] = useFindMatchMutation();
 
@@ -104,6 +108,11 @@ export default function ClientTable({ users }: ClientTableProps) {
   const handleViewGoals = (user: User) => {
     setSelectedUser(user);
     setIsTargetGoalsModalOpen(true);
+  };
+
+  const handleNotifyClient = (user: User) => {
+    setNotifyUser(user);
+    setIsNotifyModalOpen(true);
   };
 
   return (
@@ -230,18 +239,29 @@ export default function ClientTable({ users }: ClientTableProps) {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="px-10 py-6 text-center">
-                    <Button
-                      disabled={matchingUserId === user.id}
-                      onClick={() => handleFindMatch(user)}
-                      className="bg-white hover:bg-[#0FA4A9] text-[#0FA4A9] hover:text-white border-2 border-[#0FA4A9]/20 hover:border-[#0FA4A9] rounded-2xl px-6 py-2 h-auto text-sm font-bold flex items-center gap-2 mx-auto transition-all group active:scale-95 cursor-pointer shadow-sm hover:shadow-md disabled:opacity-50"
-                    >
-                      <Sparkles
-                        size={16}
-                        className={matchingUserId === user.id ? "animate-spin" : "group-hover:animate-pulse"}
-                      />
-                      {matchingUserId === user.id ? "Analysing..." : "Find Match"}
-                    </Button>
+                  <TableCell className="px-8 py-6 text-center">
+                    <div className="flex items-center justify-center gap-2.5">
+                      <Button
+                        disabled={matchingUserId === user.id}
+                        onClick={() => handleFindMatch(user)}
+                        className="bg-white hover:bg-[#0FA4A9] text-[#0FA4A9] hover:text-white border-2 border-[#0FA4A9]/20 hover:border-[#0FA4A9] rounded-2xl px-5 py-2 h-auto text-xs font-bold flex items-center gap-1.5 transition-all group active:scale-95 cursor-pointer shadow-sm hover:shadow-md disabled:opacity-50"
+                      >
+                        <Sparkles
+                          size={15}
+                          className={matchingUserId === user.id ? "animate-spin" : "group-hover:animate-pulse"}
+                        />
+                        {matchingUserId === user.id ? "Analysing..." : "Find Match"}
+                      </Button>
+
+                      <Button
+                        onClick={() => handleNotifyClient(user)}
+                        className="bg-[#0FA4A9]/10 hover:bg-[#0FA4A9] text-[#0FA4A9] hover:text-white border border-[#0FA4A9]/20 hover:border-[#0FA4A9] rounded-2xl px-4 py-2 h-auto text-xs font-bold flex items-center gap-1.5 transition-all group active:scale-95 cursor-pointer shadow-sm hover:shadow-md"
+                        title="Send notification email to client"
+                      >
+                        <Bell size={15} className="group-hover:rotate-12 transition-transform" />
+                        Notify
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -251,7 +271,7 @@ export default function ClientTable({ users }: ClientTableProps) {
                   <div className="flex flex-col items-center justify-center text-[#94A3B8]">
                     <Search size={40} className="mb-4 opacity-20" />
                     <p className="text-lg font-medium">
-                      No users found matching your search
+                    No users found matching your search
                     </p>
                   </div>
                 </TableCell>
@@ -273,6 +293,15 @@ export default function ClientTable({ users }: ClientTableProps) {
         isOpen={isTargetGoalsModalOpen}
         onClose={() => setIsTargetGoalsModalOpen(false)}
         user={selectedUser}
+      />
+
+      <NotifyClientModal
+        isOpen={isNotifyModalOpen}
+        onClose={() => {
+          setIsNotifyModalOpen(false);
+          setNotifyUser(null);
+        }}
+        user={notifyUser}
       />
     </div>
   );

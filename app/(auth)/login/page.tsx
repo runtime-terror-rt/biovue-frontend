@@ -495,6 +495,7 @@ import {
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { getRecaptchaToken } from "@/lib/recaptcha";
 import { isInvitedAndAccepted } from "@/lib/inviteHelpers";
+import { getDashboardPath } from "@/lib/planType";
 import { useProcessPaymentMutation } from "@/redux/features/api/paymentApi";
 import { resumePendingTrial } from "@/lib/trialPayment";
 import { baseApi } from "@/redux/features/api/baseApi";
@@ -652,6 +653,29 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState("individual");
   const [formData, setFormData] = useState({ email: "", password: "" });
+
+  // If already logged in, redirect straight to dashboard
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storedToken = localStorage.getItem("token");
+    let storedUser: any = null;
+    try {
+      const rawUser = localStorage.getItem("user");
+      if (rawUser && rawUser !== "null" && rawUser !== "undefined") {
+        storedUser = JSON.parse(rawUser);
+      }
+    } catch {
+      // ignore
+    }
+
+    if (storedToken && storedUser) {
+      let dest = getDashboardPath(storedUser);
+      if (!dest || dest === "/login") {
+        dest = "/user-dashboard";
+      }
+      router.replace(dest);
+    }
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

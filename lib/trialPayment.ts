@@ -48,7 +48,23 @@ export async function startTrialCheckout({
   user?: any;
   router: any;
 }): Promise<boolean> {
-  if (hasPaidPlan(user)) {
+  const effectiveToken =
+    token ||
+    (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+
+  let effectiveUser = user;
+  if (!effectiveUser && typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored && stored !== "null" && stored !== "undefined") {
+        effectiveUser = JSON.parse(stored);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (hasPaidPlan(effectiveUser)) {
     clearPendingTrial();
     toast.error(
       "You already have an active paid plan (Plus/Premium) and cannot take the free trial.",
@@ -56,7 +72,7 @@ export async function startTrialCheckout({
     return false;
   }
 
-  if (!token) {
+  if (!effectiveToken) {
     savePendingTrial(payload);
     toast.info("Please log in to start your free trial.");
     router.push("/login");
@@ -79,10 +95,47 @@ export async function startTrialCheckout({
       toast.success(
         response?.message || "Free trial activated successfully.",
       );
+
+      const targetPlanId = Number(payload.target_plan_id || payload.plan_id || 1);
+      const updatedUser = {
+        ...(effectiveUser || {}),
+        plan_id: targetPlanId,
+        is_trial: 1,
+      };
+
       if (typeof window !== "undefined") {
-        window.location.href = getDashboardPath(user);
+        try {
+          const currentStored = localStorage.getItem("user");
+          const parsed = currentStored ? JSON.parse(currentStored) : {};
+          localStorage.setItem(
+            "user",
+            JSON.stringify({ ...parsed, ...updatedUser }),
+          );
+        } catch {
+          // ignore
+        }
+      }
+
+      let dest = getDashboardPath(updatedUser);
+      if (!dest || dest === "/login" || dest.startsWith("/personalize-journey")) {
+        const uRole = String(updatedUser?.role || updatedUser?.user_type || "").toLowerCase();
+        const pType = String(updatedUser?.profession_type || "").toLowerCase();
+        if (uRole === "professional") {
+          if (pType === "trainer_coach") dest = "/trainer-dashboard/overview";
+          else if (pType === "supplement_supplier") dest = "/supplier-dashboard";
+          else if (pType === "nutritionist") dest = "/nutritionist-dashboard/overview";
+          else dest = "/trainer-dashboard/overview";
+        } else if (uRole === "api") {
+          dest = "/api-user";
+        } else {
+          dest = "/user-dashboard";
+        }
+      }
+
+      if (typeof window !== "undefined") {
+        window.location.href = dest;
       } else {
-        router.push(getDashboardPath(user));
+        router.push(dest);
       }
       return true;
     }

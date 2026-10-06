@@ -18,14 +18,26 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    // If there's no user in Redux, redirect to login
-    if (!user) {
+    let activeUser = user;
+    if (!activeUser && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored && stored !== "null" && stored !== "undefined") {
+          activeUser = JSON.parse(stored);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // If there's no user, redirect to login
+    if (!activeUser) {
       router.replace("/login");
       return;
     }
 
-    const { role, profession_type, plan_id, plan_name, plan_type } = user;
-    const userRole = String(role || user.user_type || "individual").toLowerCase();
+    const { role, profession_type, plan_id, plan_name, plan_type } = activeUser;
+    const userRole = String(role || activeUser.user_type || "individual").toLowerCase();
 
     // Check if the user has an API plan
     const isApiPlan = plan_type === "api" || (typeof plan_name === "string" && plan_name.toLowerCase().includes("api"));
@@ -42,7 +54,7 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
     // Check if the user is a professional user
     const isProfessionalUser = 
       role === "professional" || 
-      user.user_type === "professional" ||
+      activeUser.user_type === "professional" ||
       ["trainer_coach", "supplement_supplier", "nutritionist"].includes(role) ||
       ["trainer_coach", "supplement_supplier", "nutritionist"].includes(profession_type);
 
@@ -69,8 +81,8 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
     const isIndividualUser =
       !isProfessionalUser &&
       ["individual", "user", "member", ""].includes(userRole);
-    const bypassPayment = shouldBypassPayment(user);
-    const rawPlanId = user?.plan_id ?? user?.profile?.plan_id;
+    const bypassPayment = shouldBypassPayment(activeUser);
+    const rawPlanId = activeUser?.plan_id ?? activeUser?.profile?.plan_id;
     const hasPlan =
       rawPlanId !== null &&
       rawPlanId !== undefined &&
@@ -81,10 +93,10 @@ export default function ProtectedRoute({ children, allowedRoles, allowedProfessi
     if (isIndividualUser && isIndividualAllowed && !hasPlan && !bypassPayment) {
       console.log("Individual user missing plan, redirecting to onboarding steps / choose plan");
       const isProfileCompleted =
-        user?.is_profile_completed === true ||
-        user?.is_profile_completed === "true" ||
-        user?.is_profile_completed === "Your profile is complete." ||
-        Boolean(user?.profile?.id);
+        activeUser?.is_profile_completed === true ||
+        activeUser?.is_profile_completed === "true" ||
+        activeUser?.is_profile_completed === "Your profile is complete." ||
+        Boolean(activeUser?.profile?.id);
 
       if (isProfileCompleted) {
         router.replace("/personalize-journey/onboarding/steps?step=6");

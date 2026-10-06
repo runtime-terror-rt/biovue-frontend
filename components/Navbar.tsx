@@ -52,15 +52,27 @@ const Navbar = () => {
     (user?.email ? user.email.split("@")[0] : "User");
 
   const getDashboardPath = () => {
-    if (!user) return "/login";
+    let activeUser = user;
+    if (!activeUser && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored && stored !== "null" && stored !== "undefined") {
+          activeUser = JSON.parse(stored);
+        }
+      } catch {
+        // ignore
+      }
+    }
 
-    const userRole = user?.role;
-    const userType = user?.user_type;
-    const professionType = user?.profession_type;
-    const planType = user?.plan_type;
-    const planName = user?.plan_name;
+    if (!activeUser) return "/login";
 
-    if (planType === "api" || (typeof planName === "string" && planName.toLowerCase().includes("api"))) {
+    const userRole = String(activeUser?.role || activeUser?.user_type || "").toLowerCase();
+    const userType = String(activeUser?.user_type || activeUser?.role || "").toLowerCase();
+    const professionType = String(activeUser?.profession_type || "").toLowerCase();
+    const planType = String(activeUser?.plan_type || "").toLowerCase();
+    const planName = String(activeUser?.plan_name || "").toLowerCase();
+
+    if (planType === "api" || planName.includes("api")) {
       return "/api-user";
     }
 
@@ -70,24 +82,20 @@ const Navbar = () => {
       if (professionType === "trainer_coach") return "/trainer-dashboard/overview";
       if (professionType === "supplement_supplier") return "/supplier-dashboard";
       if (professionType === "nutritionist") return "/nutritionist-dashboard/overview";
-      return "/personalize-journey/onboarding";
+      return "/trainer-dashboard/overview";
     }
 
-    if (userRole === "individual") {
-      const rawPlanId = user?.plan_id ?? user?.profile?.plan_id;
-      const hasPlan =
-        rawPlanId !== null &&
-        rawPlanId !== undefined &&
-        rawPlanId !== "" &&
-        Number(rawPlanId) > 0;
+    const rawPlanId = activeUser?.plan_id ?? activeUser?.profile?.plan_id;
+    const hasPlan =
+      rawPlanId !== null &&
+      rawPlanId !== undefined &&
+      rawPlanId !== "" &&
+      Number(rawPlanId) > 0;
 
-      if (!hasPlan && !isInvitedAndAccepted(user)) {
-        return "/personalize-journey/onboarding/steps";
-      }
-      return "/user-dashboard";
+    if (!hasPlan && !isInvitedAndAccepted(activeUser)) {
+      return "/personalize-journey/onboarding/steps";
     }
-
-    return "/personalize-journey/onboarding";
+    return "/user-dashboard";
   };
 
   const getRoleLabel = () => {

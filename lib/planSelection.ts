@@ -22,6 +22,22 @@ export async function handlePlanSelection({
   billing?: string;
   onFreeTrial?: (plan: any) => void;
 }) {
+  const effectiveToken =
+    token ||
+    (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+
+  let effectiveUser = user;
+  if (!effectiveUser && typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored && stored !== "null" && stored !== "undefined") {
+        effectiveUser = JSON.parse(stored);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   // Enterprise / Custom
   if (
     plan.name?.toLowerCase().includes("enterprise") ||
@@ -39,7 +55,7 @@ export async function handlePlanSelection({
     (plan.plan_type === "individual" &&
       (plan.price === "0.00" || plan.price === 0))
   ) {
-    if (user && hasPaidPlan(user)) {
+    if (effectiveUser && hasPaidPlan(effectiveUser)) {
       toast.error(
         "You already have an active paid plan (Plus/Premium) and cannot take the free trial.",
       );
@@ -54,7 +70,7 @@ export async function handlePlanSelection({
   }
 
   // Not authenticated -> register with plan
-  if (!token) {
+  if (!effectiveToken) {
     router.push(`/register?plan_id=${plan.id}`);
     return;
   }

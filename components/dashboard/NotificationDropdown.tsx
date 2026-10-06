@@ -3,9 +3,11 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Sparkles, Dumbbell, Clock, CheckCircle2, Trash2 } from "lucide-react";
+import { MessageCircle, Sparkles, Dumbbell, Clock, CheckCircle2, Trash2, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getNotificationUrl } from "@/lib/notificationUtils";
 
 export type Notification = {
   id: string;
@@ -15,6 +17,13 @@ export type Notification = {
   created_at: string;
   created_at_formatted: string;
   read_at: string | null;
+  url?: string | null;
+  action_url?: string | null;
+  link?: string | null;
+  target_url?: string | null;
+  redirect_url?: string | null;
+  data?: any;
+  [key: string]: any;
 };
 
 // MOCK_NOTIFICATIONS removed to favor dynamic data
@@ -48,9 +57,26 @@ interface NotificationDropdownProps {
   notifications: Notification[];
 }
 
-import { Bell } from "lucide-react";
-
 export default function NotificationDropdown({ isOpen, onClose, onMarkAllAsRead, onMarkSingleAsRead, onDeleteSingleNotification, notifications }: NotificationDropdownProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleNotificationClick = (notif: Notification) => {
+    if (!notif.read_at) {
+      onMarkSingleAsRead(notif.id);
+    }
+
+    const targetUrl = getNotificationUrl(notif, pathname);
+    if (targetUrl) {
+      onClose();
+      if (targetUrl.startsWith("http://") || targetUrl.startsWith("https://")) {
+        window.open(targetUrl, "_blank");
+      } else {
+        router.push(targetUrl);
+      }
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -93,11 +119,7 @@ export default function NotificationDropdown({ isOpen, onClose, onMarkAllAsRead,
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ delay: index * 0.05, duration: 0.2 }}
-                    onClick={() => {
-                      if (!notif.read_at) {
-                        onMarkSingleAsRead(notif.id);
-                      }
-                    }}
+                    onClick={() => handleNotificationClick(notif)}
                     className={cn(
                       "group flex gap-4 p-4 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer border-b border-gray-50 last:border-0",
                       !notif.read_at && "bg-blue-50/30"

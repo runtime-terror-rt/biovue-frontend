@@ -16,6 +16,9 @@ import {
 import { cn } from "@/lib/utils";
 import { useGetNotificationsQuery, useMarkAsReadMutation, useMarkSingleAsReadMutation, useDeleteSingleNotificationMutation, useDeleteAllNotificationsMutation } from "@/redux/features/api/userDashboard/notificationApi";
 import { toast } from "sonner";
+import { useRouter, usePathname } from "next/navigation";
+import { getNotificationUrl } from "@/lib/notificationUtils";
+import { Notification } from "@/components/dashboard/NotificationDropdown";
 
 const getNotificationIcon = (type: string | null) => {
   const t = type?.toLowerCase() || "";
@@ -38,6 +41,8 @@ const getNotificationIconBg = (type: string | null) => {
 };
 
 export default function TrainerNotificationsPage() {
+  const router = useRouter();
+  const pathname = usePathname();
   const { data: response, isLoading } = useGetNotificationsQuery();
   const [markAsRead] = useMarkAsReadMutation();
   const [markSingleAsRead] = useMarkSingleAsReadMutation();
@@ -45,6 +50,20 @@ export default function TrainerNotificationsPage() {
   const [deleteAllNotifications] = useDeleteAllNotificationsMutation();
 
   const notifications = response?.data || [];
+
+  const handleNotificationClick = (notif: Notification) => {
+    if (!notif.read_at) {
+      handleMarkSingleAsRead(notif.id);
+    }
+    const targetUrl = getNotificationUrl(notif, pathname);
+    if (targetUrl) {
+      if (targetUrl.startsWith("http://") || targetUrl.startsWith("https://")) {
+        window.open(targetUrl, "_blank");
+      } else {
+        router.push(targetUrl);
+      }
+    }
+  };
 
   const handleMarkAllAsRead = async () => {
     try {
@@ -133,11 +152,7 @@ export default function TrainerNotificationsPage() {
                 "bg-white rounded-2xl p-5 md:p-6 border shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row sm:items-center gap-4 group hover:border-[#0FA4A9]/50 transition-all cursor-pointer relative",
                 notif.read_at ? "border-gray-100" : "border-blue-100 bg-blue-50/50"
               )}
-              onClick={() => {
-                if (!notif.read_at) {
-                  handleMarkSingleAsRead(notif.id);
-                }
-              }}
+              onClick={() => handleNotificationClick(notif)}
             >
               <div
                 className={cn(

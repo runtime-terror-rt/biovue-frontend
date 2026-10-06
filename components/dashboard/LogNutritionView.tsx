@@ -459,30 +459,77 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
       foodItem ||
       meals.find((m) => m.id === mealId)?.foods.find((f) => f.id === foodId);
 
+    if (!targetFood) return;
+
+    const nutriData =
+      existingNutrition?.nutrition || existingNutrition?.data?.nutrition;
+    const existingFoodsList: any[] = nutriData?.foods || [];
+
+    const isExistingFood =
+      targetFood.isExisting ||
+      targetFood.id.toString().startsWith("api-") ||
+      Boolean(targetFood.backendId) ||
+      existingFoodsList.some((f: any) => {
+        const name =
+          typeof f === "string"
+            ? f
+            : f?.food?.name || f?.food?.food || f?.food || f?.name;
+        return (
+          name?.toString().toLowerCase().trim() ===
+          targetFood.name.toLowerCase().trim()
+        );
+      });
+
     const updatedMeals = meals.map((meal) =>
       meal.id === mealId
         ? { ...meal, foods: meal.foods.filter((f) => f.id !== foodId) }
         : meal,
     );
 
-    if (
-      targetFood &&
-      (targetFood.isExisting ||
-        targetFood.id.toString().startsWith("api-") ||
-        targetFood.backendId)
-    ) {
+    if (isExistingFood) {
       setDeletingFoodId(foodId);
       try {
-        const today = new Date().toISOString().split("T")[0];
-        const logDate =
-          (existingNutrition?.log_date
-            ? existingNutrition.log_date.split("T")[0]
-            : null) || today;
+        let finalUserId = currentUser?.id || currentUser?.user_id || userId;
+        if (!finalUserId && typeof window !== "undefined") {
+          try {
+            const stored = localStorage.getItem("user");
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              finalUserId = parsed?.id || parsed?.user_id;
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        if (!finalUserId) {
+          toast.error("User ID not found");
+          setDeletingFoodId(null);
+          return;
+        }
+
+        const rawDate =
+          existingNutrition?.log_date ||
+          existingNutrition?.data?.log_date ||
+          nutriData?.log_date ||
+          existingNutrition?.date ||
+          existingNutrition?.data?.date;
+
+        let logDate = "";
+        if (rawDate && typeof rawDate === "string") {
+          logDate = rawDate.split("T")[0].split(" ")[0];
+        } else {
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, "0");
+          const day = String(now.getDate()).padStart(2, "0");
+          logDate = `${year}-${month}-${day}`;
+        }
 
         const payload = {
-          food: targetFood.name,
+          user_id: Number(finalUserId),
           log_date: logDate,
-          user_id: Number(userId) || userId,
+          food: targetFood.name.trim(),
         };
 
         const res = await deleteFood(payload).unwrap();
@@ -490,7 +537,6 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
         toast.success(res?.message || "Food item deleted successfully");
       } catch (err: any) {
         console.error("Delete food error:", err);
-        setMeals(updatedMeals);
         toast.error(
           err?.data?.message || err?.message || "Failed to delete food item",
         );

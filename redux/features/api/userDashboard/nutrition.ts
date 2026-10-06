@@ -39,7 +39,10 @@ export const nutritionApi = baseApi.injectEndpoints({
       query: () => "/nutrition/show",
       providesTags: ["Nutrition"],
     }),
-    deleteFood: builder.mutation({
+    deleteFood: builder.mutation<
+      any,
+      { user_id: number; log_date: string; food: string }
+    >({
       query: (body) => ({
         url: "/nutrition/delete-food",
         method: "POST",
@@ -56,6 +59,5 @@ export const {
   useGetNutritionReportQuery,
   useCalculateNutritionMutation,
   useGetNutritionShowQuery,
-  // useDeleteNutritionLogMutation,
   useDeleteFoodMutation,
 } = nutritionApi;

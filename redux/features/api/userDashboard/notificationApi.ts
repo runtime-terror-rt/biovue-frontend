@@ -8,6 +8,13 @@ export interface Notification {
   created_at: string;
   created_at_formatted: string;
   read_at: string | null;
+  url?: string | null;
+  action_url?: string | null;
+  link?: string | null;
+  target_url?: string | null;
+  redirect_url?: string | null;
+  data?: any;
+  [key: string]: any;
 }
 
 export interface NotificationResponse {

@@ -42,6 +42,17 @@ export function getUserPlanType(
 }
 
 export function getDashboardPath(user?: any): string {
+  if (!user && typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored && stored !== "null" && stored !== "undefined") {
+        user = JSON.parse(stored);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   if (!user) return "/login";
 
   const planAudience = getUserPlanType(user);

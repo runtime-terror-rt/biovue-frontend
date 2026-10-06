@@ -38,23 +38,6 @@ const PaymentSuccessContent = () => {
     return null;
   }, [reduxToken]);
 
-  // Target dashboard path
-  const targetDashboardUrl = useMemo(() => {
-    let user = currentUser;
-    if (!user && typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("user");
-        if (stored && stored !== "null" && stored !== "undefined") {
-          user = JSON.parse(stored);
-        }
-      } catch {
-        // fallback
-      }
-    }
-    const path = getDashboardPath(user);
-    return path === "/login" ? "/user-dashboard" : path;
-  }, [currentUser]);
-
   const sessionId = searchParams.get("session_id") || undefined;
 
   const isCanceledParam =
@@ -73,6 +56,47 @@ const PaymentSuccessContent = () => {
   const { data: userData } = useGetCurrentUserQuery(undefined, {
     skip: !effectiveToken || isCanceledParam,
   });
+
+  // Target dashboard path
+  const targetDashboardUrl = useMemo(() => {
+    let user = currentUser;
+    if (!user && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored && stored !== "null" && stored !== "undefined") {
+          user = JSON.parse(stored);
+        }
+      } catch {
+        // fallback
+      }
+    }
+
+    const payment =
+      paymentSummary?.latest_payment ||
+      (paymentSummary as any)?.data?.latest_payment;
+    const activePlanId =
+      payment?.plan?.id || user?.plan_id || 1;
+
+    const userWithActivePlan = {
+      ...(user || {}),
+      plan_id: activePlanId,
+    };
+
+    const path = getDashboardPath(userWithActivePlan);
+    if (!path || path === "/login" || path.startsWith("/personalize-journey")) {
+      const uRole = String(user?.role || user?.user_type || "").toLowerCase();
+      const pType = String(user?.profession_type || "").toLowerCase();
+      if (uRole === "professional") {
+        if (pType === "trainer_coach") return "/trainer-dashboard/overview";
+        if (pType === "supplement_supplier") return "/supplier-dashboard";
+        if (pType === "nutritionist") return "/nutritionist-dashboard/overview";
+        return "/trainer-dashboard/overview";
+      }
+      if (uRole === "api") return "/api-user";
+      return "/user-dashboard";
+    }
+    return path;
+  }, [currentUser, paymentSummary]);
 
   const hasRedirectedRef = useRef(false);
   const hasEnrichedRef = useRef(false);
@@ -157,6 +181,35 @@ const PaymentSuccessContent = () => {
     const timer = setTimeout(() => {
       if (!hasRedirectedRef.current) {
         hasRedirectedRef.current = true;
+
+        const currentStored =
+          typeof window !== "undefined" ? localStorage.getItem("user") : null;
+        let parsedUser: any = {};
+        try {
+          if (currentStored) parsedUser = JSON.parse(currentStored);
+        } catch {}
+
+        const activePlanId =
+          paymentSummary?.latest_payment?.plan?.id ||
+          (paymentSummary as any)?.data?.latest_payment?.plan?.id ||
+          parsedUser?.plan_id ||
+          currentUser?.plan_id ||
+          1;
+
+        dispatch(updateUser({ plan_id: activePlanId }));
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(
+              "user",
+              JSON.stringify({
+                ...parsedUser,
+                ...(currentUser || {}),
+                plan_id: activePlanId,
+              }),
+            );
+          } catch {}
+        }
+
         toast.success("Payment successful! Welcome to your updated plan.", {
           id: "payment-success-toast",
         });
@@ -165,7 +218,7 @@ const PaymentSuccessContent = () => {
     }, 1200);
 
     return () => clearTimeout(timer);
-  }, [isCanceledParam, router, targetDashboardUrl]);
+  }, [isCanceledParam, router, targetDashboardUrl, paymentSummary, currentUser, dispatch]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFB] flex flex-col items-center justify-center p-6 text-center select-none">

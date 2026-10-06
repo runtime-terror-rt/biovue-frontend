@@ -304,7 +304,7 @@ export default function HabitDetailPage() {
               <div className="border border-gray-50 rounded-[16px] p-10 flex flex-col gap-8 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.01)]">
                 <div className="flex items-center justify-between">
                   <h3 className="text-[#1F2D2E] font-bold text-[18px] tracking-wide uppercase">YOUR CURRENT PATTERN</h3>
-                  <span className="text-[#1F2D2E] font-bold text-[15px]">{habit.daysLogged} Days Logged</span>
+                  <span className="text-[#1F2D2E] font-bold text-[15px]">{habit.daysLogged} Logged</span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-8">
