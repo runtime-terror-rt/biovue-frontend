@@ -35,7 +35,7 @@ export default function HealthHabitOverview({
 
   const apiMetrics = {
     ...apiMetricsRaw,
-    hydration: apiMetricsRaw?.hydrration ?? null, // fix typo
+    hydration: apiMetricsRaw?.hydration ?? null, // fix typo
   };
   const staticMetrics = clientDetails.healthHabitOverview;
 
