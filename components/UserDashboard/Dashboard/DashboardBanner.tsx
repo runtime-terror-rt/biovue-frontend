@@ -52,11 +52,11 @@ const DashboardBanner = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, height: 0, marginBottom: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="w-full mb-8 sm:mb-10"
+          className="w-full mb-4 sm:mb-6 md:mb-8"
         >
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-100">
+          <div className="relative rounded-2xl overflow-hidden shadow-xl sm:shadow-2xl border border-gray-100">
             {/* Banner Image Background */}
-            <div className="relative w-full h-[180px] sm:h-[240px] md:h-[280px] lg:h-[320px] overflow-hidden">
+            <div className="relative w-full h-[170px] sm:h-[220px] md:h-[280px] lg:h-[320px] overflow-hidden">
               <AnimatePresence initial={false} mode="popLayout">
                 <motion.div
                   key={activeDot}
@@ -74,8 +74,8 @@ const DashboardBanner = () => {
                     priority
                   />
                   {/* Overlay with content - Centered without background */}
-                  <div className="absolute inset-0 flex items-center justify-center text-center px-6 sm:px-12 bg-black/20">
-                    <div className="flex flex-col items-center gap-5 sm:gap-8 max-w-2xl">
+                  <div className="absolute inset-0 flex items-center justify-center text-center px-4 sm:px-10 md:px-12 bg-black/25">
+                    <div className="flex flex-col items-center gap-2.5 sm:gap-6 md:gap-8 max-w-2xl px-2">
                       <h2
                         style={{
                           color: "#FFF",
@@ -83,16 +83,16 @@ const DashboardBanner = () => {
                           fontStyle: "normal",
                           fontWeight: 700,
                         }}
-                        className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] text-center text-2xl sm:text-4xl md:text-5xl lg:text-[48px] leading-tight"
+                        className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)] text-center text-base sm:text-3xl md:text-5xl lg:text-[48px] leading-tight line-clamp-2"
                       >
                         {activeAd?.ads_title || "Summer Wellness Sale: 50% Off"}
                       </h2>
                       <Link
                         href={activeAd?.redirect_url || "/user-dashboard/upgrade"}
-                        className="inline-flex items-center justify-center bg-white text-[#1A1A1A] text-xs sm:text-base font-bold px-8 sm:px-10 py-2.5 sm:py-3.5 rounded-full hover:bg-[#F2F4F7] transition-all shadow-xl whitespace-nowrap active:scale-95 border-none"
+                        className="inline-flex items-center justify-center bg-white text-[#1A1A1A] text-xs sm:text-sm md:text-base font-bold px-4 sm:px-8 md:px-10 py-1.5 sm:py-2.5 md:py-3.5 rounded-full hover:bg-[#F2F4F7] transition-all shadow-xl whitespace-nowrap active:scale-95 border-none"
                       >
                         Shop Now
-                        <ExternalLink size={16} className="ml-2 sm:w-[20px] sm:h-[20px]" />
+                        <ExternalLink size={14} className="ml-1.5 sm:w-[18px] sm:h-[18px]" />
                       </Link>
                     </div>
                   </div>
@@ -105,10 +105,10 @@ const DashboardBanner = () => {
                   e.stopPropagation();
                   setIsVisible(false);
                 }}
-                className="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-all border border-white/30 cursor-pointer z-10"
+                className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-all border border-white/30 cursor-pointer z-10"
                 aria-label="Close banner"
               >
-                <X size={16} className="sm:w-[20px] sm:h-[20px]" />
+                <X size={14} className="sm:w-[18px] sm:h-[18px]" />
               </button>
 
               {/* Navigation Arrows */}
@@ -116,32 +116,32 @@ const DashboardBanner = () => {
                 <>
                   <button
                     onClick={handlePrev}
-                    className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-all border border-white/30 cursor-pointer z-10"
+                    className="hidden xs:flex absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-sm items-center justify-center text-white hover:bg-white/40 transition-all border border-white/30 cursor-pointer z-10"
                     aria-label="Previous slide"
                   >
-                    <ChevronLeft size={20} />
+                    <ChevronLeft size={18} className="sm:w-5 sm:h-5" />
                   </button>
                   <button
                     onClick={handleNext}
-                    className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-all border border-white/30 cursor-pointer z-10"
+                    className="hidden xs:flex absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-white/20 backdrop-blur-sm items-center justify-center text-white hover:bg-white/40 transition-all border border-white/30 cursor-pointer z-10"
                     aria-label="Next slide"
                   >
-                    <ChevronRight size={20} />
+                    <ChevronRight size={18} className="sm:w-5 sm:h-5" />
                   </button>
                 </>
               )}
 
               {/* Dot Indicators */}
               {ads.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2.5">
+                <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2.5">
                   {ads.map((_, dot) => (
                     <button
                       key={dot}
                       onClick={() => setActiveDot(dot)}
                       className={`transition-all rounded-full cursor-pointer ${
                         activeDot === dot
-                          ? "w-6 h-1.5 sm:w-8 sm:h-2 bg-white"
-                          : "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white/50 hover:bg-white/70"
+                          ? "w-5 h-1 sm:w-8 sm:h-2 bg-white"
+                          : "w-1 h-1 sm:w-2 sm:h-2 bg-white/50 hover:bg-white/70"
                       }`}
                       aria-label={`Slide ${dot + 1}`}
                     />

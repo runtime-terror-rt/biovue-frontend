@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useSubscriptionStatus } from "@/lib/hooks/useSubscriptionStatus";
+import { useTrialCountdown } from "@/lib/hooks/useTrialCountdown";
+import { useDynamicUserPlan } from "@/lib/hooks/useDynamicUserPlan";
 import { Calendar, AlertTriangle, ArrowRight, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,6 +23,9 @@ export default function ExpiryIndicator({
   forceShow,
 }: ExpiryIndicatorProps) {
   const status = useSubscriptionStatus();
+  const { isTrial } = useTrialCountdown();
+  const { isPaid, isPlus, isPremium } = useDynamicUserPlan();
+  const isPaidUser = isPaid || isPlus || isPremium || !isTrial;
   const [showTooltip, setShowTooltip] = useState(false);
 
   const isLoading = status.isLoading;
@@ -108,6 +113,26 @@ export default function ExpiryIndicator({
     return () => clearInterval(interval);
   }, [status.expiryTimestamp, accessUntil, diffDays]);
 
+  // Format expiration date for paid plans (Plus / Premium) - must be called before early returns
+  const formattedExpiryDate = useMemo(() => {
+    let dateToFormat = accessUntil;
+    if (!dateToFormat && status.expiryTimestamp) {
+      dateToFormat = new Date(status.expiryTimestamp).toISOString();
+    }
+    if (!dateToFormat) return null;
+    try {
+      const d = new Date(dateToFormat);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+        });
+      }
+    } catch {}
+    return String(dateToFormat);
+  }, [accessUntil, status.expiryTimestamp]);
+
   // If loading and no props passed, return null
   if (isLoading && propDiffDays === undefined) return null;
 
@@ -125,14 +150,21 @@ export default function ExpiryIndicator({
       ? propIsAlert
       : (isExpired || isCancelled || !status.isSafe || diffDays <= 7);
 
-  // If live countdown is available, use it; otherwise fallback to accessUntil or day count
-  const displayLabel = countdown.formatted
+  // For Plus & Premium: only expiration date is displayed, countdown is not required.
+  // For Free Trial: only 7-day trial countdown is displayed.
+  const displayLabel = isPaidUser
+    ? formattedExpiryDate
+      ? (isExpired ? `Expired ${formattedExpiryDate}` : formattedExpiryDate)
+      : isExpired
+      ? "Expired"
+      : "Active"
+    : countdown.formatted
     ? countdown.formatted
     : accessUntil || (diffDays > 0 ? `${diffDays} Days` : "Today");
 
   return (
     <div
-      className={cn("relative inline-flex items-center", className)}
+      className={cn("relative inline-flex items-center shrink-0", className)}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
@@ -141,7 +173,7 @@ export default function ExpiryIndicator({
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           className={cn(
-            "group relative flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold shadow-xs transition-all duration-300 cursor-pointer overflow-hidden select-none",
+            "group relative flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-full border text-xs font-semibold shadow-xs transition-all duration-300 cursor-pointer overflow-hidden select-none shrink-0",
             isExpired
               ? "bg-gradient-to-r from-[#FFF1F2] to-[#FFE4E6] border-rose-300/80 text-rose-700 shadow-rose-100"
               : isCancelled
@@ -157,7 +189,7 @@ export default function ExpiryIndicator({
           {/* Icon with pulsing indicator */}
           <div
             className={cn(
-              "w-5 h-5 rounded-full flex items-center justify-center shrink-0",
+              "w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0",
               isExpired
                 ? "bg-rose-500 text-white"
                 : isCancelled
@@ -169,16 +201,18 @@ export default function ExpiryIndicator({
           >
             {isCancelled ? (
               <Clock size={11} strokeWidth={2.5} className="animate-spin-slow" />
-            ) : (
+            ) : isPaidUser ? (
               <Calendar size={11} strokeWidth={2.5} />
+            ) : (
+              <Clock size={11} strokeWidth={2.5} />
             )}
           </div>
 
           {/* Text labels */}
-          <div className="flex items-center gap-1.5 leading-none">
+          <div className="flex items-center gap-1 sm:gap-1.5 leading-none">
             <span
               className={cn(
-                "text-[10px] font-bold uppercase tracking-wider",
+                "hidden md:inline text-[10px] font-bold uppercase tracking-wider",
                 isExpired
                   ? "text-rose-500"
                   : isCancelled
@@ -186,11 +220,11 @@ export default function ExpiryIndicator({
                     : "text-[#0FA4A9]",
               )}
             >
-              {isExpired ? "Expired" : "Expires In:"}
+              {isExpired ? "Expired" : isPaidUser ? "Expires:" : "Trial Ends In:"}
             </span>
             <span
               className={cn(
-                "font-black font-mono tracking-tight text-[11px]",
+                "font-black font-mono tracking-tight text-[10px] sm:text-[11px] whitespace-nowrap",
                 isExpired
                   ? "text-rose-700 font-sans"
                   : isCancelled
@@ -198,12 +232,23 @@ export default function ExpiryIndicator({
                     : "text-[#0FA4A9]",
               )}
             >
-              {displayLabel}
+              <span className="sm:hidden">
+                {isPaidUser
+                  ? formattedExpiryDate || (isExpired ? "Expired" : "Active")
+                  : isExpired
+                  ? "0d"
+                  : countdown.days > 0
+                  ? `${countdown.days}d`
+                  : `${countdown.hours}h`}
+              </span>
+              <span className="hidden sm:inline">
+                {displayLabel}
+              </span>
             </span>
           </div>
 
           {/* Pulse dot */}
-          <span className="relative flex h-2 w-2 ml-0.5">
+          <span className="relative hidden xs:flex h-1.5 w-1.5 sm:h-2 sm:w-2 ml-0.5">
             <span
               className={cn(
                 "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
@@ -216,7 +261,7 @@ export default function ExpiryIndicator({
             />
             <span
               className={cn(
-                "relative inline-flex rounded-full h-2 w-2",
+                "relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2",
                 isExpired
                   ? "bg-rose-500"
                   : isCancelled
@@ -236,7 +281,7 @@ export default function ExpiryIndicator({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 w-72 p-3.5 bg-white rounded-xl shadow-xl border border-gray-100 text-left pointer-events-none"
+            className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 w-64 sm:w-72 max-w-[calc(100vw-1.5rem)] p-3 sm:p-3.5 bg-white rounded-xl shadow-xl border border-gray-100 text-left pointer-events-none"
           >
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-600 mb-1">
               <AlertTriangle size={13} />

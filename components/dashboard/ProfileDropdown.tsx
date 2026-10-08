@@ -90,10 +90,10 @@ export default function ProfileDropdown({ roleLabel, settingsHref }: ProfileDrop
     <div className="relative" ref={dropdownRef}>
       <button 
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="flex items-center gap-3 p-1.5 pr-3 rounded-2xl hover:bg-gray-100 transition-all cursor-pointer group"
+        className="flex items-center gap-1.5 sm:gap-2.5 md:gap-3 p-1 sm:p-1.5 sm:pr-2.5 rounded-2xl hover:bg-gray-100 transition-all cursor-pointer group"
       >
         <div className="relative">
-          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm group-hover:shadow-md transition-shadow bg-gray-50 flex items-center justify-center">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full overflow-hidden border-2 border-white shadow-sm group-hover:shadow-md transition-shadow bg-gray-50 flex items-center justify-center">
             {imageSrcWithCacheBust ? (
               <Image
                 key={imageSrcWithCacheBust}
@@ -105,21 +105,21 @@ export default function ProfileDropdown({ roleLabel, settingsHref }: ProfileDrop
                 unoptimized
               />
             ) : (
-              <User size={20} className="text-[#94A3B8]" />
+              <User size={18} className="text-[#94A3B8]" />
             )}
           </div>
           {/* Online indicator */}
-          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+          <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 border-2 border-white rounded-full"></div>
         </div>
 
-        <div className="hidden md:flex flex-col items-start leading-tight">
+        <div className="hidden lg:flex flex-col items-start leading-tight">
           <span className="text-sm font-bold text-[#1F2D2E] group-hover:text-[#0FA4A9] transition-colors line-clamp-1">{fullName}</span>
           <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-tighter">{roleLabel}</span>
         </div>
         
         <ChevronDown 
-          size={16} 
-          className={`text-[#94A3B8] transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} 
+          size={14} 
+          className={`text-[#94A3B8] transition-transform duration-200 hidden lg:block ${isDropdownOpen ? 'rotate-180' : ''}`} 
         />
       </button>
 
@@ -131,7 +131,7 @@ export default function ProfileDropdown({ roleLabel, settingsHref }: ProfileDrop
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden py-2 z-50"
+            className="absolute right-0 mt-2 sm:mt-3 w-52 sm:w-56 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden py-2 z-50"
           >
             <div className="px-4 py-3 border-b border-gray-50 mb-1">
               <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-1">Account Info</p>

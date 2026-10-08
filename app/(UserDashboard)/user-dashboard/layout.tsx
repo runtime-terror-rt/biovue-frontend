@@ -59,61 +59,77 @@ export default function UserDashboardLayout({
         </Suspense>
 
         {/* Right side */}
-        <div className="flex flex-col flex-1 min-w-0">
-          {/* Header - Now persistent in Layout */}
-          <header className="sticky top-0 z-20 flex items-center justify-between py-4 bg-white border-b border-gray-100 px-4 md:px-6 w-full">
-            <div className="flex flex-col pl-12 md:pl-0 flex-1 min-w-0 pr-2">
-              <h1 className="text-lg md:text-xl font-semibold text-[#1F2D2E] truncate">
+        <div className="flex flex-col flex-1 min-w-0 max-w-full">
+          {/* Header - Responsive for all devices */}
+          <header className="sticky top-0 z-20 flex items-center justify-between py-2 sm:py-3 md:py-4 bg-white/95 backdrop-blur-md border-b border-gray-100 px-2 sm:px-4 md:px-6 w-full max-w-full shrink-0">
+            {/* Title & Hamburger Spacing */}
+            <div className="flex items-center min-w-0 flex-1 pr-1 sm:pr-2 pl-[50px] sm:pl-14 md:pl-0">
+              <h1 className="text-xs sm:text-base md:text-xl font-bold md:font-semibold text-[#1F2D2E] truncate tracking-tight">
                 {getPageTitle()}
               </h1>
             </div>
-            <div className="flex items-center gap-2 sm:gap-4 md:gap-6 ml-auto">
-              <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
+
+            {/* Header Right Actions */}
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4 shrink-0">
+              {/* Status Indicators Group */}
+              <div className="flex items-center gap-1 sm:gap-2 md:gap-3 shrink-0">
                 <TrialCountdownHeaderBadge />
-                <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
+                
+                {/* Secondary Indicators - Visible on tablet/desktop to save mobile header space */}
+                <div className="hidden sm:flex items-center gap-1 sm:gap-2 shrink-0">
                   <ProjectionLimitIndicator />
                   <ExpiryIndicator />
                 </div>
               </div>
-              <NotificationBell />
-              <div className="flex items-center gap-1 sm:gap-3 md:pr-2">
+
+              {/* Notification Bell */}
+              <NotificationBell iconSize={18} className="shrink-0" />
+
+              {/* Divider on sm+ */}
+              <div className="hidden sm:block h-5 sm:h-6 w-px bg-gray-200/70 shrink-0" />
+
+              {/* Profile Dropdown */}
+              <div className="flex items-center shrink-0">
                 <ProfileDropdown roleLabel="User" settingsHref="/user-dashboard/settings" />
               </div>
+
+              {/* Subscription Plan Badge / Upgrade CTA */}
               {mounted && (
-                <>
+                <div className="flex items-center shrink-0">
                   {isPremium ? (
-                    <div className="flex items-center gap-1.5 bg-[#FFF4E5] text-[#E65100] border border-[#FFE0B2] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold shadow-xs select-none">
-                      <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF8A00]" />
-                      <span>Premium</span>
+                    <div className="flex items-center gap-1 sm:gap-1.5 bg-[#FFF4E5] text-[#E65100] border border-[#FFE0B2] px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-lg text-[11px] sm:text-xs md:text-sm font-bold shadow-xs select-none shrink-0">
+                      <Crown size={14} fill="currentColor" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF8A00]" />
+                      <span className="hidden xs:inline sm:inline">Premium</span>
                     </div>
                   ) : isPlus ? (
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1.5 bg-[#E6F8F6] text-[#0FA4A9] border border-[#0FA4A9]/30 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold shadow-xs select-none">
-                        <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5 text-[#0FA4A9]" />
+                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                      <div className="hidden md:flex items-center gap-1.5 bg-[#E6F8F6] text-[#0FA4A9] border border-[#0FA4A9]/30 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-bold shadow-xs select-none">
+                        <Crown size={15} fill="currentColor" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0FA4A9]" />
                         <span>Plus</span>
                       </div>
-                      <Link href="/user-dashboard/upgrade">
-                        <button className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] hover:bg-[#0D8E92] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
-                          <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <Link href="/user-dashboard/upgrade" className="shrink-0">
+                        <button className="flex items-center gap-1 sm:gap-1.5 bg-[#0FA4A9] hover:bg-[#0D8E92] text-white px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-lg font-semibold transition-all text-[11px] sm:text-xs md:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95 whitespace-nowrap shrink-0">
+                          <Crown size={13} fill="currentColor" className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 shrink-0" />
                           <span>Upgrade</span>
                         </button>
                       </Link>
                     </div>
                   ) : (
-                    <Link href="/user-dashboard/upgrade">
-                      <button className="flex items-center gap-1 sm:gap-2 bg-[#0FA4A9] hover:bg-[#0D8E92] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold transition-all text-xs sm:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95">
-                        <Crown size={18} fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span>Start Paid Plan</span>
+                    <Link href="/user-dashboard/upgrade" className="shrink-0">
+                      <button className="flex items-center gap-1 sm:gap-1.5 bg-[#0FA4A9] hover:bg-[#0D8E92] text-white px-2 sm:px-3.5 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-lg font-semibold transition-all text-[11px] sm:text-xs md:text-sm cursor-pointer shadow-sm shadow-[#0FA4A9]/20 active:scale-95 whitespace-nowrap shrink-0">
+                        <Crown size={13} fill="currentColor" className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 shrink-0" />
+                        <span className="hidden sm:inline">Start Paid Plan</span>
+                        <span className="sm:hidden">Upgrade</span>
                       </button>
                     </Link>
                   )}
-                </>
+                </div>
               )}
             </div>
           </header>
 
           {/* Page Content */}
-          <main className="flex-1 p-4 md:p-6 overflow-x-hidden w-full">{children}</main>
+          <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-x-hidden w-full">{children}</main>
         </div>
       </div>
     </ProtectedRoute>

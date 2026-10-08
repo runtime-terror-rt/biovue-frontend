@@ -59,12 +59,12 @@ export default function NotificationBell({ className, iconSize = 20 }: Notificat
     <div className={cn("relative", className)}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-full bg-[#F4FBFA] hover:bg-gray-100 transition-colors cursor-pointer flex items-center justify-center"
+        className="relative p-1.5 sm:p-2 rounded-full bg-[#F4FBFA] hover:bg-gray-100 transition-colors cursor-pointer flex items-center justify-center"
         aria-label="Notifications"
       >
         <Bell size={iconSize} className="text-[#5F6F73]" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+          <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 min-w-[16px] sm:min-w-[18px] h-[16px] sm:h-[18px] px-1 bg-red-500 text-white text-[9px] sm:text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}

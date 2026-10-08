@@ -50,7 +50,7 @@ export default function TrialCountdownHeaderBadge({
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           className={cn(
-            "group relative flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold shadow-sm transition-all duration-300 cursor-pointer overflow-hidden",
+            "group relative flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-full border text-xs font-semibold shadow-xs transition-all duration-300 cursor-pointer overflow-hidden shrink-0",
             isUrgent
               ? "bg-gradient-to-r from-[#FFF1F2] to-[#FFE4E6] border-rose-300/80 text-rose-700 shadow-rose-100"
               : "bg-gradient-to-r from-[#EEF6FF] via-[#F0FDF9] to-[#E6F8F6] border-[#3A86FF]/25 text-[#1F2D2E] hover:border-[#3A86FF]/50 shadow-[#3A86FF]/5",
@@ -62,20 +62,20 @@ export default function TrialCountdownHeaderBadge({
           {/* Icon with pulsing indicator */}
           <div
             className={cn(
-              "w-5 h-5 rounded-full flex items-center justify-center shrink-0",
+              "w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0",
               isUrgent
                 ? "bg-rose-500 text-white"
-                : "bg-[#3A86FF] text-white shadow-sm",
+                : "bg-[#3A86FF] text-white shadow-xs",
             )}
           >
             <Clock size={11} strokeWidth={2.5} className="animate-spin-slow" />
           </div>
 
           {/* Text labels */}
-          <div className="flex items-center gap-1.5 leading-none">
+          <div className="flex items-center gap-1 sm:gap-1.5 leading-none">
             <span
               className={cn(
-                "hidden sm:inline text-[10px] font-bold uppercase tracking-wider",
+                "hidden md:inline text-[10px] font-bold uppercase tracking-wider",
                 isUrgent ? "text-rose-500" : "text-[#3A86FF]",
               )}
             >
@@ -83,21 +83,22 @@ export default function TrialCountdownHeaderBadge({
             </span>
             <span
               className={cn(
-                "font-black tracking-tight",
+                "font-black tracking-tight text-[10px] sm:text-xs whitespace-nowrap",
                 isUrgent ? "text-rose-700" : "text-[#0FA4A9]",
               )}
             >
-              {dayLabel}
+              <span className="sm:hidden">{isExpired ? "0d" : `${remainingDays}d`}</span>
+              <span className="hidden sm:inline">{dayLabel}</span>
             </span>
             {targetPlanLabel && (
-              <span className="hidden lg:inline-flex items-center text-[10px] font-semibold text-[#5F6F73] ml-0.5">
+              <span className="hidden xl:inline-flex items-center text-[10px] font-semibold text-[#5F6F73] ml-0.5">
                 • <span className="ml-1 text-[#0FA4A9]">{targetPlanLabel}</span>
               </span>
             )}
           </div>
 
           {/* Pulse dot */}
-          <span className="relative flex h-2 w-2 ml-0.5">
+          <span className="relative hidden xs:flex h-1.5 w-1.5 sm:h-2 sm:w-2 ml-0.5">
             <span
               className={cn(
                 "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
@@ -106,7 +107,7 @@ export default function TrialCountdownHeaderBadge({
             />
             <span
               className={cn(
-                "relative inline-flex rounded-full h-2 w-2",
+                "relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2",
                 isUrgent ? "bg-rose-500" : "bg-[#0FA4A9]",
               )}
             />
@@ -122,7 +123,7 @@ export default function TrialCountdownHeaderBadge({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 w-64 p-3 bg-white rounded-xl shadow-xl border border-gray-100 text-left pointer-events-none"
+            className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 w-60 sm:w-64 max-w-[calc(100vw-1.5rem)] p-3 bg-white rounded-xl shadow-xl border border-gray-100 text-left pointer-events-none"
           >
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#3A86FF] mb-1">
               <Sparkles size={12} />

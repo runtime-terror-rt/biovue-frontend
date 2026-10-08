@@ -264,7 +264,7 @@ export default function HabitDetailPage() {
           <div className="bg-white rounded-[16px] p-8 md:p-12 border border-gray-100 shadow-sm">
           
           {/* Header section */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12">
+          <div className="flex flex-col lg:flex-row sm:items-center justify-between gap-6 mb-12">
             <div className="flex items-center gap-6">
               <div className={cn("w-16 h-16 rounded-xl flex items-center justify-center shrink-0", habit.iconBg)}>
                 {habit.icon}
@@ -307,7 +307,7 @@ export default function HabitDetailPage() {
                   <span className="text-[#1F2D2E] font-bold text-[15px]">{habit.daysLogged} Logged</span>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <div className="bg-[#EAF6F6] rounded-2xl p-8 flex flex-col gap-2">
                     <div className="text-[#94A3B8] font-bold text-[11px] uppercase tracking-widest">WEEKLY AVERAGE</div>
                     <div className="text-[20px] font-bold text-[#1F2D2E] leading-tight">{habit.avg}</div>

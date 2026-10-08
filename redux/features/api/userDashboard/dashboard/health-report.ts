@@ -44,7 +44,7 @@ export interface SleepHours {
 }
 
 export interface Hydration {
-  current_glasses: number;
+  current_oz: number;
   target: string;
 }
 

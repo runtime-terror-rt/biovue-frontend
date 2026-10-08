@@ -66,7 +66,13 @@ const ProjectionsPage = () => {
   });
   const userProfile = profileResponse?.data?.profile;
   const router = useRouter();
-  const { isPremium, isPaid, isFree } = useDynamicUserPlan();
+  const { isPremium, isPlus, isPaid, isFree } = useDynamicUserPlan();
+
+  // Rules:
+  // - Plus plan: 2K is usable for "6 months" and "1 year". For "5 years", 2K is grayed out/disabled.
+  // - Premium plan: 1K, 2K, 6 months, 1 year, 5 years are all usable.
+  // - Free / unpaid: 2K is disabled for all timeframes, and only 1-year is available.
+  const is2KDisabled = !isPremium && (!isPlus || timeHorizon === "5 years");
 
   useEffect(() => {
     if (!isPaid && (timeHorizon === "6 months" || timeHorizon === "5 years")) {
@@ -75,10 +81,10 @@ const ProjectionsPage = () => {
   }, [isPaid, timeHorizon]);
 
   useEffect(() => {
-    if (!isPremium && resolution === "2k") {
+    if (is2KDisabled && resolution === "2k") {
       setResolution("1k");
     }
-  }, [isPremium, resolution]);
+  }, [is2KDisabled, resolution]);
 
   const handleSelectTimeHorizon = (time: TimeHorizon) => {
     if (!isPaid && (time === "6 months" || time === "5 years")) {
@@ -91,8 +97,12 @@ const ProjectionsPage = () => {
   };
 
   const handleSelectResolution = (res: "1k" | "2k" | "4k") => {
-    if (res === "2k" && !isPremium) {
-      toast.error("2K resolution is available exclusively on the Premium plan. Please upgrade to unlock.");
+    if (res === "2k" && is2KDisabled) {
+      if (isPlus && timeHorizon === "5 years") {
+        toast.info("2K resolution for 5-year projections is available on the Premium plan. Please upgrade to unlock.");
+      } else {
+        toast.error("2K resolution is available on Plus (for 6 months & 1 year) and Premium plans. Please upgrade to unlock.");
+      }
       return;
     }
     setResolution(res);
@@ -381,38 +391,63 @@ const ProjectionsPage = () => {
               </div>
             </div>
 
-            {/* 2K Resolution - Premium Plan Only */}
+            {/* 2K Resolution - Plus (6m & 1y) and Premium (all) */}
             <div
               onClick={() => handleSelectResolution("2k")}
               className={cn(
-                "flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer",
-                resolution === "2k"
-                  ? "border-[#3A86FF] bg-[#F8FAFF]"
-                  : "border-gray-100 hover:border-gray-200",
-                !isPremium && "bg-gray-50/60 opacity-90",
+                "flex items-center justify-between p-4 rounded-xl border-2 transition-all",
+                is2KDisabled
+                  ? "bg-gray-100/70 border-dashed border-gray-200 text-gray-400 opacity-60 cursor-not-allowed select-none"
+                  : resolution === "2k"
+                  ? "border-[#3A86FF] bg-[#F8FAFF] cursor-pointer"
+                  : "border-gray-100 hover:border-gray-200 cursor-pointer",
               )}
             >
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-[#041228]">2K</span>
-                {!isPremium && (
+                <span className={cn("font-semibold", is2KDisabled ? "text-gray-400" : "text-[#041228]")}>
+                  2K
+                </span>
+                {is2KDisabled && (
                   <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
-                    <Crown size={12} fill="currentColor" /> Premium Only
+                    <Crown size={12} fill="currentColor" />
+                    {isPlus && timeHorizon === "5 years" ? "Premium for 5-Year" : "Plus / Premium"}
+                  </span>
+                )}
+                {!is2KDisabled && isPlus && (
+                  <span className="text-[10px] font-bold bg-teal-500/10 text-teal-600 border border-teal-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    Plus Plan
+                  </span>
+                )}
+                {!is2KDisabled && isPremium && (
+                  <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    Unlocked
                   </span>
                 )}
               </div>
               <div
                 className={cn(
                   "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                  resolution === "2k"
+                  is2KDisabled
+                    ? "border-gray-300 bg-gray-100"
+                    : resolution === "2k"
                     ? "border-[#3A86FF] bg-[#3A86FF]"
                     : "border-gray-300",
                 )}
               >
-                {resolution === "2k" && (
+                {resolution === "2k" && !is2KDisabled && (
                   <div className="w-2 h-2 bg-white rounded-full" />
                 )}
               </div>
             </div>
+
+            {isPlus && timeHorizon === "5 years" && (
+              <p className="text-xs text-[#5F6F73] flex items-center gap-1.5 pt-1">
+                <Info size={13} className="text-[#3A86FF] shrink-0" />
+                <span>
+                  Plus plan includes 2K for 6-month &amp; 1-year projections. Upgrade to <strong>Premium</strong> for 5-year 2K projections.
+                </span>
+              </p>
+            )}
 
             {/* 4K Resolution - Hidden for future use */}
             {/* 

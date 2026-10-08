@@ -23,7 +23,7 @@ export default function TrialCountdownBanner({
   return (
     <div
       className={cn(
-        "rounded-2xl border p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4",
+        "rounded-2xl border p-3.5 sm:p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4",
         isUrgent
           ? "bg-[#FFF5F5] border-red-100"
           : "bg-gradient-to-r from-[#E4EFFF] to-[#E6F6F6] border-[#3A86FF]/15",
@@ -32,30 +32,30 @@ export default function TrialCountdownBanner({
       <div className="flex items-start gap-3">
         <div
           className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+            "w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0",
             isUrgent ? "bg-red-100 text-red-600" : "bg-white text-[#3A86FF]",
           )}
         >
-          <Clock3 size={20} />
+          <Clock3 size={18} className="sm:w-5 sm:h-5" />
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <p
             className={cn(
-              "text-[10px] font-bold uppercase tracking-widest mb-1",
+              "text-[10px] font-bold uppercase tracking-widest mb-0.5 sm:mb-1",
               isUrgent ? "text-red-500" : "text-[#3A86FF]",
             )}
           >
             Free trial
           </p>
-          <h3 className="text-lg md:text-xl font-bold text-[#1F2D2E]">
+          <h3 className="text-base sm:text-lg md:text-xl font-bold text-[#1F2D2E]">
             {remainingDays <= 0
               ? "Your trial has ended"
               : `${remainingDays} ${remainingDays === 1 ? "day" : "days"} remaining`}
           </h3>
-          <p className="text-sm text-[#5F6F73] mt-0.5">
+          <p className="text-xs sm:text-sm text-[#5F6F73] mt-0.5">
             After 7 days, your selected plan will be charged to the saved card.
           </p>
-          <div className="mt-3 h-1.5 w-48 max-w-full rounded-full bg-white/80 overflow-hidden">
+          <div className="mt-2.5 sm:mt-3 h-1.5 w-full sm:w-48 max-w-full rounded-full bg-white/80 overflow-hidden">
             <div
               className={cn(
                 "h-full rounded-full",
@@ -68,7 +68,7 @@ export default function TrialCountdownBanner({
       </div>
       <Link
         href={settingsHref}
-        className="bg-[#0FA4A9] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-opacity-90 transition-all whitespace-nowrap text-center"
+        className="w-full sm:w-auto bg-[#0FA4A9] text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:bg-opacity-90 transition-all whitespace-nowrap text-center cursor-pointer shadow-xs active:scale-95"
       >
         Manage plan
       </Link>

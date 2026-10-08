@@ -30,14 +30,13 @@ export default function SubscriptionGuard({ children }: SubscriptionGuardProps) 
     );
   }
 
-  // Helper to detect projection-related routes
+  // Helper to detect projection-related routes (Creation routes only - Gallery remains accessible even when credits are 0)
   const isProjectionRoute = (p?: string | null) => {
     if (!p) return false;
+    if (p.includes("projection-galary")) return false;
     return (
       p.includes("/user-dashboard/projections") ||
-      p.includes("/user-dashboard/projection-galary") ||
-      p.includes("/projections") ||
-      p.includes("projection-galary")
+      p.includes("/projections")
     );
   };
 
@@ -46,10 +45,12 @@ export default function SubscriptionGuard({ children }: SubscriptionGuardProps) 
   // If fully restricted (trial ended), we already redirected above.
   // For partial restrictions we render the page but blur/disable interaction.
 
-  // Case A: expiry over -> only allow dashboard and settings
+  // Case A: expiry over -> only allow dashboard, settings, and projection galary
   if (expiryOver) {
     const allowed =
-      pathname === "/user-dashboard" || pathname?.includes("/user-dashboard/settings");
+      pathname === "/user-dashboard" ||
+      pathname?.includes("/user-dashboard/settings") ||
+      pathname?.includes("/user-dashboard/projection-galary");
     if (allowed) return <>{children}</>;
 
     return (

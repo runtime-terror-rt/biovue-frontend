@@ -94,8 +94,7 @@ export default function NotificationDropdown({ isOpen, onClose, onMarkAllAsRead,
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute top-14 right-6 w-[400px] bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden flex flex-col max-h-[85vh]"
+            className="fixed inset-x-2.5 top-14 sm:inset-x-auto sm:absolute sm:top-12 sm:right-0 w-auto sm:w-[380px] md:w-[400px] max-w-[calc(100vw-1.25rem)] bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden flex flex-col max-h-[85vh]"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-5 bg-[#F9FAFB] border-b border-gray-100">

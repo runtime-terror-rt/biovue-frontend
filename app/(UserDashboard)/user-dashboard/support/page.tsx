@@ -1286,7 +1286,7 @@ const SupportPage = () => {
               </div>
             </div>
           ) : (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 mt-12">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 mt-12 px-6 md:px-8 lg:px-12">
               {/* Header and Upload Area */}
               <div className="flex flex-col gap-8">
                 {/* Navigation & Title */}
@@ -1369,7 +1369,7 @@ const SupportPage = () => {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {displayRecommended.length > 0 ? (
                     displayRecommended.map((coach: any) => (
                       <RecommendationCard
@@ -1503,7 +1503,7 @@ const SupportPage = () => {
                   Discover expert help across the BioVue network.
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {displayBrowse
                     .slice(browseIndex, browseIndex + 3)
                     .map((item: any) => (

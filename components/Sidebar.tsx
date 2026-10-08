@@ -83,8 +83,16 @@ export default function Sidebar({ role }: SidebarProps) {
     }
   };
 
+  const [isDesktop, setIsDesktop] = useState(false);
+
   useEffect(() => {
     setMounted(true);
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const handleLogout = () => {
@@ -124,52 +132,57 @@ export default function Sidebar({ role }: SidebarProps) {
   }, [pathname, searchParams, menu]);
 
   // Handle server-side rendering or non-mounted state
-  const showContent = mounted && (isExpanded || window.innerWidth >= 768);
+  const showContent = mounted && (isExpanded || isDesktop);
 
   return (
     <>
-      {/* Hamburger Menu Button - Visible on mobile */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="fixed top-4 left-4 z-50 md:hidden p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
-        aria-label="Toggle sidebar"
-      >
-        {isExpanded ? (
-          <X size={24} className="fixed right-45" />
-        ) : (
-          <Menu size={24} />
-        )}
-      </button>
+      {/* Hamburger Menu Button - Visible on mobile when drawer is closed */}
+      {!isExpanded && (
+        <button
+          onClick={() => setIsExpanded(true)}
+          className="fixed top-2.5 sm:top-3 left-2.5 sm:left-3 z-30 md:hidden p-2 rounded-xl hover:bg-gray-100 bg-white/95 backdrop-blur-md shadow-xs border border-gray-100 cursor-pointer flex items-center justify-center transition-all active:scale-95"
+          aria-label="Open sidebar"
+        >
+          <Menu size={20} className="text-gray-700" />
+        </button>
+      )}
 
       {/* Overlay - Visible when sidebar is expanded on mobile */}
       {isExpanded && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 md:hidden transition-opacity"
           onClick={() => setIsExpanded(false)}
         />
       )}
 
       <aside
-        className={`fixed md:sticky top-0 left-0 self-start h-screen z-40 bg-white flex flex-col px-3 py-8 md:px-6 transition-all duration-300 ease-in-out border-r border-gray-200 ${
-          isExpanded
-            ? "w-64 translate-x-0 shadow-2xl md:shadow-none"
+        className={`fixed md:sticky top-0 left-0 self-start h-screen z-50 md:z-30 bg-white flex flex-col px-3.5 py-6 md:px-6 md:py-8 transition-all duration-300 ease-in-out border-r border-gray-200 ${isExpanded
+            ? "w-64 sm:w-72 translate-x-0 shadow-2xl md:shadow-none"
             : "-translate-x-full md:translate-x-0 w-20 md:w-64"
-        }`}
+          }`}
       >
-        {/* Logo */}
-        <div
-          className={`mb-8 transition-all duration-300 flex items-center justify-center md:block 
-             w-16 md:w-25 h-8 md:h-14 `}
-        >
-          <Link href="/" className="block">
-            <Image
-              src="/images/logo.png"
-              alt="BioVue"
-              width={99}
-              height={56}
-              className={`object-contain w-full h-full`}
-            />
-          </Link>
+        {/* Header (Logo + Mobile Close Button) */}
+        <div className="mb-6 md:mb-8 flex items-center justify-between w-full">
+          <div className="w-16 md:w-25 h-8 md:h-12 flex items-center">
+            <Link href="/" className="block">
+              <Image
+                src="/images/logo.png"
+                alt="BioVue"
+                width={99}
+                height={56}
+                className="object-contain w-full h-full"
+                priority
+              />
+            </Link>
+          </div>
+          {/* Mobile close button inside drawer */}
+          <button
+            onClick={() => setIsExpanded(false)}
+            className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+            aria-label="Close sidebar"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Menu */}
@@ -210,11 +223,10 @@ export default function Sidebar({ role }: SidebarProps) {
                     <Link
                       href={item.href}
                       onClick={() => setIsExpanded(false)}
-                      className={`flex-1 cursor-pointer flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap ${
-                        isActive
+                      className={`flex-1 cursor-pointer flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 whitespace-nowrap ${isActive
                           ? "bg-[#3A86FF25] text-black"
                           : "text-gray-600 hover:bg-gray-100"
-                      }`}
+                        }`}
                     >
                       <Icon size={20} className="shrink-0" />
                       {showContent && <span>{item.label}</span>}
@@ -224,9 +236,8 @@ export default function Sidebar({ role }: SidebarProps) {
                   {hasChildren && showContent && (
                     <button
                       onClick={(e) => toggleSubmenu(item.label, e)}
-                      className={`absolute right-2 p-1 rounded-md hover:opacity-80 text-gray-400 transition-transform duration-300 ${
-                        isOpen ? "rotate-180" : ""
-                       }`}
+                      className={`absolute right-2 p-1 rounded-md hover:opacity-80 text-gray-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""
+                        }`}
                     >
                       <ChevronDown className="cursor-pointer" size={24} />
                     </button>
@@ -261,11 +272,10 @@ export default function Sidebar({ role }: SidebarProps) {
                             key={child.label}
                             href={child.href}
                             onClick={() => setIsExpanded(false)}
-                            className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
-                              isChildActive
+                            className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors ${isChildActive
                                 ? "text-[#3A86FF] bg-[#3A86FF10]"
                                 : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
-                            }`}
+                              }`}
                           >
                             - {child.label}
                           </Link>
@@ -281,9 +291,8 @@ export default function Sidebar({ role }: SidebarProps) {
         {/* Sign Out Button */}
         <button
           onClick={handleLogout}
-          className={`flex items-center gap-3 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-all duration-300 whitespace-nowrap cursor-pointer ${
-            isExpanded ? "" : "justify-center px-2 md:px-4 md:justify-start"
-          }`}
+          className={`flex items-center gap-3 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-all duration-300 whitespace-nowrap cursor-pointer ${isExpanded ? "" : "justify-center px-2 md:px-4 md:justify-start"
+            }`}
           title={isExpanded ? "" : "Sign Out"}
         >
           <LogOut size={18} className="shrink-0" />

@@ -38,35 +38,35 @@ export default function TrainerMotivation() {
   const latestMessage = motivationalMessages[0];
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-[#0FA4A9]/5 to-[#3A86FF]/5 border border-[#0FA4A9]/20 rounded-2xl p-6 shadow-sm">
-      <div className="absolute top-0 right-0 p-4 opacity-10">
-        <Quote size={80} className="text-[#0FA4A9]" />
+    <div className="relative overflow-hidden bg-gradient-to-br from-[#0FA4A9]/5 to-[#3A86FF]/5 border border-[#0FA4A9]/20 rounded-2xl p-4 sm:p-5 md:p-6 shadow-xs">
+      <div className="absolute top-0 right-0 p-3 sm:p-4 opacity-10 pointer-events-none">
+        <Quote size={48} className="sm:w-16 sm:h-16 md:w-20 md:h-20 text-[#0FA4A9]" />
       </div>
       
-      <div className="relative z-10 flex flex-col gap-4">
+      <div className="relative z-10 flex flex-col gap-3 sm:gap-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#0FA4A9] rounded-lg text-white">
-            <Sparkles size={18} />
+          <div className="p-1.5 sm:p-2 bg-[#0FA4A9] rounded-lg text-white shrink-0">
+            <Sparkles size={16} className="sm:w-[18px] sm:h-[18px]" />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <Avatar 
               src={latestMessage.sender.image_url || latestMessage.sender.profile_image || latestMessage.sender.profile?.image} 
               name={latestMessage.sender.name} 
               size="sm" 
               border={false}
-              className="w-6 h-6"
+              className="w-5 h-5 sm:w-6 sm:h-6 shrink-0"
             />
-            <h3 className="text-sm font-bold text-[#1F2D2E] uppercase tracking-wider">
+            <h3 className="text-xs sm:text-sm font-bold text-[#1F2D2E] uppercase tracking-wider truncate">
               Motivation from {latestMessage.sender.name}
             </h3>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <p className="text-lg md:text-xl font-medium text-[#1F2D2E] leading-relaxed italic">
+        <div className="space-y-1.5 sm:space-y-2">
+          <p className="text-sm sm:text-base md:text-xl font-medium text-[#1F2D2E] leading-relaxed italic">
             "{latestMessage.cleanMessage}"
           </p>
-          <p className="text-xs text-[#5F6F73] font-medium">
+          <p className="text-[11px] sm:text-xs text-[#5F6F73] font-medium">
             Received on {new Date(latestMessage.created_at).toLocaleDateString("en-US", {
               month: "long",
               day: "numeric",

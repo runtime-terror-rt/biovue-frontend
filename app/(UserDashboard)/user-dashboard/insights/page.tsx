@@ -225,7 +225,7 @@ export default function InsightsPage() {
     <SubscriptionGuard>
       <div className="flex flex-col min-h-[calc(100vh-80px)] p-6 md:p-8 container mx-auto w-full">
       {/* Top Navigation */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-1 bg-[#E6F6F6] p-1 rounded-lg border border-[#BDE8E8]">
           <button
             onClick={() => handleTabChange("current")}

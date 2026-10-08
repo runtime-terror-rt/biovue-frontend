@@ -77,6 +77,61 @@ const SettingsPage = () => {
   }, [tab]);
 
   const currentUser = useSelector(selectCurrentUser);
+  const { accessUntil } = useSubscriptionStatus();
+  const { remainingDays, isTrial } = useTrialCountdown();
+  const { data: projectionLimitData } = useGetProjectionLimitQuery();
+  const { data: paymentSummary } = useGetPaymentSummaryQuery();
+
+  const rawExpireDate = useMemo(() => {
+    // 1. Direct accessUntil or end_date from payment summary / projection limit / user data
+    const directDate =
+      accessUntil ||
+      paymentSummary?.access_until ||
+      (paymentSummary as any)?.data?.access_until ||
+      paymentSummary?.latest_payment?.access_until ||
+      (paymentSummary as any)?.data?.latest_payment?.access_until ||
+      paymentSummary?.latest_payment?.end_date ||
+      (paymentSummary as any)?.data?.latest_payment?.end_date ||
+      projectionLimitData?.expired_at ||
+      (projectionLimitData as any)?.data?.expired_at ||
+      currentUser?.access_until ||
+      currentUser?.next_billing_date ||
+      currentUser?.expire_date ||
+      currentUser?.expires_at ||
+      currentUser?.expiry_date ||
+      null;
+
+    if (directDate) return directDate;
+
+    // 2. If remaining days are available, compute the exact expiration date
+    if (typeof remainingDays === "number" && remainingDays > 0) {
+      return new Date(Date.now() + remainingDays * 24 * 60 * 60 * 1000).toISOString();
+    }
+
+    // 3. Fallback to plan duration from user profile
+    if (typeof currentUser?.plan_duration === "number" && currentUser.plan_duration > 0) {
+      return new Date(Date.now() + currentUser.plan_duration * 24 * 60 * 60 * 1000).toISOString();
+    }
+
+    return null;
+  }, [accessUntil, paymentSummary, projectionLimitData, currentUser, remainingDays]);
+
+  const formattedExpireDate = useMemo(() => {
+    if (!rawExpireDate) return null;
+    try {
+      const date = new Date(rawExpireDate);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString("en-US", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      }
+    } catch {
+      // Fallback
+    }
+    return String(rawExpireDate);
+  }, [rawExpireDate]);
 
   // Notifications API
   const {
@@ -306,7 +361,11 @@ const SettingsPage = () => {
                   Subscription & Billing
                 </span>
                 <span className="text-[11px] text-[#5F6F73] font-medium">
-                  Premium Wellness Plan • Next billing Mar 15
+                  {isTrial && remainingDays !== null
+                    ? `7-Day Trial • ${remainingDays} days remaining`
+                    : formattedExpireDate
+                    ? `Next billing ${formattedExpireDate}`
+                    : "No active plan"}
                 </span>
               </div>
             </div>
@@ -638,7 +697,16 @@ const ProfileEditView = ({
         daily_step: p?.daily_step?.toString() || "",
         sleep_hour: p?.sleep_hour?.toString() || "",
         water_consumption_week: p?.water_consumption_week?.toString() || "",
-        overall_diet_quality: p?.overall_diet_quality || "good",
+        overall_diet_quality: p?.overall_diet_quality
+          ? (() => {
+              const lower = p.overall_diet_quality.toLowerCase();
+              if (lower === "excellent") return "Excellent";
+              if (lower === "good") return "Good";
+              if (lower === "average" || lower === "fair") return "Average";
+              if (lower === "bad" || lower === "poor") return "Bad";
+              return p.overall_diet_quality.charAt(0).toUpperCase() + p.overall_diet_quality.slice(1);
+            })()
+          : "Good",
         fast_food_frequency: p?.fast_food_frequency || "once in a week",
         strength_training_week: p?.strength_training_week || "3 sessions",
         workout_week: p?.workout_week || "5 sessions",
@@ -1014,14 +1082,30 @@ const ProfileEditView = ({
               <label className="text-sm font-bold text-[#1F2D2E]">
                 Overall Diet Quality
               </label>
-              <input
-                type="text"
-                name="overall_diet_quality"
-                value={formData.overall_diet_quality}
-                onChange={handleInputChange}
-                placeholder="e.g. good"
-                className="w-full bg-white border border-gray-200 rounded-[12px] py-4 px-6 text-sm outline-none"
-              />
+              <div className="relative">
+                <select
+                  name="overall_diet_quality"
+                  value={formData.overall_diet_quality}
+                  onChange={handleInputChange}
+                  className="w-full bg-white border border-gray-200 rounded-[12px] py-4 px-6 pr-12 text-sm text-[#1F2D2E] outline-none appearance-none cursor-pointer focus:border-[#3A86FF] transition-colors"
+                >
+                  <option value="">Select.....</option>
+                  <option value="Excellent">
+                    Excellent - Whole-food based
+                  </option>
+                  <option value="Good">
+                    Good - Mostly healthy, some moderation needed
+                  </option>
+                  <option value="Average">
+                    Fair - High in processed foods/sugars
+                  </option>
+                  <option value="Bad">Poor - Little nutritional value</option>
+                </select>
+                <ChevronDown
+                  size={20}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#0FA4A9] pointer-events-none"
+                />
+              </div>
             </div>
 
             <div className="flex flex-col gap-3">
@@ -1288,8 +1372,19 @@ const SubscriptionView = ({
 
   const [cancelSubscription, { isLoading: isCancelling }] =
     useCancelSubscriptionMutation();
+  const [localCancelled, setLocalCancelled] = useState(false);
 
-  const plans = (plansData?.data || []).filter((plan: any) => plan.status === true);
+  // Available options: Plus Plan, Premium Plan, and Free Trial
+  const plans = (plansData?.data || [])
+    .filter((plan: any) => plan.status === true)
+    .filter((plan: any) => {
+      const name = (plan.name || "").toLowerCase();
+      return (
+        name.includes("plus") ||
+        name.includes("premium") ||
+        isFreeTrialPlan(plan)
+      );
+    });
 
   console.log("Plans:", plans);
 
@@ -1362,6 +1457,8 @@ const SubscriptionView = ({
     currentUser?.can_cancel === false
   );
 
+  const effectiveCancelled = isCancelled || localCancelled;
+
   const accessUntil =
     subStatusAccessUntil ||
     paymentSummary?.access_until ||
@@ -1375,9 +1472,6 @@ const SubscriptionView = ({
     if (activePlanId && plans.length > 0) {
       const foundInCurrentCycle = plans.some(p => Number(p.id) === Number(activePlanId));
       if (!foundInCurrentCycle) {
-        // If we have an active plan but it's not in the currently displayed (monthly/annual) list,
-        // we might want to tell the user or auto-switch?
-        // For now, let's just log it.
         console.log("Active plan not in current cycle view");
       }
     }
@@ -1385,7 +1479,7 @@ const SubscriptionView = ({
 
   // Calculate if the subscription is more than 6 months old
   const canCancel = useMemo(() => {
-    if (isCancelled) return false;
+    if (effectiveCancelled) return false;
     // If no summary available yet, default to allowing cancel if they have a plan_id (or as per business logic)
     if (!paymentSummary?.latest_payment) return true; 
     
@@ -1394,10 +1488,10 @@ const SubscriptionView = ({
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     return createdAt <= sixMonthsAgo;
-  }, [paymentSummary, isCancelled]);
+  }, [paymentSummary, effectiveCancelled]);
 
   const handleCancelSubscription = async () => {
-    if (isCancelled) {
+    if (effectiveCancelled) {
       toast.error("NO Active Plan Found");
       await Swal.fire({
         title: "NO Active Plan Found",
@@ -1433,6 +1527,7 @@ const SubscriptionView = ({
     if (result.isConfirmed) {
       try {
         const res: any = await cancelSubscription().unwrap();
+        setLocalCancelled(true);
         dispatch(
           updateUser({
             cancel_requested: true,
@@ -1484,17 +1579,21 @@ const SubscriptionView = ({
             </div>
             <div className="flex flex-col items-end gap-2">
               <span className="text-xs font-bold opacity-80 uppercase tracking-widest">
-                {isCancelled && accessUntil
+                {effectiveCancelled && accessUntil
                   ? `Expires on ${accessUntil}`
-                  : remainingDays !== null
-                  ? isTrial
-                    ? `${remainingDays} Days Remaining (Trial)`
-                    : `${remainingDays} Days Remaining`
+                  : !effectiveIsTrial && isUserOnPaidPlan
+                  ? expiryDateString
+                    ? `Expires on ${expiryDateString}`
+                    : accessUntil
+                    ? `Expires on ${accessUntil}`
+                    : "Active Plan"
+                  : effectiveIsTrial && remainingDays !== null
+                  ? `${remainingDays} Days Remaining (7-Day Trial)`
+                  : effectiveIsTrial
+                  ? "7 Days Free Trial"
                   : activePlanId
-                    ? "Active Plan"
-                    : isTrial
-                      ? "7 Days Free Trial"
-                      : "No Active Plan"}
+                  ? "Active Plan"
+                  : "No Active Plan"}
               </span>
               <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full flex items-center gap-2">
                 <div
@@ -1533,32 +1632,40 @@ const SubscriptionView = ({
                   {currentUser?.user_type === "individual" || currentUser?.role === "individual" ? (
                     <button
                       onClick={handleCancelSubscription}
-                      disabled={isCancelling}
+                      disabled={effectiveCancelled || isCancelling}
                       className={cn(
                         "text-[10px] font-extrabold uppercase tracking-widest border px-4 py-1.5 rounded-lg transition-all",
-                        !isCancelling
+                        !effectiveCancelled && !isCancelling
                           ? "border-white/40 hover:bg-white/10 cursor-pointer"
                           : "border-white/20 text-white/40 cursor-not-allowed opacity-50 grayscale",
                       )}
                     >
-                      {isCancelling ? "Cancelling..." : "Cancel Subscription"}
+                      {isCancelling
+                        ? "Cancelling..."
+                        : effectiveCancelled
+                        ? "Subscription Cancelled"
+                        : "Cancel Subscription"}
                     </button>
                   ) : (
                     <div className="flex flex-col items-end">
                       <button
                         onClick={handleCancelSubscription}
-                        disabled={(!canCancel && !isCancelled) || isCancelling}
+                        disabled={effectiveCancelled || (!canCancel && !effectiveCancelled) || isCancelling}
                         className={cn(
                           "text-[10px] font-extrabold uppercase tracking-widest border px-4 py-1.5 rounded-lg transition-all",
-                          ((!canCancel && !isCancelled) || isCancelling)
+                          effectiveCancelled || (!canCancel && !effectiveCancelled) || isCancelling
                             ? "border-white/20 text-white/40 cursor-not-allowed opacity-50 grayscale"
                             : "border-white/40 hover:bg-white/10 cursor-pointer",
                         )}
-                        title={!canCancel && !isCancelled ? "You cannot disable within 6 months" : "Cancel subscription"}
+                        title={effectiveCancelled ? "Subscription cancelled" : !canCancel ? "You cannot disable within 6 months" : "Cancel subscription"}
                       >
-                        {isCancelling ? "Cancelling..." : "Cancel Subscription"}
+                        {isCancelling
+                          ? "Cancelling..."
+                          : effectiveCancelled
+                          ? "Subscription Cancelled"
+                          : "Cancel Subscription"}
                       </button>
-                      {!canCancel && !isCancelled && activePlanId && (
+                      {!canCancel && !effectiveCancelled && activePlanId && (
                         <span className="text-[8px] font-bold text-white/50 uppercase tracking-tighter">
                           YOU CANNOT DISABLE WITHIN 6 MONTHS
                         </span>
@@ -1567,7 +1674,7 @@ const SubscriptionView = ({
                   )}
                 </>
               )}
-              {isCancelled && (
+              {effectiveCancelled && (
                 <span className="text-[9px] font-bold text-amber-200 uppercase tracking-wider">
                   Cancellation Pending
                 </span>
@@ -1709,21 +1816,23 @@ const SubscriptionView = ({
                     : "bg-white border-[#3A86FF]/25 shadow-sm hover:border-[#0FA4A9]/50",
                 )}
               >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-6">
-                    <div
-                      className={cn(
-                        "w-12 h-12 rounded-xl flex items-center justify-center",
-                        isActive
-                          ? "bg-[#0FA4A9] text-white"
-                          : "bg-[#E4EFFF] text-[#3A86FF]",
-                      )}
-                    >
-                      {plan.name === "Premium" || plan.name === "Plus" ? (
-                        <Crown size={24} />
-                      ) : (
-                        <User size={24} />
-                      )}
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col md:flex-row  items-center gap-6">
+                    <div>
+                      <div
+                        className={cn(
+                          "w-12 h-12 rounded-xl flex items-center justify-center",
+                          isActive
+                            ? "bg-[#0FA4A9] text-white"
+                            : "bg-[#E4EFFF] text-[#3A86FF]",
+                        )}
+                      >
+                        {plan.name === "Premium" || plan.name === "Plus" ? (
+                          <Crown size={24} />
+                        ) : (
+                          <User size={24} />
+                        )}
+                      </div>
                     </div>
                     <div className="flex flex-col gap-1">
                       <h4 className="text-xl font-bold text-[#1F2D2E]">
@@ -1766,17 +1875,22 @@ const SubscriptionView = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleCancelSubscription();
+                            if (!effectiveCancelled) {
+                              handleCancelSubscription();
+                            }
                           }}
-                          disabled={isCancelling}
+                          disabled={effectiveCancelled || isCancelling}
                           className={cn(
-                            "text-[10px] font-bold text-red-500 hover:text-red-600 uppercase tracking-widest flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition-all cursor-pointer",
-                            isCancelling && "opacity-50 cursor-not-allowed",
+                            "text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-all",
+                            effectiveCancelled || isCancelling
+                              ? "border-gray-200 text-gray-400 bg-gray-50 opacity-60 cursor-not-allowed"
+                              : "text-red-500 hover:text-red-600 border-red-100 hover:bg-red-50 cursor-pointer",
                           )}
                         >
-                          <Trash2 size={10} /> Cancel
+                          <Trash2 size={10} />
+                          {effectiveCancelled ? "Cancelled" : "Cancel"}
                         </button>
-                        {isCancelled && (
+                        {effectiveCancelled && (
                           <span className="text-[9px] font-bold text-amber-700 uppercase tracking-widest flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                             Cancellation Pending
                           </span>

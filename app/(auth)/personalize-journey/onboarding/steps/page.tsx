@@ -1306,6 +1306,7 @@ import { useProcessPaymentMutation } from "@/redux/features/api/paymentApi";
 import {
   Loader2,
   ChevronLeft,
+  ChevronDown,
   ArrowRight,
   CheckCircle,
   Calendar,
@@ -1897,17 +1898,23 @@ const OnboardingStepsPage = () => {
                     <User size={18} className="text-[#3A86FF]" />
                     Sex <span className="text-red-400">*</span>
                   </label>
-                  <select
-                    value={formData.sex}
-                    onChange={(e) =>
-                      setFormData({ ...formData, sex: e.target.value })
-                    }
-                    className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3A86FF]/10 transition-all font-medium appearance-none"
-                  >
-                    <option value="">Select.....</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.sex}
+                      onChange={(e) =>
+                        setFormData({ ...formData, sex: e.target.value })
+                      }
+                      className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 pr-12 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#3A86FF]/10 transition-all font-medium appearance-none cursor-pointer"
+                    >
+                      <option value="">Select.....</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                    <ChevronDown
+                      size={20}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
                 </div>
 
                 {/* Height */}
@@ -2050,17 +2057,23 @@ const OnboardingStepsPage = () => {
                     <Cigarette size={18} className="text-[#3A86FF]" />
                     Smoking Status
                   </label>
-                  <select
-                    value={formData.smoking}
-                    onChange={(e) =>
-                      setFormData({ ...formData, smoking: e.target.value })
-                    }
-                    className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-5 text-gray-400 font-medium appearance-none"
-                  >
-                    <option value="">Select.....</option>
-                    <option value="false">No</option>
-                    <option value="true">Yes</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.smoking}
+                      onChange={(e) =>
+                        setFormData({ ...formData, smoking: e.target.value })
+                      }
+                      className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 pr-12 text-gray-700 font-medium appearance-none cursor-pointer"
+                    >
+                      <option value="">Select.....</option>
+                      <option value="false">No</option>
+                      <option value="true">Yes</option>
+                    </select>
+                    <ChevronDown
+                      size={20}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
                 </div>
 
                 {/* Alcohol */}
@@ -2069,17 +2082,23 @@ const OnboardingStepsPage = () => {
                     <GlassWater size={18} className="text-[#3A86FF]" />
                     Alcohol Consumption
                   </label>
-                  <select
-                    value={formData.alcohol}
-                    onChange={(e) =>
-                      setFormData({ ...formData, alcohol: e.target.value })
-                    }
-                    className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-5 text-gray-400 font-medium appearance-none"
-                  >
-                    <option value="">Select.....</option>
-                    <option value="false">No</option>
-                    <option value="true">Yes</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.alcohol}
+                      onChange={(e) =>
+                        setFormData({ ...formData, alcohol: e.target.value })
+                      }
+                      className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 pr-12 text-gray-700 font-medium appearance-none cursor-pointer"
+                    >
+                      <option value="">Select.....</option>
+                      <option value="false">No</option>
+                      <option value="true">Yes</option>
+                    </select>
+                    <ChevronDown
+                      size={20}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
                 </div>
 
                 {/* Steps */}
@@ -2152,25 +2171,31 @@ const OnboardingStepsPage = () => {
                     <Utensils size={18} className="text-[#3A86FF]" />
                     Overall Diet Quality
                   </label>
-                  <select
-                    value={formData.diet}
-                    onChange={(e) =>
-                      setFormData({ ...formData, diet: e.target.value })
-                    }
-                    className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-5 text-gray-400 font-medium appearance-none"
-                  >
-                    <option value="">Select.....</option>
-                    <option value="Excellent">
-                      Excellent - Whole-food based
-                    </option>
-                    <option value="Good">
-                      Good - Mostly healthy, some moderation needed
-                    </option>
-                    <option value="Average">
-                      Fair - High in processed foods/sugars
-                    </option>
-                    <option value="Bad">Poor - Little nutritional value</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.diet}
+                      onChange={(e) =>
+                        setFormData({ ...formData, diet: e.target.value })
+                      }
+                      className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 pr-12 text-gray-700 font-medium appearance-none cursor-pointer"
+                    >
+                      <option value="">Select.....</option>
+                      <option value="Excellent">
+                        Excellent - Whole-food based
+                      </option>
+                      <option value="Good">
+                        Good - Mostly healthy, some moderation needed
+                      </option>
+                      <option value="Average">
+                        Fair - High in processed foods/sugars
+                      </option>
+                      <option value="Bad">Poor - Little nutritional value</option>
+                    </select>
+                    <ChevronDown
+                      size={20}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
                 </div>
 
                 {/* Fast Food */}
@@ -2179,20 +2204,26 @@ const OnboardingStepsPage = () => {
                     <Utensils size={18} className="text-[#3A86FF]" />
                     Fast Food Frequency
                   </label>
-                  <select
-                    value={formData.fastFood}
-                    onChange={(e) =>
-                      setFormData({ ...formData, fastFood: e.target.value })
-                    }
-                    className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-3 px-5 text-gray-400 font-medium appearance-none"
-                  >
-                    <option value="">Select.....</option>
-                    <option value="Never">Never</option>
-                    <option value="Daily">Daily</option>
-                    <option value="Once a week">Once a week</option>
-                    <option value="Once a month">Once a month</option>
-                    <option value="Occasionally">Occasionally</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.fastFood}
+                      onChange={(e) =>
+                        setFormData({ ...formData, fastFood: e.target.value })
+                      }
+                      className="w-full bg-[#F8FAFF] border border-gray-100 rounded-xl py-4 px-5 pr-12 text-gray-700 font-medium appearance-none cursor-pointer"
+                    >
+                      <option value="">Select.....</option>
+                      <option value="Never">Never</option>
+                      <option value="Daily">Daily</option>
+                      <option value="Once a week">Once a week</option>
+                      <option value="Once a month">Once a month</option>
+                      <option value="Occasionally">Occasionally</option>
+                    </select>
+                    <ChevronDown
+                      size={20}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
                 </div>
 
                 {/* Stress */}

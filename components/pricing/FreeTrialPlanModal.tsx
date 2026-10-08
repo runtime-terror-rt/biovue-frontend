@@ -54,19 +54,19 @@ const FreeTrialPlanModal = ({
   const paidPlans = useMemo(() => {
     return (plansResp?.data || [])
       .filter((plan) => plan.status)
-      .filter((plan) => plan.plan_type === planType)
       .filter((plan) => {
         const name = (plan.name || "").toLowerCase();
+        const isPlusOrPremium = name.includes("plus") || name.includes("premium");
         const isFree =
           name.includes("free trial") ||
           name.includes("free plan") ||
           plan.price === "0.00" ||
           plan.price === 0;
         const isEnterprise = name.includes("enterprise");
-        return !isFree && !isEnterprise;
+        return isPlusOrPremium && !isFree && !isEnterprise;
       })
       .sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
-  }, [plansResp, planType]);
+  }, [plansResp]);
 
   const audienceLabel =
     planType === "api"
@@ -94,7 +94,7 @@ const FreeTrialPlanModal = ({
     }
 
     if (!selectedPlanId) {
-      toast.error("Please select a plan to continue after your trial.");
+      toast.error("Please choose which plan to subscribe to after your 7-day trial: Plus Plan or Premium Plan.");
       return;
     }
 
@@ -124,12 +124,10 @@ const FreeTrialPlanModal = ({
                 7-day free trial
               </p>
               <h2 className="text-2xl font-bold text-[#1F2D2E]">
-                Which {audienceLabel.toLowerCase()} plan after 7 days?
+                Choose your plan after the 7-day trial
               </h2>
               <p className="text-[#5F6F73] text-sm mt-2 max-w-xl">
-                Start free for 7 days. After that, your saved card will be
-                billed for the plan you choose. Checkout will show a $0 balance
-                today.
+                Start free for 7 days. Please choose which plan you want to subscribe to after the trial: <strong>Plus Plan</strong> or <strong>Premium Plan</strong>. Checkout shows a $0 balance today.
               </p>
             </div>
             <button

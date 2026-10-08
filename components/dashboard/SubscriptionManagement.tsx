@@ -67,6 +67,7 @@ const SubscriptionManagement = ({
   const { data: projectionLimitData } = useGetProjectionLimitQuery();
   const [cancelSubscription, { isLoading: isCancelling }] =
     useCancelSubscriptionMutation();
+  const [localCancelled, setLocalCancelled] = useState(false);
 
   const paidEndDate =
     paymentSummary?.latest_payment?.end_date ||
@@ -96,7 +97,16 @@ const SubscriptionManagement = ({
       ? currentUser.plan_duration
       : null;
 
-  const plans = plansData?.data || [];
+  const plans = (plansData?.data || [])
+    .filter((plan: any) => plan.status === true)
+    .filter((plan: any) => {
+      const name = (plan.name || "").toLowerCase();
+      return (
+        name.includes("plus") ||
+        name.includes("premium") ||
+        isFreeTrialPlan(plan)
+      );
+    });
 
   const profileData = profileResponse?.data || profileResponse;
   const rawProfilePlanId =
@@ -156,6 +166,8 @@ const SubscriptionManagement = ({
     currentUser?.can_cancel === false
   );
 
+  const effectiveCancelled = isCancelled || localCancelled;
+
   const accessUntil =
     subStatusAccessUntil ||
     paymentSummary?.access_until ||
@@ -166,7 +178,7 @@ const SubscriptionManagement = ({
 
   // Calculate if the subscription is more than 6 months old
   const canCancel = useMemo(() => {
-    if (isCancelled) return false;
+    if (effectiveCancelled) return false;
     if (!paymentSummary?.latest_payment) return true;
 
     if (!paymentSummary.latest_payment.created_at) return false;
@@ -174,10 +186,10 @@ const SubscriptionManagement = ({
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     return createdAt <= sixMonthsAgo;
-  }, [paymentSummary, isCancelled]);
+  }, [paymentSummary, effectiveCancelled]);
 
   const handleCancelSubscription = async () => {
-    if (isCancelled) {
+    if (effectiveCancelled) {
       toast.error("NO Active Plan Found");
       await Swal.fire({
         title: "NO Active Plan Found",
@@ -213,6 +225,7 @@ const SubscriptionManagement = ({
     if (result.isConfirmed) {
       try {
         const res: any = await cancelSubscription().unwrap();
+        setLocalCancelled(true);
         dispatch(
           updateUser({
             cancel_requested: true,
@@ -269,17 +282,21 @@ const SubscriptionManagement = ({
           </div>
           <div className="flex flex-col items-end gap-2">
             <span className="text-[10px] font-bold opacity-80 uppercase tracking-widest">
-              {isCancelled && accessUntil
+              {effectiveCancelled && accessUntil
                 ? `EXPIRES ON ${accessUntil.toUpperCase()}`
-                : remainingDays !== null
-                ? isTrial
-                  ? `${remainingDays} DAYS REMAINING (TRIAL)`
-                  : `${remainingDays} DAYS REMAINING`
+                : !effectiveIsTrial && isUserOnPaidPlan
+                ? expiryDateString
+                  ? `EXPIRES ON ${expiryDateString.toUpperCase()}`
+                  : accessUntil
+                  ? `EXPIRES ON ${accessUntil.toUpperCase()}`
+                  : "ACTIVE PLAN"
+                : effectiveIsTrial && remainingDays !== null
+                ? `${remainingDays} DAYS REMAINING (7-DAY TRIAL)`
+                : effectiveIsTrial
+                ? "7 DAYS FREE TRIAL"
                 : activePlanId
-                  ? "ACTIVE PLAN"
-                  : isTrial
-                    ? "7 DAYS FREE TRIAL"
-                    : "NO ACTIVE PLAN"}
+                ? "ACTIVE PLAN"
+                : "NO ACTIVE PLAN"}
             </span>
             <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2">
               <div
@@ -317,36 +334,46 @@ const SubscriptionManagement = ({
               {currentUser?.user_type === "individual" || currentUser?.role === "individual" ? (
                 <button
                   onClick={handleCancelSubscription}
-                  disabled={isCancelling}
+                  disabled={effectiveCancelled || isCancelling}
                   className={cn(
                     "text-[10px] font-extrabold uppercase tracking-widest border border-white/60 px-6 py-2 rounded-lg transition-all",
-                    !isCancelling
+                    !effectiveCancelled && !isCancelling
                       ? "hover:bg-white/10 cursor-pointer"
                       : "opacity-50 cursor-not-allowed",
                   )}
                 >
-                  {isCancelling ? "Cancelling..." : "CANCEL SUBSCRIPTION"}
+                  {isCancelling
+                    ? "Cancelling..."
+                    : effectiveCancelled
+                    ? "CANCELLED"
+                    : "CANCEL SUBSCRIPTION"}
                 </button>
               ) : (
                 <div className="flex flex-col items-end gap-1">
                   <button
                     onClick={handleCancelSubscription}
-                    disabled={(!canCancel && !isCancelled) || isCancelling}
+                    disabled={effectiveCancelled || (!canCancel && !effectiveCancelled) || isCancelling}
                     className={cn(
                       "text-[10px] font-extrabold uppercase tracking-widest border border-white/60 px-6 py-2 rounded-lg transition-all",
-                      (!canCancel && !isCancelled) || isCancelling
+                      effectiveCancelled || (!canCancel && !effectiveCancelled) || isCancelling
                         ? "opacity-50 cursor-not-allowed"
                         : "hover:bg-white/10 cursor-pointer",
                     )}
                     title={
-                      !canCancel && !isCancelled
+                      effectiveCancelled
+                        ? "Subscription cancelled"
+                        : !canCancel
                         ? "You cannot disable within 6 months"
                         : "Cancel subscription"
                     }
                   >
-                    {isCancelling ? "Cancelling..." : "CANCEL SUBSCRIPTION"}
+                    {isCancelling
+                      ? "Cancelling..."
+                      : effectiveCancelled
+                      ? "CANCELLED"
+                      : "CANCEL SUBSCRIPTION"}
                   </button>
-                  {!canCancel && !isCancelled && activePlanId && (
+                  {!canCancel && !effectiveCancelled && activePlanId && (
                     <span className="text-[8px] font-bold text-white/50 uppercase tracking-tighter mt-1">
                       6 MONTHS COMMITMENT REQUIRED
                     </span>
@@ -525,13 +552,13 @@ const SubscriptionManagement = ({
                               e.stopPropagation();
                               handleCancelSubscription();
                             }}
-                            disabled={isCancelling}
+                            disabled={effectiveCancelled || isCancelling}
                             className={cn(
                               "text-[10px] font-bold text-red-500 hover:text-red-600 uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 transition-all cursor-pointer",
-                              isCancelling && "opacity-50 cursor-not-allowed",
+                              (effectiveCancelled || isCancelling) && "opacity-50 cursor-not-allowed pointer-events-none hover:bg-transparent",
                             )}
                           >
-                            <Trash2 size={12} /> Cancel
+                            <Trash2 size={12} /> {effectiveCancelled ? "Cancelled" : "Cancel"}
                           </button>
                         ) : (
                           <button
@@ -539,22 +566,24 @@ const SubscriptionManagement = ({
                               e.stopPropagation();
                               handleCancelSubscription();
                             }}
-                            disabled={(!canCancel && !isCancelled) || isCancelling}
+                            disabled={effectiveCancelled || (!canCancel && !effectiveCancelled) || isCancelling}
                             title={
-                              !canCancel && !isCancelled
+                              effectiveCancelled
+                                ? "Subscription already cancelled"
+                                : !canCancel && !effectiveCancelled
                                 ? "You cannot disable within 6 months"
                                 : "Cancel subscription"
                             }
                             className={cn(
                               "text-[10px] font-bold text-red-500 uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-100 transition-all",
-                              ((!canCancel && !isCancelled) || isCancelling) &&
-                                "opacity-50 cursor-not-allowed",
+                              (effectiveCancelled || (!canCancel && !effectiveCancelled) || isCancelling) &&
+                                "opacity-50 cursor-not-allowed pointer-events-none",
                             )}
                           >
-                            <Trash2 size={12} /> Cancel
+                            <Trash2 size={12} /> {effectiveCancelled ? "Cancelled" : "Cancel"}
                           </button>
                         )}
-                        {isCancelled && (
+                        {effectiveCancelled && (
                           <span className="text-[9px] font-bold text-amber-700 uppercase tracking-widest flex items-center gap-1 px-2 py-0.5 rounded border border-amber-200 bg-amber-50">
                             Cancellation Pending
                           </span>

@@ -123,46 +123,55 @@ const LogTodayModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-[16px] w-full max-w-2xl max-h-[90vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shadow-2xl relative border border-[#3A86FF]/25">
-        {/* Close Button */}
-        {/* <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 cursor-pointer z-10"
-        >
-          <X size={20} />
-        </button> */}
-
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shadow-2xl relative border border-[#3A86FF]/25">
         {/* Device Sync Banner */}
-        <div className="flex items-center justify-between bg-white border-b border-[#3A86FF]/25 px-6 py-4 rounded-t-[16px]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white border-b border-[#3A86FF]/20 px-4 sm:px-6 py-3.5 sm:py-4 rounded-t-2xl relative pr-12 sm:pr-6">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-50/80 border border-blue-100 rounded-lg flex items-center justify-center">
+            <div className="w-9 h-9 bg-blue-50/80 border border-blue-100 rounded-lg flex items-center justify-center shrink-0">
               <Smartphone size={18} className="text-[#3A86FF]" />
             </div>
             <div>
-              <p className="text-sm font-bold text-[#1F2D2E]">Device Sync Active</p>
-              <p className="text-[11px] text-[#5F6F73]">Some Data Is Automatically Synced From Your Connected Device.</p>
+              <p className="text-xs sm:text-sm font-bold text-[#1F2D2E]">Device Sync Active</p>
+              <p className="text-[10px] sm:text-[11px] text-[#5F6F73]">Some Data Is Automatically Synced From Your Connected Device.</p>
             </div>
           </div>
-          <button
-            onClick={onChangeSource}
-            className="bg-white border border-gray-200 text-[#1F2D2E] text-xs font-semibold px-4 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap hover:bg-gray-50"
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+            <button
+              onClick={onChangeSource}
+              className="bg-white border border-gray-200 text-[#1F2D2E] text-xs font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap hover:bg-gray-50 active:scale-95 shadow-xs"
+            >
+              Change Source
+            </button>
+            <button 
+              onClick={onClose}
+              className="sm:hidden p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          {/* Desktop close button */}
+          <button 
+            onClick={onClose}
+            className="hidden sm:block absolute top-3.5 right-4 p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 cursor-pointer"
+            aria-label="Close modal"
           >
-            Change Source
+            <X size={18} />
           </button>
         </div>
 
         {/* Form Content */}
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 bg-[#E8F1FF] rounded-xl flex items-center justify-center">
-              <Crown size={18} className="text-[#3A86FF]" />
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-1">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#E8F1FF] rounded-xl flex items-center justify-center shrink-0">
+              <Crown size={16} className="text-[#3A86FF] sm:w-[18px] sm:h-[18px]" />
             </div>
-            <h2 className="text-xl font-bold text-[#041228]">Lifestyle Habits</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-[#041228]">Lifestyle Habits</h2>
           </div>
-          <p className="text-gray-400 text-sm mb-6 ml-12">Your daily habits shape your future health</p>
+          <p className="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6 ml-0 sm:ml-12">Your daily habits shape your future health</p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-x-6 md:gap-y-5">
             {/* Weight */}
             <div className="flex flex-col gap-3 p-4 rounded-[16px] border border-[#3A86FF]/25 bg-white shadow-sm">
               <label className="flex items-center gap-2 text-[#1F2D2E] font-semibold text-sm">

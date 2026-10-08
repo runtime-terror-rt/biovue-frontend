@@ -41,7 +41,7 @@ const UserDashboard = () => {
   const [showSourceModal, setShowSourceModal] = useState(false);
   const [dataSource, setDataSource] = useState<"device" | "manual">("device");
   const [days, setDays] = useState(7);
-  
+
   const { data: healthReport, isLoading: isHealthLoading } = useGetHealthReportQuery();
   const { data: insightsData, isLoading: isInsightsLoading } = useGetInsightsQuery(undefined, { skip: !currentUser?.id });
   const { data: chartResponse, isLoading: isChartLoading } = useGetUserOverviewChartQuery(days);
@@ -82,16 +82,16 @@ const UserDashboard = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Main Content Area with Padding */}
-      <div className="flex flex-col gap-6 py-6 container mx-auto pb-12">
+      <div className="flex flex-col gap-4 sm:gap-6 py-2 sm:py-4 md:py-6 px-6 md:px-8 xl:px-16 max-w-8xl mx-auto w-full pb-12">
         {/* Top Banner - Mirrored from Landing Page */}
         <DashboardBanner />
 
         {/* Welcome Message */}
-        <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
-          <h2 className="text-lg font-bold text-[#1F2D2E] mb-1">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+          <h2 className="text-base sm:text-lg font-bold text-[#1F2D2E] mb-0.5 sm:mb-1">
             Welcome, {userName}!
           </h2>
-          <p className="text-sm text-[#5F6F73]">
+          <p className="text-xs sm:text-sm text-[#5F6F73]">
             Complete your setup to unlock future features
           </p>
         </div>
@@ -103,31 +103,31 @@ const UserDashboard = () => {
         <TrainerMotivation />
 
         {/* AI Projections Banner */}
-        <div className="relative overflow-hidden bg-white border-[1.5px] border-[#3A86FF] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12 min-h-45">
-          <div className="flex-1 flex flex-col items-start gap-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-[#3A86FF]">
+        <div className="relative overflow-hidden bg-white border-[1.5px] border-[#3A86FF] rounded-2xl p-5 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-5 sm:gap-6 lg:gap-8">
+          <div className="flex-1 flex flex-col items-start gap-3 sm:gap-4 min-w-0">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#3A86FF] leading-snug">
               AI-Powered Body Projections
             </h2>
-            <p className="text-[#5F6F73] text-sm md:text-base max-w-xl">
+            <p className="text-[#5F6F73] text-xs sm:text-sm md:text-base max-w-xl">
               Upload your photo and see your future body transformation with AI
               predictions
             </p>
-            <Link href="/user-dashboard/projections">
-              <button className="bg-[#0FA4A9] text-white px-6 py-2.5 rounded-lg font-semibold flex items-center gap-2 hover:bg-opacity-90 transition-all mt-2 group cursor-pointer">
-                Generate AI Body Projections
+            <Link href="/user-dashboard/projections" className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto bg-[#0FA4A9] text-white px-5 sm:px-6 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all text-xs sm:text-sm font-medium whitespace-nowrap active:scale-95 shadow-xs cursor-pointer">
+                <span>Generate AI Body Projections</span>
                 <ArrowRight
-                  size={20}
-                  className="group-hover:translate-x-1 transition-transform"
+                  size={16}
+                  className="group-hover:translate-x-1 transition-transform shrink-0"
                 />
               </button>
             </Link>
           </div>
-          <div className="w-full md:w-auto flex flex-col gap-3 min-w-0 md:min-w-[200px]">
-            <div className="bg-white border border-[#3A86FF] rounded-xl p-4 flex flex-col transition-all cursor-pointer hover:bg-blue-50">
-              <span className="text-[10px] font-bold text-[#5F6F73] uppercase tracking-wider mb-2">
+          <div className="w-full sm:w-auto flex flex-col gap-3 shrink-0 min-w-0 sm:min-w-[180px] lg:min-w-[210px]">
+            <div className="bg-white border border-[#3A86FF] rounded-xl p-3.5 sm:p-4 flex flex-col transition-all cursor-pointer hover:bg-blue-50">
+              <span className="text-[10px] font-bold text-[#5F6F73] uppercase tracking-wider mb-1">
                 Current Goal
               </span>
-              <span className="text-[#3A86FF] font-bold text-lg">
+              <span className="text-[#3A86FF] font-bold text-sm sm:text-base lg:text-lg whitespace-nowrap">
                 Build Athletic Lean Mass
               </span>
             </div>
@@ -135,38 +135,35 @@ const UserDashboard = () => {
         </div>
 
         {/* Summary Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 md:gap-6">
           {/* Wellness Score */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:border-[#0FA4A9] transition-all">
+          <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:border-[#0FA4A9] transition-all">
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-bold text-[#5F6F73] uppercase tracking-wider">
                 Wellness Score
               </span>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-[#1F2D2E]">
+                <span className="text-2xl sm:text-3xl font-bold text-[#1F2D2E]">
                   {summary?.wellness_score || 0}
                 </span>
-                <span className="text-[#5F6F73] text-sm font-medium">
+                <span className="text-[#5F6F73] text-xs sm:text-sm font-medium">
                   / 100
                 </span>
               </div>
-              {/* <span className="text-[#2DD4BF] text-[10px] font-medium flex items-center gap-1 mt-1">
-                <Plus size={10} /> {summary?.wellness_score?.trend || "N/A"}
-              </span> */}
             </div>
-            <div className="w-16 h-16 rounded-full border-[1.5px] border-[#3A86FF] border-t-transparent flex items-center justify-center transform group-hover:rotate-12 transition-transform">
-              <Activity size={24} className="text-[#3A86FF]" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full border-[1.5px] border-[#3A86FF] border-t-transparent flex items-center justify-center transform group-hover:rotate-12 transition-transform shrink-0">
+              <Activity size={22} className="text-[#3A86FF] sm:w-6 sm:h-6" />
             </div>
           </div>
 
           {/* Days Active */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:border-[#0FA4A9] transition-all">
+          <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:border-[#0FA4A9] transition-all">
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-bold text-[#5F6F73] uppercase tracking-wider">
                 Days Active
               </span>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-[#1F2D2E]">
+                <span className="text-2xl sm:text-3xl font-bold text-[#1F2D2E]">
                   {summary?.logs_summary?.activity_days || 0}
                 </span>
               </div>
@@ -174,19 +171,19 @@ const UserDashboard = () => {
                 Keep it up!
               </span>
             </div>
-            <div className="w-16 h-16 rounded-xl bg-[#E4EFFF] flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <Calendar size={24} className="text-[#3A86FF]" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl bg-[#E4EFFF] flex items-center justify-center group-hover:bg-blue-100 transition-colors shrink-0">
+              <Calendar size={22} className="text-[#3A86FF] sm:w-6 sm:h-6" />
             </div>
           </div>
 
           {/* Data Logged */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:border-[#0FA4A9] transition-all">
+          <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center justify-between group hover:border-[#0FA4A9] transition-all sm:col-span-2 lg:col-span-1">
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-bold text-[#5F6F73] uppercase tracking-wider">
                 Data Logged
               </span>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-[#1F2D2E]">
+                <span className="text-2xl sm:text-3xl font-bold text-[#1F2D2E]">
                   {summary?.data_logged_entries || 0}
                 </span>
               </div>
@@ -194,27 +191,20 @@ const UserDashboard = () => {
                 Entries total
               </span>
             </div>
-            <div className="w-16 h-16 rounded-xl bg-[#E4EFFF] flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <Archive size={24} className="text-[#3A86FF]" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl bg-[#E4EFFF] flex items-center justify-center group-hover:bg-blue-100 transition-colors shrink-0">
+              <Archive size={22} className="text-[#3A86FF] sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
 
         {/* Current Health Overview */}
-        <div className="flex items-center justify-between mt-4">
-          <h2 className="text-xl font-bold text-[#1F2D2E]">
+        <div className="flex items-center justify-between mt-2 sm:mt-4">
+          <h2 className="text-lg sm:text-xl font-bold text-[#1F2D2E]">
             Current Health Overview
           </h2>
-          {/* <button
-            onClick={() => setShowLogModal(true)}
-            className="flex items-center gap-2 bg-[#0FA4A9] text-white px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-sm group cursor-pointer"
-          >
-            <Plus size={18} />
-            Log today&apos;s data
-          </button> */}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 md:gap-6">
           {[
             {
               label: "Current Weight",
@@ -267,7 +257,7 @@ const UserDashboard = () => {
             },
             {
               label: "Hydration",
-              value: healthOverview?.hydration?.current_glasses || 0,
+              value: healthOverview?.hydration?.current_oz || 0,
               // unit: "Ounces",
               status: "Target",
               desc: (healthOverview?.hydration?.target || "N/A"),
@@ -284,25 +274,25 @@ const UserDashboard = () => {
           ].map((metric, i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3"
+              className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-2 sm:gap-3"
             >
               <span className="text-[#5F6F73] text-[10px] font-bold uppercase tracking-wider">
                 {metric.label}
               </span>
               <div className="flex items-baseline gap-1">
-                <span className={cn("text-3xl font-bold", metric.color)}>
-                  {metric.value === "N/A" ? "N/A" : 
+                <span className={cn("text-2xl sm:text-3xl font-bold", metric.color)}>
+                  {metric.value === "N/A" ? "N/A" :
                     typeof metric.value === "number"
                       ? Number.isInteger(metric.value)
                         ? metric.value
                         : metric.value.toFixed(2)
-                     : metric.value}
+                      : metric.value}
                 </span>
-                <span className="text-[#5F6F73] text-sm font-medium">
+                <span className="text-[#5F6F73] text-xs sm:text-sm font-medium">
                   {metric.unit}
                 </span>
               </div>
-              <div className="flex flex-col gap-1 mt-1">
+              <div className="flex flex-col gap-1 mt-0.5 sm:mt-1">
                 <span
                   className={cn(
                     "text-xs font-semibold",
@@ -317,7 +307,7 @@ const UserDashboard = () => {
                 >
                   {metric.status}
                 </span>
-                <span className="text-[#5F6F73] text-[11px] leading-tight">
+                <span className="text-[#5F6F73] text-[11px] leading-tight break-words">
                   {metric.desc}
                 </span>
               </div>
@@ -326,12 +316,12 @@ const UserDashboard = () => {
         </div>
 
         {/* Your Progress & Trends */}
-        <div className="mt-8 flex flex-col gap-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-[#1F2D2E]">
+        <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <h2 className="text-lg sm:text-xl font-bold text-[#1F2D2E]">
               Your Progress & Trends
             </h2>
-            <div className="flex p-1 bg-white border border-gray-100 rounded-lg shadow-sm">
+            <div className="flex items-center p-1 bg-white border border-gray-100 rounded-xl shadow-xs self-start sm:self-auto overflow-x-auto max-w-full">
               {[
                 { label: "Weekly", value: 7 },
                 { label: "Monthly", value: 30 },
@@ -341,9 +331,9 @@ const UserDashboard = () => {
                   key={t.value}
                   onClick={() => setDays(t.value)}
                   className={cn(
-                    "px-4 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                    "px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap",
                     days === t.value
-                      ? "bg-[#E4EFFF] text-[#3A86FF]"
+                      ? "bg-[#E4EFFF] text-[#3A86FF] shadow-xs"
                       : "text-[#5F6F73] hover:text-[#1F2D2E]",
                   )}
                 >
@@ -364,34 +354,34 @@ const UserDashboard = () => {
         </div>
 
         {/* Today's Focus - Dynamic Insights */}
-        <div className="mt-8 flex flex-col gap-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-[#1F2D2E]">
+        <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:gap-6">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-lg sm:text-xl font-bold text-[#1F2D2E]">
               Today&apos;s focus
             </h2>
             <Link href="/user-dashboard/insights">
-              <button className="flex items-center gap-2 bg-[#0FA4A9] text-white px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-sm group cursor-pointer">
-                View All Insights
+              <button className="flex items-center gap-1.5 sm:gap-2 bg-[#0FA4A9] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium hover:bg-opacity-90 transition-all text-xs sm:text-sm group cursor-pointer whitespace-nowrap active:scale-95 shadow-xs">
+                <span>View All Insights</span>
                 <ArrowRight
-                  size={18}
+                  size={16}
                   className="group-hover:translate-x-1 transition-transform"
                 />
               </button>
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4 md:gap-6">
             {isInsightsLoading ? (
-              <div className="col-span-2 flex items-center justify-center py-12">
+              <div className="col-span-1 md:col-span-2 flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-[#0FA4A9]" />
               </div>
             ) : dynamicInsights.slice(0, 2).map((insight: { category?: string; priority?: string; insight?: string; why_this_matters?: string }, i: number) => {
               const cat = insight.category?.toLowerCase() || "";
-              const categoryIcon = cat.includes("nutrition") ? <Zap size={20} className="text-[#1F2D2E]" />
-                : cat.includes("cardio") || cat.includes("heart") ? <HeartPulse size={20} className="text-[#1F2D2E]" />
-                : cat.includes("exercise") || cat.includes("muscle") ? <Dumbbell size={20} className="text-[#1F2D2E]" />
-                : cat.includes("sleep") ? <Moon size={20} className="text-[#1F2D2E]" />
-                : <Scale size={20} className="text-[#1F2D2E]" />;
+              const categoryIcon = cat.includes("nutrition") ? <Zap size={18} className="text-[#1F2D2E]" />
+                : cat.includes("cardio") || cat.includes("heart") ? <HeartPulse size={18} className="text-[#1F2D2E]" />
+                  : cat.includes("exercise") || cat.includes("muscle") ? <Dumbbell size={18} className="text-[#1F2D2E]" />
+                    : cat.includes("sleep") ? <Moon size={18} className="text-[#1F2D2E]" />
+                      : <Scale size={18} className="text-[#1F2D2E]" />;
 
               const priorityColor = insight.priority?.toUpperCase() === "HIGH"
                 ? "text-pink-500 bg-pink-50"
@@ -402,11 +392,11 @@ const UserDashboard = () => {
               return (
                 <div
                   key={i}
-                  className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4 group  transition-all cursor-pointer"
+                  className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3 sm:gap-4 group transition-all cursor-pointer hover:border-[#0FA4A9]/30"
                 >
                   <div className="flex items-start justify-between">
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#E4EFFF] transition-colors"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center bg-[#E4EFFF] transition-colors shrink-0"
                     >
                       {categoryIcon}
                     </div>
@@ -415,10 +405,10 @@ const UserDashboard = () => {
                     </span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <h3 className="text-base font-bold text-[#1F2D2E]">
+                    <h3 className="text-sm sm:text-base font-bold text-[#1F2D2E] leading-snug">
                       {insight.insight}
                     </h3>
-                    <p className="text-xs text-[#5F6F73] italic">
+                    <p className="text-xs text-[#5F6F73] italic break-words">
                       {insight.why_this_matters ? `"${insight.why_this_matters}"` : `"${insight.category}"`}
                     </p>
                   </div>
@@ -426,7 +416,7 @@ const UserDashboard = () => {
               );
             })}
             {!isInsightsLoading && dynamicInsights.length === 0 && (
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center justify-center text-[#94A3B8] italic text-sm">
+              <div className="col-span-1 md:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-xs flex items-center justify-center text-[#94A3B8] italic text-sm">
                 No new AI insights generated at this time.
               </div>
             )}

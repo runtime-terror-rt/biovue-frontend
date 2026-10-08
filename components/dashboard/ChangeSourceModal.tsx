@@ -19,15 +19,15 @@ const ChangeSourceModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-[16px] w-full max-w-sm shadow-2xl p-6 relative border border-[#3A86FF]/25">
-        <h2 className="text-lg font-bold text-[#041228] mb-1">Change Data Source</h2>
-        <p className="text-sm text-gray-400 mb-6">Choose how today&apos;s data should be filled</p>
+    <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-4 sm:p-6 relative border border-[#3A86FF]/25">
+        <h2 className="text-base sm:text-lg font-bold text-[#041228] mb-1">Change Data Source</h2>
+        <p className="text-xs sm:text-sm text-gray-400 mb-4 sm:mb-6">Choose how today&apos;s data should be filled</p>
 
         <div className="space-y-3">
           {/* Option 1: Connected Device */}
           <label className={cn(
-            "flex items-start gap-4 p-4 rounded-3xl border-2 cursor-pointer transition-all",
+            "flex items-start gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl border-2 cursor-pointer transition-all",
             dataSource === "device" ? "border-[#3A86FF] bg-[#F0F6FF]" : "border-gray-100 hover:bg-gray-50 bg-white"
           )}>
             <input 
@@ -39,14 +39,14 @@ const ChangeSourceModal = ({
               className="mt-1 w-4 h-4 accent-[#3A86FF] cursor-pointer" 
             />
             <div>
-              <p className="font-bold text-sm text-[#041228]">Use connected devices</p>
-              <p className="text-xs text-gray-400 mt-0.5">Choose how today&apos;s data should be filled</p>
+              <p className="font-bold text-xs sm:text-sm text-[#041228]">Use connected devices</p>
+              <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5">Choose how today&apos;s data should be filled</p>
             </div>
           </label>
 
           {/* Option 2: Manual Entry */}
           <label className={cn(
-            "flex items-start gap-4 p-4 rounded-[16px] border-2 cursor-pointer transition-all",
+            "flex items-start gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl border-2 cursor-pointer transition-all",
             dataSource === "manual" ? "border-[#3A86FF] bg-[#F0F6FF]" : "border-gray-100 hover:bg-gray-50 bg-white"
           )}>
             <input 

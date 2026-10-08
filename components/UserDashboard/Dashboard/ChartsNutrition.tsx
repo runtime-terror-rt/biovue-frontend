@@ -55,32 +55,32 @@ export const ChartCard = ({
   iconBg,
   children,
 }: ChartCardProps) => (
-  <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4 group hover:border-[#3A86FF]/20 transition-all">
+  <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3 sm:gap-4 group hover:border-[#3A86FF]/20 transition-all">
     <div className="flex items-start justify-between">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-0.5 sm:gap-1">
         <div className="flex items-center gap-2">
           <div
             className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
+              "w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-colors shrink-0",
               iconBg || "bg-[#F3F8FF] text-[#3A86FF] group-hover:bg-[#3A86FF] group-hover:text-white",
             )}
           >
             {icon || <Archive size={16} />}
           </div>
-          <h3 className="text-sm font-bold text-[#1F2D2E]">{title}</h3>
+          <h3 className="text-xs sm:text-sm font-bold text-[#1F2D2E] truncate">{title}</h3>
         </div>
-        <p className="text-[10px] text-[#5F6F73] mt-1">{subtitle}</p>
+        <p className="text-[10px] text-[#5F6F73] mt-0.5 sm:mt-1">{subtitle}</p>
       </div>
       {total && (
-        <div className="text-right">
-          <p className="text-[#5F6F73] text-[10px] font-medium">{totalLabel}</p>
-          <p className="text-[#10B981] font-bold text-sm tracking-tight">
+        <div className="text-right shrink-0 ml-2">
+          <p className="text-[#5F6F73] text-[9px] sm:text-[10px] font-medium">{totalLabel}</p>
+          <p className="text-[#10B981] font-bold text-xs sm:text-sm tracking-tight">
             {total}
           </p>
         </div>
       )}
     </div>
-    <div className="mt-2 h-50 w-full">{children}</div>
+    <div className="mt-1 sm:mt-2 h-44 sm:h-48 md:h-52 w-full">{children}</div>
   </div>
 );
 
@@ -189,11 +189,11 @@ export default function ChartsNutrition({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 md:gap-6 opacity-50">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="h-72 bg-gray-50 rounded-2xl animate-pulse flex items-center justify-center"
+            className="h-64 sm:h-72 bg-gray-50 rounded-2xl animate-pulse flex items-center justify-center"
           >
             <Archive size={24} className="text-gray-200" />
           </div>
@@ -204,7 +204,7 @@ export default function ChartsNutrition({
 
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4 md:gap-6">
         {/* 1. Weight Progress */}
         <ChartCard
           title="Weight Progress"
