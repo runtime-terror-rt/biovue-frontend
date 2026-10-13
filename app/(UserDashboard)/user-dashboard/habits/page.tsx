@@ -172,7 +172,7 @@ export default function HabitsPage() {
         </div>
 
         {/* Habits Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 w-full min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 w-full min-w-0">
           {consistencyMetrics.map((habit: any, index: number) => {
             const habitId = habit.title.toLowerCase();
             const isNeedAttention = habit.status === "Need Attention";
