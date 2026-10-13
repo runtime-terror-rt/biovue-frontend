@@ -209,7 +209,7 @@ export default function HabitDetailPage() {
       habit.avg = habit.avg.replace(/glasses|gls/gi, "Ounces");
     }
     if (typeof habit.target === 'string') {
-      habit.target = habit.target.replace(/glasses|gls/gi, "Ounces");
+      habit.target = habit.target.replace(/glasses|gls/gi, "Glasses");
     }
   } else if (habitId === 'nutrition') {
     if (typeof habit.avg === 'string') {
