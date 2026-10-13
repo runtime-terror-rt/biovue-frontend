@@ -121,9 +121,24 @@ export const paymentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getSubscriptionPlans: builder.query<
       PlansResponse,
-      { billing: string; type: string }
+      { billing?: string; type: string }
     >({
-      query: ({ billing, type }) => `/plans?billing=${billing}&type=${type}`,
+      query: ({ billing, type }) =>
+        type === "professional"
+          ? `/plans/active?type=professional`
+          : billing
+          ? `/plans?billing=${billing}&type=${type}`
+          : `/plans/active?type=${type}`,
+      providesTags: ["Plans"],
+    }),
+    getActivePlans: builder.query<
+      PlansResponse,
+      { type?: string } | void
+    >({
+      query: (args) => {
+        const type = args?.type;
+        return type ? `/plans/active?type=${type}` : `/plans/active`;
+      },
       providesTags: ["Plans"],
     }),
     // processPayment: builder.mutation<PaymentProcessResponse, { plan_id: number; billing: string }>({
@@ -195,6 +210,7 @@ export const paymentApi = baseApi.injectEndpoints({
 
 export const {
   useGetSubscriptionPlansQuery,
+  useGetActivePlansQuery,
   useProcessPaymentMutation,
   useGetPaymentSummaryQuery,
   useCancelSubscriptionMutation,

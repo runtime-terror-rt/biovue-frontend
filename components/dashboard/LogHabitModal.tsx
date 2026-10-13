@@ -189,49 +189,49 @@ export default function LogHabitModal({
             onClick={onClose}
             className="fixed inset-0 bg-black/40 z-50 backdrop-blur-[2px]"
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 pointer-events-none">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-3xl p-6 md:p-8 shadow-2xl w-full max-w-150 pointer-events-auto border border-[#3A86FF]/25 flex flex-col gap-6"
+              className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl w-full max-w-xl max-h-[92vh] overflow-y-auto pointer-events-auto border border-[#3A86FF]/25 flex flex-col gap-4 sm:gap-6"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-blue-50/80 border border-blue-100 flex items-center justify-center shrink-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50/80 border border-blue-100 flex items-center justify-center shrink-0">
                     {getIcon()}
                   </div>
-                  <h2 className="text-[22px] font-bold text-[#3A86FF]">
+                  <h2 className="text-lg sm:text-[22px] font-bold text-[#3A86FF]">
                     Logging: {habitType}
                   </h2>
                   <div className="flex bg-gray-100/80 rounded-lg p-1 border border-gray-200">
-                      <button
-                        type="button"
-                        onClick={() => setWeightUnit("lbs")}
-                        className={`px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
-                          weightUnit === "lbs"
-                            ? "bg-white text-[#3A86FF] shadow-sm"
-                            : "text-gray-400 hover:text-gray-600"
-                        }`}
-                      >
-                        Imperial (lbs)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setWeightUnit("kg")}
-                        className={`px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
-                          weightUnit === "kg"
-                            ? "bg-white text-[#3A86FF] shadow-sm"
-                            : "text-gray-400 hover:text-gray-600"
-                        }`}
-                      >
-                        Metric (kg)
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setWeightUnit("lbs")}
+                      className={`px-3 sm:px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                        weightUnit === "lbs"
+                          ? "bg-white text-[#3A86FF] shadow-sm"
+                          : "text-gray-400 hover:text-gray-600"
+                      }`}
+                    >
+                      Imperial (lbs)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWeightUnit("kg")}
+                      className={`px-3 sm:px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                        weightUnit === "kg"
+                          ? "bg-white text-[#3A86FF] shadow-sm"
+                          : "text-gray-400 hover:text-gray-600"
+                      }`}
+                    >
+                      Metric (kg)
+                    </button>
+                  </div>
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-1 text-gray-400 hover:text-gray-600 border border-gray-200 rounded-full transition-colors cursor-pointer"
+                  className="p-1 text-gray-400 hover:text-gray-600 border border-gray-200 rounded-full transition-colors cursor-pointer shrink-0 mt-1"
                 >
                   <X size={16} />
                 </button>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import DashboardHeading from "@/components/common/DashboardHeading";
 import ClientsTable from "@/components/TrainerDashboard/Clients/ClientsTable";
 import { Client } from "@/components/TrainerDashboard/overview/data";
-import { ArrowDownUp, Funnel, UserPlus } from "lucide-react";
+import { ArrowDownUp, CloudCog, Funnel, UserPlus } from "lucide-react";
 import { useGetTrainerOverviewQuery } from "@/redux/features/api/TrainerDashboard/trainerOverviewApi";
 import { useSendInvitationMutation } from "@/redux/features/api/TrainerDashboard/SendInvitation";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ function Modal({
 export default function ClientsPage() {
   const { data: overviewData, isLoading } = useGetTrainerOverviewQuery();
   const apiClients = overviewData?.client_table || [];
+  console.log("apiClients", apiClients);
   const stats = overviewData?.stats;
 
   const [searchTerm, setSearchTerm] = useState("");

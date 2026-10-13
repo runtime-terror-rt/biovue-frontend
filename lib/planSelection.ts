@@ -75,15 +75,14 @@ export async function handlePlanSelection({
     return;
   }
 
-  // Normalize billing values to match backend expectations (monthly|annual)
+  // Normalize billing values to match backend expectations (monthly|annual|half_annual)
   const normalizeBilling = (b: string | undefined | null) => {
     if (!b) return "monthly";
     const val = String(b).toLowerCase();
+    if (val === "half_annual" || (val.includes("half") && val.includes("annual"))) return "half_annual";
     if (val.includes("annual") || val.includes("year") || val.includes("yr")) return "annual";
-    if (val.includes("half") && val.includes("annual")) return "annual";
     if (val.includes("month") || val.includes("monthly") || val.includes("mo")) return "monthly";
-    // fallback to monthly to avoid DB enum truncation
-    return "monthly";
+    return val;
   };
 
   const billingToSend = normalizeBilling(billing);

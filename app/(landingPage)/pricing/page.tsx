@@ -474,20 +474,21 @@ const PricingPage = () => {
                   //     ? "Contact Via Mail"
                   //     : "Start 7-Day Free Trial"
                   // }
-                  cta={
-                    idx === 0
-                      ? "Buy Now"
-                      : idx === 1
-                        ? "Update to Tier 2"
-                        : idx === 2
-                          ? "Update to Tier 3"
-                          : idx === filteredProfessionalPlans.length - 1 ||
-                              plan.name.toLowerCase().includes("enterprise") ||
-                              plan.price === "0.00" ||
-                              plan.price === 0
-                            ? "Contact Via Mail"
-                            : "Get Started"
-                  }
+                  // cta={
+                  //   idx === 0
+                  //     ? "Buy Now"
+                  //     : idx === 1
+                  //       ? "Update to Tier 2"
+                  //       : idx === 2
+                  //         ? "Update to Tier 3"
+                  //         : idx === filteredProfessionalPlans.length - 1 ||
+                  //             plan.name.toLowerCase().includes("enterprise") ||
+                  //             plan.price === "0.00" ||
+                  //             plan.price === 0
+                  //           ? "Contact Via Mail"
+                  //           : "Get Started"
+                  // }
+                  cta = "Get Started"
                   ctaColor="bg-[#0FA4A9]"
                   onSelect={() => handlePlanSelection(plan)}
                   isLoading={loadingPlanId === plan.id}

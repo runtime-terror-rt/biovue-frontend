@@ -18,6 +18,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { useGetTrainerOverviewQuery } from "@/redux/features/api/TrainerDashboard/trainerOverviewApi";
 
 interface ProgramViewProps {
   program: {
@@ -65,7 +66,9 @@ export default function ProgramView({ program }: ProgramViewProps) {
   ];
 
   const connectedUserIds = program.users.map((u) => u.id);
-  const allUsers = usersData?.data || [];
+  // const allUsers = usersData?.data || [];
+    const { data: overviewData, isLoading } = useGetTrainerOverviewQuery();
+  const allUsers = overviewData?.client_table || [];
   const handleAddClients = async () => {
     if (selectedUserIds.length === 0) {
       toast.error("Please select at least one client");
@@ -264,39 +267,50 @@ export default function ProgramView({ program }: ProgramViewProps) {
                 </div>
 
                 <div className="max-h-60 overflow-y-auto border rounded-lg p-2 space-y-2">
-                  {usersLoading ? (
+                  {usersLoading || isLoading ? (
                     <div className="flex justify-center p-4">
                       <Loader2 className="animate-spin text-teal-600" />
                     </div>
                   ) : allUsers.length > 0 ? (
                     allUsers.map((user) => {
-                      const isAlreadyAssigned = connectedUserIds.includes(user.id);
+                      const isAlreadyAssigned = connectedUserIds.includes(user.user_id);
+                      const matchedUser =
+                        usersData?.data?.find((u) => u.id === user.user_id) ||
+                        program.users?.find((u) => u.id === user.user_id);
+                      const clientEmail =
+                        matchedUser?.email ||
+                        (user as any).user_email ||
+                        (user as any).email ||
+                        "";
+
                       return (
                         <div
-                          key={user.id}
+                          key={user.user_id}
                           className={cn(
                             "flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors",
                             isAlreadyAssigned && "opacity-60 cursor-not-allowed"
                           )}
-                          onClick={() => !isAlreadyAssigned && toggleUserSelection(user.id)}
+                          onClick={() => !isAlreadyAssigned && toggleUserSelection(user.user_id)}
                         >
                           <Checkbox
-                            id={`user-${user.id}`}
-                            checked={isAlreadyAssigned || selectedUserIds.includes(user.id)}
+                            id={`user-${user.user_id}`}
+                            checked={isAlreadyAssigned || selectedUserIds.includes(user.user_id)}
                             disabled={isAlreadyAssigned}
-                            onCheckedChange={() => !isAlreadyAssigned && toggleUserSelection(user.id)}
+                            onCheckedChange={() => !isAlreadyAssigned && toggleUserSelection(user.user_id)}
                           />
                           <div className="flex items-center gap-3 flex-1">
                             <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-xs font-bold">
-                              {user.name.charAt(0)}
+                              {user.user_name?.charAt(0) || "U"}
                             </div>
                             <div>
                               <p className="text-sm font-medium text-gray-900">
-                                {user.name}
+                                {user.user_name}
                               </p>
-                              <p className="text-xs text-gray-500">
-                                {user.email}
-                              </p>
+                              {clientEmail && (
+                                <p className="text-xs text-gray-500">
+                                  {clientEmail}
+                                </p>
+                              )}
                               {isAlreadyAssigned && (
                                 <p className="text-[10px] text-teal-600 font-semibold uppercase">Already Assigned</p>
                               )}

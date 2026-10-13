@@ -87,13 +87,13 @@ export default function LogStressView({ onSave, onBack }: LogStressViewProps) {
         </button>
       </div>
 
-      <div className="bg-white rounded-[24px] p-6 md:p-10 border border-gray-100 shadow-sm flex flex-col gap-8">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-4">
+      <div className="bg-white rounded-2xl md:rounded-[24px] p-4 sm:p-6 md:p-10 border border-gray-100 shadow-sm flex flex-col gap-6 md:gap-8">
+        <div className="flex items-center justify-between mb-1 sm:mb-2">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-10 h-10 rounded-xl bg-[#F5F3FF] border border-purple-100 flex items-center justify-center shrink-0">
               <Frown size={22} className="text-[#A855F7]" />
             </div>
-            <h2 className="text-[22px] font-bold text-[#3A86FF]">Logging : Stress</h2>
+            <h2 className="text-lg sm:text-[22px] font-bold text-[#3A86FF]">Logging : Stress</h2>
           </div>
           <button 
             onClick={onBack}
@@ -104,10 +104,10 @@ export default function LogStressView({ onSave, onBack }: LogStressViewProps) {
         </div>
 
         {/* Stress Level */}
-        <div className="flex flex-col gap-6 p-6 rounded-[16px] border border-[#3A86FF]/25 bg-white shadow-sm">
+        <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6 rounded-xl sm:rounded-[16px] border border-[#3A86FF]/25 bg-white shadow-sm">
           <div className="flex items-center justify-between">
-            <h3 className="text-[#1F2D2E] font-medium text-[16px]">Rate your stress level</h3>
-            <span className="text-[#3A86FF] font-bold text-[18px]">
+            <h3 className="text-[#1F2D2E] font-medium text-sm sm:text-[16px]">Rate your stress level</h3>
+            <span className="text-[#3A86FF] font-bold text-base sm:text-[18px]">
               {stressLevel}/10
             </span>
           </div>
@@ -125,15 +125,15 @@ export default function LogStressView({ onSave, onBack }: LogStressViewProps) {
         </div>
 
         {/* Today's Mood */}
-        <div className="flex flex-col gap-4">
-          <h3 className="text-[#1F2D2E] font-medium text-[16px]">Today's Mood</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <h3 className="text-[#1F2D2E] font-medium text-sm sm:text-[16px]">Today's Mood</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
             {MOODS.map((mood) => (
               <button
                 key={mood.id}
                 onClick={() => setSelectedMood(mood.id)}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-xl border transition-all",
+                  "flex flex-col items-center justify-center gap-2 py-3 sm:py-4 px-2 rounded-xl border transition-all cursor-pointer",
                   selectedMood === mood.id
                     ? cn(mood.bg, "border-[#3A86FF] border-2 shadow-sm")
                     : "bg-white border-gray-100 hover:border-gray-200"
@@ -148,13 +148,13 @@ export default function LogStressView({ onSave, onBack }: LogStressViewProps) {
         </div>
 
         {/* Description */}
-        <div className="flex flex-col gap-4">
-          <h3 className="text-[#1F2D2E] font-medium text-[16px]">Tell us more (Optional)</h3>
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <h3 className="text-[#1F2D2E] font-medium text-sm sm:text-[16px]">Tell us more (Optional)</h3>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="How was your day? What influenced your stress level?"
-            className="w-full min-h-[120px] p-4 rounded-xl border border-gray-100 focus:border-[#3A86FF]/30 focus:ring-4 focus:ring-blue-50/50 focus:outline-none transition-all resize-none text-[15px] bg-gray-50/30"
+            className="w-full min-h-[100px] sm:min-h-[120px] p-3 sm:p-4 rounded-xl border border-gray-100 focus:border-[#3A86FF]/30 focus:ring-4 focus:ring-blue-50/50 focus:outline-none transition-all resize-none text-sm sm:text-[15px] bg-gray-50/30"
           />
         </div>
 
@@ -162,7 +162,7 @@ export default function LogStressView({ onSave, onBack }: LogStressViewProps) {
         <button 
           onClick={handleSubmit}
           disabled={isPosting}
-          className="w-full bg-[#0FA4A9] text-white py-4 rounded-xl font-bold text-[18px] hover:bg-opacity-90 transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20 flex items-center justify-center gap-2"
+          className="w-full bg-[#0FA4A9] text-white py-3.5 sm:py-4 rounded-xl font-bold text-base sm:text-[18px] hover:bg-opacity-90 transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20 flex items-center justify-center gap-2"
         >
           {isPosting ? <Loader2 className="animate-spin" /> : "Save Today's Stress"}
         </button>

@@ -56,20 +56,20 @@ export default function LogNutritionModal({
             onClick={onClose}
             className="fixed inset-0 bg-black/40 z-50 backdrop-blur-[2px]"
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 pointer-events-none overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 pointer-events-none overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-3xl p-6 md:p-8 shadow-2xl w-full max-w-250 pointer-events-auto border border-gray-100 flex flex-col gap-6 my-4 max-h-[95vh] overflow-hidden"
+              className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl w-full max-w-4xl pointer-events-auto border border-gray-100 flex flex-col gap-4 sm:gap-6 my-2 sm:my-4 max-h-[94vh] overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div className="w-10 h-10 rounded-xl bg-[#E6F6F6] border border-[#0FA4A9]/20 flex items-center justify-center shrink-0">
                     <Apple size={20} className="text-[#0FA4A9]" />
                   </div>
-                  <h2 className="text-[20px] font-bold text-[#3A86FF]">
+                  <h2 className="text-lg sm:text-[20px] font-bold text-[#3A86FF]">
                     Logging : Nutrition
                   </h2>
                 </div>

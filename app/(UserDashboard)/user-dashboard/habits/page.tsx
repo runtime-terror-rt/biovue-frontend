@@ -148,13 +148,13 @@ export default function HabitsPage() {
   };
   return (
     <SubscriptionGuard>
-      <div className="flex flex-col min-h-[calc(100vh-80px)] p-6 md:p-8 container  mx-auto w-full">
+      <div className="flex flex-col min-h-[calc(100vh-80px)] p-2 sm:p-4 md:p-6 w-full max-w-7xl mx-auto min-w-0">
         {/* Top Navigation */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Link
               href="/user-dashboard"
-              className="flex items-center gap-2 px-4 py-2 border border-[#3A86FF]/30 text-[#5F6F73] hover:text-[#1F2D2E] hover:bg-blue-50/50 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 border border-[#3A86FF]/30 text-[#5F6F73] hover:text-[#1F2D2E] hover:bg-blue-50/50 rounded-lg text-xs sm:text-sm font-medium transition-colors"
             >
               <ArrowLeft size={16} />
               Back to Dashboard
@@ -163,21 +163,16 @@ export default function HabitsPage() {
             <button
               onClick={handleUpdateInsights}
               disabled={isUpdating}
-              className="flex items-center gap-2 px-4 py-2 bg-[#0FA4A9] text-white rounded-lg text-sm font-medium hover:bg-opacity-90 transition-all disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#0FA4A9] text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-opacity-90 transition-all disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw size={16} className={cn(isUpdating && "animate-spin")} />
               {isUpdating ? "Updating..." : "Refresh Habits"}
             </button>
           </div>
-
-          {/* <button className="flex items-center gap-2 bg-[#0FA4A9] text-white px-5 py-2.5 rounded-lg font-medium hover:bg-opacity-90 transition-all text-sm shadow-sm cursor-pointer">
-            <Plus size={18} />
-            Log Today&apos;s Habit
-          </button> */}
         </div>
 
         {/* Habits Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 w-full min-w-0">
           {consistencyMetrics.map((habit: any, index: number) => {
             const habitId = habit.title.toLowerCase();
             const isNeedAttention = habit.status === "Need Attention";
@@ -185,13 +180,13 @@ export default function HabitsPage() {
             return (
               <div
                 key={index}
-                className="bg-white rounded-3xl p-6 border border-[#3A86FF]/25 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:border-blue-100 transition-colors"
+                className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-[#3A86FF]/25 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col justify-between hover:border-blue-100 transition-colors"
               >
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-3 sm:gap-4">
+                  <div className="flex items-start justify-between gap-2">
                     <div
                       className={cn(
-                        "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
+                        "w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0",
                         iconsBgMap[habitId] || "bg-blue-100",
                       )}
                     >
@@ -199,7 +194,7 @@ export default function HabitsPage() {
                     </div>
                     <span
                       className={cn(
-                        "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border text-nowrap",
+                        "px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider border text-nowrap",
                         isNeedAttention
                           ? "bg-pink-100 text-pink-500 border-pink-200"
                           : "bg-teal-100 text-[#0FA4A9] border-teal-200",
@@ -210,16 +205,16 @@ export default function HabitsPage() {
                   </div>
 
                   <div className="flex flex-col gap-1 mt-1">
-                    <h3 className="text-[22px] font-bold text-[#1F2D2E]">
+                    <h3 className="text-xl sm:text-[22px] font-bold text-[#1F2D2E]">
                       {habit.title}
                     </h3>
-                    <p className="text-[#5F6F73] text-[15px] italic ">
+                    <p className="text-[#5F6F73] text-sm sm:text-[15px] italic">
                       &quot;{habit.avg}&quot;
                     </p>
                   </div>
 
                   {/* Consistency Bar */}
-                  <div className="flex flex-col gap-2 mt-4">
+                  <div className="flex flex-col gap-2 mt-3 sm:mt-4">
                     <div className="flex items-center justify-between text-xs font-bold text-[#94A3B8] uppercase tracking-wider">
                       <span>Consistency</span>
                       <span>{habit.ratio}</span>
@@ -250,9 +245,9 @@ export default function HabitsPage() {
 
                 <Link
                   href={`/user-dashboard/habits/${habitId}`}
-                  className="mt-8"
+                  className="mt-6 sm:mt-8"
                 >
-                  <button className="w-full bg-[#5C82C8] text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all text-sm group cursor-pointer shadow-sm">
+                  <button className="w-full bg-[#5C82C8] text-white py-2.5 sm:py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all text-xs sm:text-sm group cursor-pointer shadow-sm">
                     View Details
                     <ArrowRight
                       size={16}
@@ -266,13 +261,13 @@ export default function HabitsPage() {
         </div>
 
         {/* Focus on Trends Banner */}
-        <div className="bg-[#EEF2FC] rounded-3xl p-6 border border-[#2563EB]/10 flex items-center gap-4 mt-auto shadow-sm">
-          <div className="w-12 h-12 rounded-xl bg-[#5C82C8] flex items-center justify-center shrink-0 shadow-sm">
-            <Calendar size={24} className="text-white" />
+        <div className="bg-[#EEF2FC] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-[#2563EB]/10 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mt-auto shadow-sm">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#5C82C8] flex items-center justify-center shrink-0 shadow-sm">
+            <Calendar size={20} className="text-white sm:w-6 sm:h-6" />
           </div>
           <div className="flex flex-col gap-1">
-            <h4 className="text-[#1F2D2E] font-bold text-lg">Focus on Trends</h4>
-            <p className="text-[#5C82C8] text-sm italic">
+            <h4 className="text-[#1F2D2E] font-bold text-base sm:text-lg">Focus on Trends</h4>
+            <p className="text-[#5C82C8] text-xs sm:text-sm italic">
               {(habitData?.data?.focus_on_trends || habitData?.focus_on_trends) || "Missing a day happens. BioVue focuses on long-term consistency over perfection."}
             </p>
           </div>
