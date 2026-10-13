@@ -49,13 +49,18 @@ const SubscriptionManagement = ({
   );
   const [trialPlan, setTrialPlan] = useState<any | null>(null);
 
+  const isProfessional =
+    role === "professional" ||
+    currentUser?.role === "professional" ||
+    (currentUser as any)?.user_type === "professional";
+
   const { isTrial, remainingDays: trialRemainingDays, targetPlan } =
     useTrialCountdown();
 
   const { data: plansData, isLoading: isLoadingPlans } =
     useGetSubscriptionPlansQuery({
       billing: billingCycle,
-      type: role || currentUser?.role || "individual",
+      type: isProfessional ? "professional" : role || currentUser?.role || "individual",
     });
 
   const userId = currentUser?.id || (currentUser as any)?.user_id;
@@ -100,6 +105,16 @@ const SubscriptionManagement = ({
   const plans = (plansData?.data || [])
     .filter((plan: any) => plan.status === true)
     .filter((plan: any) => {
+      if (isProfessional) {
+        // Only professional plans, strictly NO free trial / free plan
+        if (plan.plan_type && plan.plan_type !== "professional") return false;
+        if (isFreeTrialPlan(plan)) return false;
+        const name = (plan.name || "").toLowerCase();
+        if (name.includes("trial") || name.includes("free trial") || name === "free") return false;
+        return true;
+      }
+
+      // Individual dashboard plans
       const name = (plan.name || "").toLowerCase();
       return (
         name.includes("plus") ||
@@ -135,9 +150,17 @@ const SubscriptionManagement = ({
     activePlanId === 3 ||
     (matchedPlan && !isFreeTrialPlan(matchedPlan) && Number(matchedPlan.price || 0) > 0);
 
-  const effectiveIsTrial = isTrial && !isUserOnPaidPlan;
+  const effectiveIsTrial = !isProfessional && isTrial && !isUserOnPaidPlan;
 
-  const activePlanName = effectiveIsTrial
+  const activePlanName = isProfessional
+    ? matchedPlan?.name ||
+      (currentUser?.plan_name &&
+      !currentUser.plan_name.toLowerCase().includes("trial") &&
+      !currentUser.plan_name.toLowerCase().includes("free")
+        ? currentUser.plan_name
+        : null) ||
+      (activePlanId ? "Active Plan" : "No Active Plan")
+    : effectiveIsTrial
     ? "Free Trial"
     : matchedPlan?.name ||
       (activePlanId === 3
@@ -290,11 +313,11 @@ const SubscriptionManagement = ({
                   : accessUntil
                   ? `EXPIRES ON ${accessUntil.toUpperCase()}`
                   : "ACTIVE PLAN"
-                : effectiveIsTrial && remainingDays !== null
+                : !isProfessional && effectiveIsTrial && remainingDays !== null
                 ? `${remainingDays} DAYS REMAINING (7-DAY TRIAL)`
-                : effectiveIsTrial
+                : !isProfessional && effectiveIsTrial
                 ? "7 DAYS FREE TRIAL"
-                : activePlanId
+                : activePlanId || matchedPlan
                 ? "ACTIVE PLAN"
                 : "NO ACTIVE PLAN"}
             </span>
@@ -302,11 +325,15 @@ const SubscriptionManagement = ({
               <div
                 className={cn(
                   "w-2 h-2 rounded-full",
-                  activePlanId || isTrial ? "bg-[#4ADE80]" : "bg-gray-400",
+                  activePlanId || matchedPlan || (!isProfessional && isTrial)
+                    ? "bg-[#4ADE80]"
+                    : "bg-gray-400",
                 )}
               />
               <span className="text-[9px] font-extrabold uppercase tracking-widest">
-                {activePlanId || isTrial ? "ACTIVE" : "INACTIVE"}
+                {activePlanId || matchedPlan || (!isProfessional && isTrial)
+                  ? "ACTIVE"
+                  : "INACTIVE"}
               </span>
             </div>
           </div>
@@ -317,7 +344,7 @@ const SubscriptionManagement = ({
             <span className="text-xs font-bold opacity-90">
               Plan: {typeof activePlanName === "string" ? activePlanName : "Active Plan"}
             </span>
-            {targetPlan && isTrial && (
+            {!isProfessional && targetPlan && isTrial && (
               <span className="text-[11px] font-medium text-white/90">
                 Next plan:{" "}
                 <strong className="font-bold underline decoration-white/40">
@@ -396,39 +423,41 @@ const SubscriptionManagement = ({
         />
       </div>
 
-      {/* Billing Cycle */}
-      <div className="bg-white rounded-[16px] p-8 border border-[#3A86FF]/10 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-lg font-bold text-[#1F2D2E]">Billing Cycle</h3>
-          <p className="text-[#5F6F73] text-sm font-medium">
-            Save up to 10% with annual billing
-          </p>
+      {/* Billing Cycle (for individual plans) */}
+      {!isProfessional && (
+        <div className="bg-white rounded-[16px] p-8 border border-[#3A86FF]/10 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-lg font-bold text-[#1F2D2E]">Billing Cycle</h3>
+            <p className="text-[#5F6F73] text-sm font-medium">
+              Save up to 10% with annual billing
+            </p>
+          </div>
+          <div className="flex text-sm font-bold items-center gap-6">
+            <span
+              onClick={() => setBillingCycle("monthly")}
+              className={cn(
+                "cursor-pointer transition-all uppercase tracking-widest text-[11px]",
+                billingCycle === "monthly"
+                  ? "text-[#0FA4A9] border-b-2 border-[#0FA4A9] pb-0.5"
+                  : "text-[#94A3B8]",
+              )}
+            >
+              Monthly
+            </span>
+            <span
+              onClick={() => setBillingCycle("annual")}
+              className={cn(
+                "cursor-pointer transition-all uppercase tracking-widest text-[11px]",
+                billingCycle === "annual"
+                  ? "text-[#0FA4A9] border-b-2 border-[#0FA4A9] pb-0.5"
+                  : "text-[#94A3B8]",
+              )}
+            >
+              Annual
+            </span>
+          </div>
         </div>
-        <div className="flex text-sm font-bold items-center gap-6">
-          <span
-            onClick={() => setBillingCycle("monthly")}
-            className={cn(
-              "cursor-pointer transition-all uppercase tracking-widest text-[11px]",
-              billingCycle === "monthly"
-                ? "text-[#0FA4A9] border-b-2 border-[#0FA4A9] pb-0.5"
-                : "text-[#94A3B8]",
-            )}
-          >
-            Monthly
-          </span>
-          <span
-            onClick={() => setBillingCycle("annual")}
-            className={cn(
-              "cursor-pointer transition-all uppercase tracking-widest text-[11px]",
-              billingCycle === "annual"
-                ? "text-[#0FA4A9] border-b-2 border-[#0FA4A9] pb-0.5"
-                : "text-[#94A3B8]",
-            )}
-          >
-            Annual
-          </span>
-        </div>
-      </div>
+      )}
 
       {/* Plan Tiers */}
       <div className="flex flex-col gap-4">
@@ -438,7 +467,7 @@ const SubscriptionManagement = ({
           </div>
         ) : plans.length === 0 ? (
           <div className="py-12 bg-white rounded-2xl border border-gray-100 text-center text-gray-500 font-medium">
-            No plans available for this cycle.
+            No plans available.
           </div>
         ) : (
           plans.map((plan: any) => {
@@ -450,12 +479,20 @@ const SubscriptionManagement = ({
               Boolean(activePlanId && plan.id) &&
               Number(activePlanId) === Number(plan.id);
 
-            // During free trial, paid plans are NOT yet active, so user can click to pay and activate immediately
-            const isActive = effectiveIsTrial
+            // For professional users, no free trial exists
+            const isActive = isProfessional
+              ? Boolean(plan.is_current_plan || isIdMatch || (isNameMatch && activePlanId))
+              : effectiveIsTrial
               ? isFreeTrialPlan(plan)
               : isIdMatch || (isNameMatch && !effectiveIsTrial);
             const isTrialIneligible =
-              isFreeTrialPlan(plan) && hasPaidPlan(currentUser, paymentSummary);
+              !isProfessional && isFreeTrialPlan(plan) && hasPaidPlan(currentUser, paymentSummary);
+
+            const isEnterpriseOrCustom =
+              Boolean(plan.name?.toLowerCase().includes("enterprise")) ||
+              plan.billing_cycle === "custom" ||
+              plan.price === "0.00" ||
+              Number(plan.price) === 0;
 
             return (
               <div
@@ -464,8 +501,14 @@ const SubscriptionManagement = ({
                   if (isActive) return;
                   if (isTrialIneligible) {
                     toast.error(
-                      "You already have an active paid plan (Plus/Premium) and cannot take the free trial.",
+                      "You already have an active paid plan.",
                     );
+                    return;
+                  }
+                  if (isProfessional && isEnterpriseOrCustom) {
+                    window.location.href = `mailto:BioVueSupport@gmail.com?subject=Professional%20Plan%20Inquiry%20-%20${encodeURIComponent(
+                      plan.name || "",
+                    )}`;
                     return;
                   }
                   await handlePlanSelection({
@@ -476,7 +519,7 @@ const SubscriptionManagement = ({
                     processPayment,
                     setLoadingPlanId,
                     billing: plan.billing_cycle || "monthly",
-                    onFreeTrial: (trial) => setTrialPlan(trial),
+                    onFreeTrial: isProfessional ? undefined : (trial) => setTrialPlan(trial),
                   });
                 }}
                 className={cn(
@@ -500,19 +543,41 @@ const SubscriptionManagement = ({
                           : "bg-[#F0F7FF] text-[#3A86FF]",
                       )}
                     >
-                      {plan.name === "Premium" || plan.name === "Plus" ? (
+                      {plan.name === "Premium" ||
+                      plan.name === "Plus" ||
+                      plan.plan_type === "professional" ? (
                         <Crown size={28} />
                       ) : (
                         <User size={28} />
                       )}
                     </div>
                     <div className="flex flex-col gap-1">
-                      <h4 className="text-xl font-bold text-[#1F2D2E]">
-                        {plan.name}
-                      </h4>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-xl font-bold text-[#1F2D2E]">
+                          {plan.name}
+                        </h4>
+                        {plan.billing_cycle && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                            {plan.billing_cycle === "half_annual"
+                              ? "6 Months"
+                              : plan.billing_cycle === "monthly"
+                              ? "Monthly"
+                              : plan.billing_cycle === "custom"
+                              ? "Custom"
+                              : plan.billing_cycle}
+                          </span>
+                        )}
+                        {plan.member_limit !== null &&
+                          plan.member_limit !== undefined &&
+                          plan.member_limit > 0 && (
+                            <span className="text-[10px] font-semibold text-[#3A86FF] bg-[#F0F7FF] px-2 py-0.5 rounded-full">
+                              Up to {plan.member_limit} clients
+                            </span>
+                          )}
+                      </div>
                       <div className="flex flex-col gap-1.5 mt-1">
                         {plan.features
-                          ?.slice(0, 2)
+                          ?.slice(0, 4)
                           .map((feature: string, i: number) => (
                             <span
                               key={i}
@@ -530,15 +595,32 @@ const SubscriptionManagement = ({
                               {feature}
                             </span>
                           ))}
+                        {plan.features?.length > 4 && (
+                          <span className="text-[11px] font-semibold text-[#0FA4A9]">
+                            +{plan.features.length - 4} more features
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span className="text-2xl font-black text-[#1F2D2E]">
-                      ${plan.price}
-                      <span className="text-sm font-medium text-[#94A3B8]">
-                        /{plan.billing_cycle === "monthly" ? "mo" : "yr"}
-                      </span>
+                      {isEnterpriseOrCustom ? (
+                        "Custom"
+                      ) : (
+                        <>
+                          ${plan.price}
+                          <span className="text-sm font-medium text-[#94A3B8]">
+                            /{plan.billing_cycle === "monthly"
+                              ? "mo"
+                              : plan.billing_cycle === "half_annual"
+                              ? "6 mos"
+                              : plan.billing_cycle === "annual"
+                              ? "yr"
+                              : plan.billing_cycle || "mo"}
+                          </span>
+                        </>
+                      )}
                     </span>
                     {isActive && (
                       <div className="flex flex-col items-end gap-2 mt-2">
@@ -590,13 +672,20 @@ const SubscriptionManagement = ({
                         )}
                       </div>
                     )}
-                    {!isActive && isTrial && !isFreeTrialPlan(plan) && (
+                    {!isActive && !isProfessional && isTrial && !isFreeTrialPlan(plan) && (
                       <span className="text-[10px] font-bold text-[#0FA4A9] uppercase tracking-widest flex items-center gap-1.5 bg-[#E6F6F6] px-2.5 py-1 rounded-full border border-[#0FA4A9]/30 mt-2">
                         {Number(currentUser?.target_plan_id) === Number(plan.id) ||
                         (typeof targetPlan === "string" &&
                           targetPlan.toLowerCase() === plan.name?.toLowerCase())
                           ? "Next Plan • Click to Pay Now"
                           : "Click to Pay & Activate"}
+                      </span>
+                    )}
+                    {!isActive && isProfessional && (
+                      <span className="text-[10px] font-bold text-[#0FA4A9] uppercase tracking-widest flex items-center gap-1.5 bg-[#EAFBF7] px-2.5 py-1 rounded-full border border-[#0FA4A9]/30 mt-2">
+                        {isEnterpriseOrCustom
+                          ? "Contact Us"
+                          : "Click to Upgrade"}
                       </span>
                     )}
                   </div>
@@ -607,19 +696,7 @@ const SubscriptionManagement = ({
         )}
       </div>
 
-      {/* <div className="flex items-center gap-4">
-        <button className="flex-[2] bg-[#0FA4A9] text-white py-4 rounded-[12px] font-bold text-base hover:bg-[#0d8e92] transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20">
-          Confirm Changes
-        </button>
-        <button
-          onClick={handleBack}
-          className="flex-1 bg-white border border-gray-100 text-[#5F6F73] py-4 rounded-[12px] font-bold text-base hover:bg-gray-50 transition-all cursor-pointer"
-        >
-          {backLabel}
-        </button>
-      </div> */}
-
-      {trialPlan && (
+      {!isProfessional && trialPlan && (
         <FreeTrialPlanModal
           isOpen={!!trialPlan}
           onClose={() => setTrialPlan(null)}

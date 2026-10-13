@@ -374,7 +374,7 @@ export default function HabitProgressPage() {
     hData?.why_this_matters;
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-80px)] p-6 md:p-8 container mx-auto w-full">
+    <div className="flex flex-col min-h-[calc(100vh-80px)] p-2 sm:p-4 md:p-6 w-full max-w-7xl mx-auto min-w-0">
       {view === "logging" && habitId === "nutrition" ? (
         <LogNutritionView
           onBack={() => setView("trends")}
@@ -391,7 +391,7 @@ export default function HabitProgressPage() {
           <div className="mb-2">
             <button
               onClick={() => router.push(`/user-dashboard/habits/${habitId}`)}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-[#3A86FF]/30 text-[#5F6F73] hover:text-[#1F2D2E] hover:bg-blue-50/50 rounded-lg text-xs font-semibold transition-all cursor-pointer w-fit"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border border-[#3A86FF]/30 text-[#5F6F73] hover:text-[#1F2D2E] hover:bg-blue-50/50 rounded-lg text-xs font-semibold transition-all cursor-pointer w-fit"
             >
               <ArrowLeft size={14} />
               Back To Habit
@@ -399,42 +399,44 @@ export default function HabitProgressPage() {
           </div>
 
           {/* Breadcrumbs */}
-          <div className="flex items-center gap-1 text-sm font-medium mb-8">
+          <div className="flex items-center gap-1 text-xs sm:text-sm font-medium mb-3 sm:mb-6">
             <span className="text-[#94A3B8]">Habits/</span>
             <span className="text-[#A855F7] capitalize">
               {habitId}/ progress
             </span>
           </div>
 
-          <div className="flex flex-col gap-6 w-full">
+          <div className="flex flex-col gap-4 sm:gap-6 w-full min-w-0">
             {/* Main Chart Card */}
-            <div className="bg-white rounded-[24px] p-8 md:p-10 border border-[#EDF2F7] shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col gap-8 w-full">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-6">
+            <div className="bg-white rounded-2xl md:rounded-[24px] p-4 sm:p-5 md:p-6 lg:p-8 border border-[#EDF2F7] shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-col gap-5 sm:gap-6 w-full min-w-0 overflow-hidden">
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 w-full min-w-0">
+                <div className="flex items-center gap-3 sm:gap-5 min-w-0">
                   <div
                     className={cn(
-                      "w-16 h-16 rounded-[12px] flex items-center justify-center shrink-0 bg-[#EAF1FF]",
+                      "w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-[12px] flex items-center justify-center shrink-0 bg-[#EAF1FF]",
                     )}
                   >
-                    {habitId === 'sleep' ? <Bed size={32} className="text-[#3A86FF]" /> : habit.icon}
+                    <div className="[&>svg]:w-6 [&>svg]:h-6 sm:[&>svg]:w-7 sm:[&>svg]:h-7 md:[&>svg]:w-8 md:[&>svg]:h-8 flex items-center justify-center">
+                      {habitId === 'sleep' ? <Bed size={32} className="text-[#3A86FF]" /> : habit.icon}
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <h2 className="text-2xl font-bold text-[#3A86FF]">
+                  <div className="flex flex-col gap-0.5 sm:gap-1 min-w-0">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#3A86FF] truncate">
                       {habitId === 'sleep' ? "Sleep Progress" : `${habit.title} Trends`}
                     </h2>
-                    <p className="text-[#94A3B8] text-sm font-medium italic">
+                    <p className="text-[#94A3B8] text-xs sm:text-sm font-medium italic truncate">
                       {habitId === 'sleep' ? "Based on your logged sleep data" : `Based on your logged ${habitId === 'nutrition' ? 'meals and nutrition quality' : 'data'}`}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex p-1.5 bg-white border border-[#E2E8F0] rounded-[12px] overflow-hidden self-start md:self-auto shrink-0">
+                <div className="flex items-center gap-1 p-1 bg-white border border-[#E2E8F0] rounded-xl self-start sm:self-auto shrink-0 w-full sm:w-auto overflow-x-auto">
                   {["Weekly", "Monthly", "Last 3 months"].map((t) => (
                     <button
                       key={t}
                       onClick={() => setTimeframe(t)}
                       className={cn(
-                        "px-5 py-2 text-sm font-semibold rounded-[8px] transition-all cursor-pointer",
+                        "flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer text-center whitespace-nowrap shrink-0",
                         t === timeframe
                           ? "bg-[#D9E6FF] text-[#1F2D2E]"
                           : "text-[#5F6F73] hover:bg-gray-50",
@@ -446,7 +448,7 @@ export default function HabitProgressPage() {
                 </div>
               </div>
 
-              <div className="h-80 w-full mt-4 -ml-4 pr-4">
+              <div className="h-64 sm:h-72 md:h-80 w-full min-w-0 mt-2 sm:mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   {habitId === "nutrition" ? (
                     <BarChart
@@ -589,60 +591,58 @@ export default function HabitProgressPage() {
             </div>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full">
-              <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm flex flex-col gap-3">
-                <span className="text-[#3A86FF] font-bold text-[13px] uppercase tracking-widest">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 w-full min-w-0">
+              <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-sm flex flex-col gap-1.5 min-w-0">
+                <span className="text-[#3A86FF] font-bold text-[11px] sm:text-xs uppercase tracking-widest truncate">
                   AVERAGE
                 </span>
-                <span className="text-[20px] font-bold text-[#1F2D2E]">
+                <span className="text-lg sm:text-xl font-bold text-[#1F2D2E] truncate">
                   {habit.avgStr}
                 </span>
               </div>
-              <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm flex flex-col gap-3">
-                <span className="text-[#3A86FF] font-bold text-[13px] uppercase tracking-widest">
+              <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-sm flex flex-col gap-1.5 min-w-0">
+                <span className="text-[#3A86FF] font-bold text-[11px] sm:text-xs uppercase tracking-widest truncate">
                   CONSISTENCY
                 </span>
-                <span className="text-[20px] font-bold text-[#1F2D2E]">
+                <span className="text-lg sm:text-xl font-bold text-[#1F2D2E] truncate">
                   {habit.consistency}
                 </span>
               </div>
-              <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm flex flex-col gap-3">
-                <span className="text-[#3A86FF] font-bold text-[13px] uppercase tracking-widest">
+              <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-sm flex flex-col gap-1.5 min-w-0 sm:col-span-2 lg:col-span-1">
+                <span className="text-[#3A86FF] font-bold text-[11px] sm:text-xs uppercase tracking-widest truncate">
                   BEST STREAK
                 </span>
-                <span className="text-[20px] font-bold text-[#1F2D2E]">
+                <span className="text-lg sm:text-xl font-bold text-[#1F2D2E] truncate">
                   {habit.streak}
                 </span>
               </div>
             </div>
 
-
-
             {/* BIOVUE Insight */}
-            <div className="bg-[#EAF6F6] rounded-4xl p-6 md:p-8 border border-teal-100 flex flex-col gap-3">
-              <div className="flex items-center gap-2 text-[#0FA4A9] font-bold text-sm tracking-widest uppercase">
+            <div className="bg-[#EAF6F6] rounded-2xl sm:rounded-3xl md:rounded-4xl p-4 sm:p-6 md:p-8 border border-teal-100 flex flex-col gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 text-[#0FA4A9] font-bold text-xs sm:text-sm tracking-widest uppercase">
                 <ActivityIcon size={18} />
                 BIOVUE INSIGHT
               </div>
-              <p className="text-[#1F2D2E] italic">{biovueInsight || habit.insight}</p>
+              <p className="text-sm sm:text-base text-[#1F2D2E] italic">{biovueInsight || habit.insight}</p>
             </div>
 
             {/* Coach Note */}
             {habit.coachNote && (
-              <div className="bg-[#F5F3FF] rounded-4xl p-6 md:p-8 border border-purple-100 flex flex-col gap-4">
+              <div className="bg-[#F5F3FF] rounded-2xl sm:rounded-3xl md:rounded-4xl p-4 sm:p-6 md:p-8 border border-purple-100 flex flex-col gap-3 sm:gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#8B5CF6] flex items-center justify-center text-white shrink-0 shadow-sm">
-                    <User size={20} />
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#8B5CF6] flex items-center justify-center text-white shrink-0 shadow-sm">
+                    <User size={18} className="sm:w-5 sm:h-5" />
                   </div>
-                  <h3 className="text-[#8B5CF6] font-bold text-[17px]">
+                  <h3 className="text-[#8B5CF6] font-bold text-base sm:text-[17px]">
                     Coach Note
                   </h3>
                 </div>
-                <p className="text-[#1F2D2E] italic text-[15px] leading-relaxed">
+                <p className="text-[#1F2D2E] italic text-sm sm:text-[15px] leading-relaxed">
                   {habit.coachNote}
                 </p>
                 {habit.coachName && (
-                  <span className="text-[#94A3B8] font-bold text-[11px] uppercase tracking-widest italic mt-1">
+                  <span className="text-[#94A3B8] font-bold text-[10px] sm:text-[11px] uppercase tracking-widest italic mt-1">
                     {habit.coachName}{habit.coachTime ? `. ${habit.coachTime}` : ""}
                   </span>
                 )}
@@ -650,12 +650,12 @@ export default function HabitProgressPage() {
             )}
 
             {/* Sticky-like Footer Button */}
-            <div className="mt-8 mb-4">
+            <div className="mt-4 sm:mt-8 mb-4">
               <button
                 onClick={handleLogClick}
-                className="w-full bg-[#0FA4A9] text-white py-4 rounded-xl font-bold text-[17px] hover:bg-opacity-90 transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20 flex items-center justify-center gap-2 group"
+                className="w-full bg-[#0FA4A9] text-white py-3.5 sm:py-4 rounded-xl font-bold text-base sm:text-[17px] hover:bg-opacity-90 transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20 flex items-center justify-center gap-2 group"
               >
-                <Calendar size={20} />
+                <Calendar size={18} className="sm:w-5 sm:h-5" />
                 Log Today&apos;s {habit.title}
               </button>
             </div>

@@ -650,16 +650,16 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
       </div>
 
       {/* Main Container */}
-      <div className="bg-white rounded-3xl p-6 md:p-10 border border-gray-100 shadow-sm flex flex-col gap-8">
+      <div className="bg-white rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-10 border border-gray-100 shadow-sm flex flex-col gap-6 md:gap-8">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-10 h-10 rounded-xl bg-[#E6F6F6] border border-[#0FA4A9]/20 flex items-center justify-center shrink-0">
               <Apple size={22} className="text-[#0FA4A9]" />
             </div>
             <div>
-              <h2 className="text-[22px] font-bold text-[#3A86FF]">Food Log</h2>
-              <p className="text-sm text-gray-500">
+              <h2 className="text-lg sm:text-[22px] font-bold text-[#3A86FF]">Food Log</h2>
+              <p className="text-xs sm:text-sm text-gray-500">
                 Log your meals and track macros
               </p>
             </div>
@@ -673,9 +673,9 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
         </div>
 
         {/* Calorie Target Section */}
-        <div className="flex flex-col gap-4 p-6 rounded-2xl border border-[#3A86FF]/25 bg-linear-to-br from-blue-50 to-white">
+        <div className="flex flex-col gap-4 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-[#3A86FF]/25 bg-linear-to-br from-blue-50 to-white">
           <div className="flex items-center justify-between">
-            <label className="text-[#1F2D2E] font-semibold text-[16px]">
+            <label className="text-[#1F2D2E] font-semibold text-sm sm:text-[16px]">
               Daily Calorie Target
             </label>
             {/* <input
@@ -726,7 +726,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
             <p className="text-sm font-semibold text-[#1F2D2E]">
               Macro Progress
             </p>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
               {/* Protein Progress */}
               {/* <div>
                 <div className="flex items-center justify-between mb-2">
@@ -870,7 +870,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
             <div
               key={meal.id}
               className={cn(
-                "p-6 rounded-2xl border-2",
+                "p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2",
                 MEAL_TYPES.find((m) => m.value === meal.type)?.color || "",
               )}
             >
@@ -1010,8 +1010,8 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
                   </div>
 
                   {/* Quantity and Unit Input */}
-                  <div className="grid grid-cols-4 gap-2">
-                    <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-3">
+                    <div className="col-span-1">
                       <label className="text-xs font-semibold text-gray-700 block mb-1">
                         Quantity
                       </label>
@@ -1024,7 +1024,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
                       />
                     </div>
 
-                    <div className="col-span-2 space-y-2">
+                    <div className="col-span-1 sm:col-span-2 space-y-2">
                       <label className="text-xs font-semibold text-gray-700 block mb-1">
                         Unit
                       </label>
@@ -1060,10 +1060,10 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
                         />
                       )}
                     </div>
-                    <div className="flex items-end">
+                    <div className="flex items-end col-span-1">
                       <button
                         onClick={() => addFoodToMeal(meal.id)}
-                        className="w-full px-3 py-2 bg-[#0FA4A9] text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all transition-all"
+                        className="w-full px-3 py-2 bg-[#0FA4A9] text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all cursor-pointer"
                       >
                         Add Food
                       </button>
@@ -1110,7 +1110,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
         <button
           onClick={handleSave}
           disabled={loadingCalories || isSubmitting}
-          className="w-full bg-[#0FA4A9] text-white py-4 rounded-xl font-bold text-[18px] hover:bg-opacity-90 transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20 flex items-center justify-center gap-2"
+          className="w-full bg-[#0FA4A9] text-white py-3.5 sm:py-4 rounded-xl font-bold text-base sm:text-[18px] hover:bg-opacity-90 transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20 flex items-center justify-center gap-2"
         >
           {(loadingCalories || isSubmitting) && <Loader2 className="animate-spin" size={20} />}
           {loadingCalories || isSubmitting ? "Saving..." : "Save Food Log"}

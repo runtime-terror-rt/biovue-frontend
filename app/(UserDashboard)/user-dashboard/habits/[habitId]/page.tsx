@@ -234,7 +234,7 @@ export default function HabitDetailPage() {
 
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-80px)] p-6 md:p-8 container mx-auto w-full">
+    <div className="flex flex-col min-h-[calc(100vh-80px)] p-2 sm:p-4 md:p-6 w-full max-w-7xl mx-auto min-w-0">
       {view === "logging" && habitId === "nutrition" ? (
         <LogNutritionView onBack={() => setView("details")} onSave={() => setView("details")} />
       ) : view === "logging" && habitId === "stress" ? (
@@ -245,7 +245,7 @@ export default function HabitDetailPage() {
           <div className="mb-2">
             <button 
               onClick={() => router.push('/user-dashboard/habits')}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-[#3A86FF]/30 text-[#5F6F73] hover:text-[#1F2D2E] hover:bg-blue-50/50 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border border-[#3A86FF]/30 text-[#5F6F73] hover:text-[#1F2D2E] hover:bg-blue-50/50 rounded-lg text-xs font-semibold transition-all cursor-pointer"
             >
               <ArrowLeft size={14} />
               Back To Habit
@@ -253,7 +253,7 @@ export default function HabitDetailPage() {
           </div>
 
           {/* Breadcrumbs */}
-          <div className="flex items-center gap-1 text-sm font-medium mb-8">
+          <div className="flex items-center gap-1 text-xs sm:text-sm font-medium mb-4 sm:mb-8">
             <span className="text-[#94A3B8]">Habits/</span>
             <span className="text-[#A855F7] capitalize">
               {habitId}
@@ -261,24 +261,26 @@ export default function HabitDetailPage() {
           </div>
 
           {/* Main Container */}
-          <div className="bg-white rounded-[16px] p-8 md:p-12 border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-2xl md:rounded-[24px] p-4 sm:p-6 md:p-8 border border-gray-100 shadow-sm w-full min-w-0 overflow-hidden">
           
           {/* Header section */}
-          <div className="flex flex-col lg:flex-row sm:items-center justify-between gap-6 mb-12">
-            <div className="flex items-center gap-6">
-              <div className={cn("w-16 h-16 rounded-xl flex items-center justify-center shrink-0", habit.iconBg)}>
-                {habit.icon}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-8 md:mb-12">
+            <div className="flex items-center gap-3 sm:gap-6">
+              <div className={cn("w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center shrink-0", habit.iconBg)}>
+                <div className="[&>svg]:w-6 [&>svg]:h-6 sm:[&>svg]:w-8 sm:[&>svg]:h-8 flex items-center justify-center">
+                  {habit.icon}
+                </div>
               </div>
               <div className="flex flex-col gap-1">
-                <h1 className="text-3xl font-bold text-[#3A86FF] leading-none">{habit.title}</h1>
-                <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border w-fit", habit.statusBg, habit.statusBg.split(' ')[0].replace('bg-', 'border-').replace('100', '200'))}>
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#3A86FF] leading-none">{habit.title}</h1>
+                <span className={cn("px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border w-fit", habit.statusBg, habit.statusBg.split(' ')[0].replace('bg-', 'border-').replace('100', '200'))}>
                   {habit.status}
                 </span>
               </div>
             </div>
 
-            <Link href={`/user-dashboard/habits/${habitId}/progress`}>
-              <button className="flex items-center gap-2 bg-[#0FA4A9] text-white px-6 py-3 rounded-xl font-bold hover:bg-opacity-90 transition-all text-sm cursor-pointer shadow-sm">
+            <Link href={`/user-dashboard/habits/${habitId}/progress`} className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto justify-center flex items-center gap-2 bg-[#0FA4A9] text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold hover:bg-opacity-90 transition-all text-xs sm:text-sm cursor-pointer shadow-sm">
                 <BarChart2 size={18} />
                 View Progress
               </button>
@@ -286,35 +288,34 @@ export default function HabitDetailPage() {
           </div>
 
           {/* Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 w-full min-w-0">
             
             {/* Left Column (Why it matters & Patterns) */}
-            <div className="lg:col-span-2 flex flex-col gap-6">
+            <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-6 min-w-0">
               
               {/* Why This Matters */}
-              <div className="bg-[#F8FBFF] rounded-2xl p-8 border border-blue-100/50 flex flex-col gap-3">
-                <h3 className="text-[#1F2D2E] font-bold text-sm uppercase tracking-wider">WHY THIS MATTERS</h3>
-                <p className="text-[#1F2D2E] italic leading-relaxed text-[15px]">
+              <div className="bg-[#F8FBFF] rounded-2xl p-4 sm:p-6 md:p-8 border border-blue-100/50 flex flex-col gap-2 sm:gap-3">
+                <h3 className="text-[#1F2D2E] font-bold text-xs sm:text-sm uppercase tracking-wider">WHY THIS MATTERS</h3>
+                <p className="text-[#1F2D2E] italic leading-relaxed text-sm sm:text-[15px]">
                   {habit.why}
                 </p>
               </div>
 
-
               {/* Current Pattern */}
-              <div className="border border-gray-50 rounded-[16px] p-10 flex flex-col gap-8 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.01)]">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[#1F2D2E] font-bold text-[18px] tracking-wide uppercase">YOUR CURRENT PATTERN</h3>
-                  <span className="text-[#1F2D2E] font-bold text-[15px]">{habit.daysLogged} Logged</span>
+              <div className="border border-gray-50 rounded-2xl md:rounded-[16px] p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-6 md:gap-8 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.01)]">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-[#1F2D2E] font-bold text-base sm:text-[18px] tracking-wide uppercase">YOUR CURRENT PATTERN</h3>
+                  <span className="text-[#1F2D2E] font-bold text-xs sm:text-[15px]">{habit.daysLogged} Logged</span>
                 </div>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="bg-[#EAF6F6] rounded-2xl p-8 flex flex-col gap-2">
-                    <div className="text-[#94A3B8] font-bold text-[11px] uppercase tracking-widest">WEEKLY AVERAGE</div>
-                    <div className="text-[20px] font-bold text-[#1F2D2E] leading-tight">{habit.avg}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                  <div className="bg-[#EAF6F6] rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 flex flex-col gap-1 sm:gap-2">
+                    <div className="text-[#94A3B8] font-bold text-[10px] sm:text-[11px] uppercase tracking-widest">WEEKLY AVERAGE</div>
+                    <div className="text-lg sm:text-[20px] font-bold text-[#1F2D2E] leading-tight">{habit.avg}</div>
                   </div>
-                  <div className="bg-[#EAF6F6] rounded-2xl p-8 flex flex-col gap-2">
-                    <div className="text-[#94A3B8] font-bold text-[11px] uppercase tracking-widest">CONSISTENCY</div>
-                    <div className="text-[28px] font-bold text-[#1F2D2E] leading-none">{habit.consistency}</div>
+                  <div className="bg-[#EAF6F6] rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 flex flex-col gap-1 sm:gap-2">
+                    <div className="text-[#94A3B8] font-bold text-[10px] sm:text-[11px] uppercase tracking-widest">CONSISTENCY</div>
+                    <div className="text-2xl sm:text-[28px] font-bold text-[#1F2D2E] leading-none">{habit.consistency}</div>
                   </div>
                 </div>
               </div>
@@ -322,55 +323,38 @@ export default function HabitDetailPage() {
             </div>
 
             {/* Right Column (Suggested Target & Log Button) */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 sm:gap-6">
               
               {/* Suggested Target */}
-              <div className="border border-gray-100 rounded-[16px] p-8 flex flex-col items-center justify-center text-center gap-3 bg-white shadow-sm relative overflow-hidden">
+              <div className="border border-gray-100 rounded-2xl md:rounded-[16px] p-5 sm:p-6 md:p-8 flex flex-col items-center justify-center text-center gap-2 sm:gap-3 bg-white shadow-sm relative overflow-hidden">
                 {habit.isAiSuggestion && (
-                  <div className="absolute top-0 right-0 px-3 py-1 bg-[#3A86FF]/10 text-[#3A86FF] text-[8px] font-bold uppercase tracking-wider rounded-bl-lg">
+                  <div className="absolute top-0 right-0 px-2.5 sm:px-3 py-1 bg-[#3A86FF]/10 text-[#3A86FF] text-[8px] font-bold uppercase tracking-wider rounded-bl-lg">
                     AI POWERED
                   </div>
                 )}
-                <div className="text-[#94A3B8] font-bold text-[11px] uppercase tracking-widest leading-relaxed">
+                <div className="text-[#94A3B8] font-bold text-[10px] sm:text-[11px] uppercase tracking-widest leading-relaxed">
                   {habit.isAiSuggestion ? "AI SUGGESTED TARGET" : "SUGGESTED TARGET"}
                 </div>
-                <div className="text-[32px] font-bold text-[#1F2D2E] leading-none my-1">{habit.target}</div>
-                
-                {/* {habit.isAiSuggestion && habit.aiTarget?.macros && (
-                  <div className="grid grid-cols-3 gap-4 w-full mt-4 pt-4 border-t border-gray-50">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-tight mb-1">PROT</span>
-                      <span className="text-[14px] font-bold text-[#1F2D2E]">{habit.aiTarget.macros.protein.value}{habit.aiTarget.macros.protein.unit}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-tight mb-1">CARB</span>
-                      <span className="text-[14px] font-bold text-[#1F2D2E]">{habit.aiTarget.macros.carbs.value}{habit.aiTarget.macros.carbs.unit}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-tight mb-1">FAT</span>
-                      <span className="text-[14px] font-bold text-[#1F2D2E]">{habit.aiTarget.macros.fat.value}{habit.aiTarget.macros.fat.unit}</span>
-                    </div>
-                  </div>
-                )} */}
+                <div className="text-2xl sm:text-[32px] font-bold text-[#1F2D2E] leading-none my-1">{habit.target}</div>
 
                 <div className={cn(
-                  "flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest mt-2",
+                  "flex items-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest mt-2",
                   habit.isAiSuggestion ? "text-[#3A86FF]" : "text-[#1F2D2E]"
                 )}>
-                  <div className={cn("w-2.5 h-2.5 rounded-full", habit.isAiSuggestion ? "bg-[#3A86FF] animate-pulse shadow-[0_0_8px_rgba(58,134,255,0.4)]" : "bg-[#10B981]")} />
-                  {habit.isAiSuggestion ? "AI SUGGESTS" : "COACH SUGGESTS ADJUSTMENT"}
+                  <div className={cn("w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0", habit.isAiSuggestion ? "bg-[#3A86FF] animate-pulse shadow-[0_0_8px_rgba(58,134,255,0.4)]" : "bg-[#10B981]")} />
+                  <span>{habit.isAiSuggestion ? "AI SUGGESTS" : "COACH SUGGESTS ADJUSTMENT"}</span>
                 </div>
               </div>
 
               {/* Log Button Box */}
               <div 
                 onClick={handleLogClick}
-                className="border-2 border-[#3A86FF] rounded-[16px] p-8 flex flex-col items-center justify-center text-center gap-4 bg-white hover:bg-blue-50/30 transition-all cursor-pointer group flex-1 min-h-[240px] shadow-[0_4px_20px_rgba(58,134,255,0.08)]"
+                className="border-2 border-[#3A86FF] rounded-2xl md:rounded-[16px] p-5 sm:p-6 md:p-8 flex flex-col items-center justify-center text-center gap-3 sm:gap-4 bg-white hover:bg-blue-50/30 transition-all cursor-pointer group flex-1 min-h-[160px] sm:min-h-[200px] md:min-h-[240px] shadow-[0_4px_20px_rgba(58,134,255,0.08)]"
               >
-                <div className="w-12 h-12 rounded-xl bg-[#3A86FF] flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-blue-200">
-                  <Plus size={24} className="text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#3A86FF] flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-blue-200">
+                  <Plus size={20} className="text-white sm:w-6 sm:h-6" />
                 </div>
-                <span className="text-[#1F2D2E] font-bold text-[17px]">
+                <span className="text-[#1F2D2E] font-bold text-base sm:text-[17px]">
                   Log Today's {habit.title}
                 </span>
               </div>

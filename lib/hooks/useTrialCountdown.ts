@@ -92,12 +92,14 @@ export function useTrialCountdown() {
     };
   }
 
-  // 2. Filter out non-individual dashboards (e.g., admin or api)
+  // 2. Filter out non-individual dashboards (e.g., admin, api, professional)
   const userRole = String(user?.role || user?.user_type || "").toLowerCase();
   const isExcludedRole =
     userRole === "admin" ||
     userRole === "api" ||
+    userRole === "professional" ||
     user?.plan_type === "api" ||
+    user?.plan_type === "professional" ||
     planName.includes("api");
 
   if (isExcludedRole) {

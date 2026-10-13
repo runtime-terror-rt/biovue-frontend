@@ -10,7 +10,7 @@ export default function UpgradePlan() {
   const currentUser = useSelector(selectCurrentUser);
 
   const planName =
-    currentUser?.plan_name || (currentUser?.plan_id ? "Active Plan" : "Free");
+    currentUser?.plan_name || (currentUser?.plan_id ? "Active Plan" : "No Active Plan");
 
   const planDuration = currentUser?.plan_duration; // days left, optional
 
