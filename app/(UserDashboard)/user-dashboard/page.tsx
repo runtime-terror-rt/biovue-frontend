@@ -406,7 +406,7 @@ const UserDashboard = () => {
               return (
                 <div
                   key={i}
-                  className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3 sm:gap-4 group transition-all cursor-pointer hover:border-[#0FA4A9]/30"
+                  className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3 sm:gap-4 group transition-all cursor-pointer"
                 >
                   <div className="flex items-start justify-between">
                     <div
