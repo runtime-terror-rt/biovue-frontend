@@ -86,7 +86,14 @@ export const healthApi = baseApi.injectEndpoints({
         url: "/health-report",
         method: "GET",
       }),
-      providesTags: ["HealthHabitOverview"], // you can adjust tag
+      providesTags: [
+        "HealthHabitOverview",
+        "Habit",
+        "Reports",
+        "SleepLog",
+        "Nutrition",
+        "Hydration",
+      ],
     }),
   }),
 });

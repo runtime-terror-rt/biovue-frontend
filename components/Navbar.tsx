@@ -14,6 +14,7 @@ import TrialCountdownHeaderBadge from "@/components/dashboard/TrialCountdownHead
 import { isInvitedAndAccepted } from "@/lib/inviteHelpers";
 
 const Navbar = () => {
+  const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const user = useSelector(selectCurrentUser);
@@ -22,6 +23,10 @@ const Navbar = () => {
   const [logoutMutation] = useLogoutMutation();
   const { data: profileResponse } = useGetProfileQuery(user?.id, { skip: !user?.id });
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -154,7 +159,7 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-4">
-          {!user && (
+          {!mounted || !user ? (
             <>
               <Link
                 href="/login"
@@ -172,9 +177,7 @@ const Navbar = () => {
                 </div>
               </Link>
             </>
-          )}
-
-          {user && (
+          ) : (
             <div className="flex items-center gap-3">
               <TrialCountdownHeaderBadge settingsHref={getDashboardPath()} />
               <div className="relative" ref={dropdownRef}>
@@ -266,7 +269,7 @@ const Navbar = () => {
       {/* Mobile Navigation */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-b border-gray-100 shadow-xl px-4 py-8 flex flex-col items-center gap-6 animate-in slide-in-from-top duration-300">
-          {!user ? (
+          {!mounted || !user ? (
             <>
               <Link
                 href="/login"

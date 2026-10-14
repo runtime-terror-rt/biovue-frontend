@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,13 +24,14 @@ import { toast } from "sonner";
 import { X } from "lucide-react";
 import Swal from "sweetalert2";
 import FreeTrialPlanModal from "@/components/pricing/FreeTrialPlanModal";
-import { isFreeTrialPlan, hasPaidPlan } from "@/lib/planType";
+import { isFreeTrialPlan, hasPaidPlan, getUserPlanType } from "@/lib/planType";
 
 const PricingPage = () => {
   const router = useRouter();
   const token = useSelector(selectCurrentToken);
   const user = useSelector(selectCurrentUser);
   const dispatch = useDispatch();
+  const [mounted, setMounted] = useState(false);
   const [processPayment] = useProcessPaymentMutation();
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
   const [loadingPlanId, setLoadingPlanId] = useState<number | null>(null);
@@ -42,7 +43,35 @@ const PricingPage = () => {
   const [contactMessage, setContactMessage] = useState("");
   const [trialPlan, setTrialPlan] = useState<Plan | null>(null);
 
-  const userHasPaid = hasPaidPlan(user);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const effectiveToken =
+    token ||
+    (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+
+  const effectiveUser = React.useMemo(() => {
+    if (user) return user;
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored && stored !== "null" && stored !== "undefined") {
+          return JSON.parse(stored);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return null;
+  }, [user, mounted]);
+
+  const isLoggedIn = mounted && Boolean(effectiveToken && effectiveUser);
+  const userPlanAudience = isLoggedIn ? getUserPlanType(effectiveUser) : null;
+  const isProfessionalUser = mounted && userPlanAudience === "professional";
+  const isIndividualUser = mounted && userPlanAudience === "individual";
+
+  const userHasPaid = mounted && hasPaidPlan(effectiveUser || user);
 
   const { data: plans = [], isLoading } = useGetPlansQuery(billingCycle);
 
@@ -92,6 +121,24 @@ const PricingPage = () => {
         }
       } catch {
         // ignore
+      }
+    }
+
+    if (effectiveToken && effectiveUser) {
+      const userAudience = getUserPlanType(effectiveUser);
+
+      if (userAudience === "professional" && plan.plan_type === "individual") {
+        toast.error(
+          "You are logged in as a Professional account and cannot subscribe to Individual plans.",
+        );
+        return;
+      }
+
+      if (userAudience === "individual" && plan.plan_type === "professional") {
+        toast.error(
+          "You are logged in as an Individual account and cannot subscribe to Professional plans.",
+        );
+        return;
       }
     }
 
@@ -268,92 +315,102 @@ const PricingPage = () => {
                   fontWeight: 400,
                   lineHeight: "24px",
                 }}
-                className="mb-6"
+                className="mb-4"
               >
                 For Individual
               </h2>
+              {isProfessionalUser && (
+                <div className="flex justify-center mt-3">
+                  <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 shadow-xs">
+                    <Lock size={13} />
+                    You are logged in as a Professional. Individual plans are restricted for your account.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Individual Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 container mx-auto">
-              {filteredIndividualPlans.map((plan, idx) => (
-                <PricingCard
-                  key={plan.id}
-                  title={plan.name}
-                  // price={
-                  //   plan.price === "0.00" || plan.price === 0 ? "0" : plan.price
-                  // }
-                  price={
-                    plan.price === "0.00" || plan.price === 0
-                      ? "0"
-                      : getDisplayPrice(plan.price)
-                  }
-                  // period={
-                  //   plan.name.toLowerCase().includes("free trial")
-                  //     ? `for ${plan.duration} days`
-                  //     : "/Month"
-                  // }
-                  period={
-                    plan.name.toLowerCase().includes("free trial")
-                      ? `for ${plan.duration} days`
-                      : billingCycle === "monthly" ? "/Month" : "/Year"
-                  }
-                  // subtext={
-                  //   plan.name.toLowerCase().includes("free trial")
-                  //     ? "Then auto-bills based on selected plan"
-                  //     : ""
-                  // }
-                  subtext={
-                    plan.name.toLowerCase().includes("free trial")
-                      ? "Then auto-bills based on selected plan"
-                      : ""
-                  }
-                  description={
-                    plan.name?.toLowerCase().includes("free trial")
-                      ? "Experience BioVue's core AI projections before committing."
-                      : plan.name?.toLowerCase().includes("plus")
+              {filteredIndividualPlans.map((plan, idx) => {
+                const isTrial = plan.name?.toLowerCase().includes("free trial");
+                const isRestrictedForProfessional = isProfessionalUser;
+
+                let cta = `Upgrade To ${plan.name || ""}`;
+                let ctaColor = "bg-[#0FA4A9]";
+                let disabled = false;
+                let disabledMessage: string | undefined = undefined;
+
+                if (isRestrictedForProfessional) {
+                  cta = "Not Available for Professional";
+                  ctaColor =
+                    "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed shadow-none hover:bg-gray-100";
+                  disabled = true;
+                  disabledMessage =
+                    "You are logged in as a Professional account and cannot subscribe to Individual plans.";
+                } else if (isTrial && userHasPaid) {
+                  cta = "Not Eligible (Active Paid Plan)";
+                  ctaColor =
+                    "bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200 shadow-none border border-gray-300";
+                  disabled = true;
+                  disabledMessage =
+                    "You already have an active paid plan (Plus/Premium) and cannot take the free trial.";
+                } else if (isTrial) {
+                  cta = `Start ${plan.duration || 7}-Day Trial`;
+                }
+
+                return (
+                  <PricingCard
+                    key={plan.id}
+                    title={plan.name}
+                    price={
+                      plan.price === "0.00" || plan.price === 0
+                        ? "0"
+                        : getDisplayPrice(plan.price)
+                    }
+                    period={
+                      isTrial
+                        ? `for ${plan.duration} days`
+                        : billingCycle === "monthly" ? "/Month" : "/Year"
+                    }
+                    subtext={
+                      isTrial ? "Then auto-bills based on selected plan" : ""
+                    }
+                    description={
+                      isTrial
+                        ? "Experience BioVue's core AI projections before committing."
+                        : plan.name?.toLowerCase().includes("plus")
                         ? "See your future and track how your lifestyle is improving."
                         : "Build a complete picture of your future health with our advanced AI, real-world data sync, and long-term forecasting."
-                  }
-                  features={(plan.features || []).map((f) => {
-                    const lockedFeatures = [
-                      "ai improvement suggestions",
-                      "health indicators",
-                      "recommended coaches & clinics",
-                      "achievement badges & progress reports",
-                    ];
-                    const isLocked =
-                      (plan.name?.toLowerCase() || "").includes("free trial") &&
-                      lockedFeatures.some((lf) => f.toLowerCase().includes(lf));
-                    return { text: f, included: !isLocked };
-                  })}
-                  cta={
-                    plan.name?.toLowerCase().includes("free trial")
-                      ? userHasPaid
-                        ? "Not Eligible (Active Paid Plan)"
-                        : `Start ${plan.duration || 7}-Day Trial`
-                      : `Upgrade To ${plan.name || ""}`
-                  }
-                  ctaColor={
-                    plan.name?.toLowerCase().includes("free trial") && userHasPaid
-                      ? "bg-gray-200 text-gray-500 cursor-not-allowed hover:bg-gray-200 shadow-none border border-gray-300"
-                      : "bg-[#0FA4A9]"
-                  }
-                  disabled={
-                    plan.name?.toLowerCase().includes("free trial") && userHasPaid
-                  }
-                  specialFeature={
-                    plan.name?.toLowerCase().includes("premium")
-                      ? {
-                          label: "EVERYTHING IN PLUS",
-                          icon: <Zap size={14} fill="#3A86FF" />,
-                        }
-                      : undefined
-                  }
-                  onSelect={() => handlePlanSelection(plan)}
-                  isLoading={loadingPlanId === plan.id}
-                />
-              ))}
+                    }
+                    features={(plan.features || []).map((f) => {
+                      const lockedFeatures = [
+                        "ai improvement suggestions",
+                        "health indicators",
+                        "recommended coaches & clinics",
+                        "achievement badges & progress reports",
+                      ];
+                      const isLocked =
+                        isTrial &&
+                        lockedFeatures.some((lf) => f.toLowerCase().includes(lf));
+                      return { text: f, included: !isLocked };
+                    })}
+                    cta={cta}
+                    ctaColor={ctaColor}
+                    disabled={disabled}
+                    disabledMessage={disabledMessage}
+                    specialFeature={
+                      plan.name?.toLowerCase().includes("premium")
+                        ? {
+                            label: "EVERYTHING IN PLUS",
+                            icon: <Zap size={14} fill="#3A86FF" />,
+                          }
+                        : undefined
+                    }
+                    onSelect={() => handlePlanSelection(plan)}
+                    isLoading={loadingPlanId === plan.id}
+                  />
+                );
+              })}
             </div>
           </section>
 
@@ -374,126 +431,117 @@ const PricingPage = () => {
               >
                 Professional Plan
               </h2>
-              <p className="text-[#041228] text-center font-['Roboto'] text-[24px] font-normal leading-[24px] my-6">
-                6 month minimum commitment required.
-              </p>
+              {isIndividualUser ? (
+                <div className="flex justify-center my-4">
+                  <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 shadow-xs">
+                    <Lock size={13} />
+                    You are logged in as an Individual. Professional plans are restricted for your account.
+                  </span>
+                </div>
+              ) : (
+                <p className="text-[#041228] text-center font-['Roboto'] text-[24px] font-normal leading-[24px] my-6">
+                  6 month minimum commitment required.
+                </p>
+              )}
             </div>
 
             {/* Professional Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 container mx-auto">
-              {filteredProfessionalPlans.map((plan, idx) => (
-                <PricingCard
-                  key={plan.id}
-                  compact
-                  title={plan.name}
-                  // capacity={
-                  //   plan.member_limit
-                  //     ? `Up to ${plan.member_limit} clients`
-                  //     : "Unlimited clients"
-                  // }
-                  // price={
-                  //   plan.price === "0.00" || plan.price === 0
-                  //     ? "Custom"
-                  //     : plan.price
-                  // }
-                  price={
-                    plan.price === "0.00" || plan.price === 0
-                      ? "Custom"
-                      : getDisplayPrice(plan.price)
-                  }
-                  // period={
-                  //   plan.price === "0.00" || plan.price === 0 ? "" : "/Month"
-                  // }
-                  period={
-                    plan.price === "0.00" || plan.price === 0 
-                      ? "" 
-                      : billingCycle === "monthly" ? "/Month" : "/Year"
-                  }
-                  subtext=""
-                  features={(() => {
-                    const overrideTexts = [
-                      "Dedicated account manager",
-                      "Quarterly business reviews",
-                    ];
-                    const baseFeatures = (plan.features || [])
-                      .filter(
-                        (f) =>
-                          !overrideTexts.some((ot) =>
-                            f.toLowerCase().includes(ot.toLowerCase()),
-                          ),
-                      )
-                      .map((f) => ({ text: f, included: true }));
+              {filteredProfessionalPlans.map((plan, idx) => {
+                const isRestrictedForIndividual = isIndividualUser;
+                const cta = isRestrictedForIndividual
+                  ? "Not Available for Individual"
+                  : "Get Started";
+                const ctaColor = isRestrictedForIndividual
+                  ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed shadow-none hover:bg-gray-100"
+                  : "bg-[#0FA4A9]";
+                const disabled = isRestrictedForIndividual;
+                const disabledMessage = isRestrictedForIndividual
+                  ? "You are logged in as an Individual account and cannot subscribe to Professional plans."
+                  : undefined;
 
-                    // Professional Plan specific card overrides
-                    if (plan.plan_type === "professional") {
-                      if (idx === 1) {
-                        // 2nd Professional Card
-                        return [
-                          ...baseFeatures,
-                          {
-                            text: "Dedicated account manager",
-                            included: false,
-                            isNegative: true,
-                          },
-                        ];
-                      }
-                      if (idx === 2) {
-                        // 3rd Professional Card
-                        return [
-                          ...baseFeatures,
-                          {
-                            text: "Quarterly business reviews",
-                            included: false,
-                            isNegative: true,
-                          },
-                          {
-                            text: "Dedicated account manager",
-                            included: false,
-                            isNegative: true,
-                          },
-                        ];
-                      }
-                      if (plan.name?.toLowerCase().includes("enterprise")) {
-                        return [
-                          ...baseFeatures,
-                          { text: "Dedicated account manager", included: true },
-                          {
-                            text: "Quarterly business reviews",
-                            included: true,
-                          },
-                        ];
-                      }
+                return (
+                  <PricingCard
+                    key={plan.id}
+                    compact
+                    title={plan.name}
+                    price={
+                      plan.price === "0.00" || plan.price === 0
+                        ? "Custom"
+                        : getDisplayPrice(plan.price)
                     }
+                    period={
+                      plan.price === "0.00" || plan.price === 0 
+                        ? "" 
+                        : billingCycle === "monthly" ? "/Month" : "/Year"
+                    }
+                    subtext=""
+                    features={(() => {
+                      const overrideTexts = [
+                        "Dedicated account manager",
+                        "Quarterly business reviews",
+                      ];
+                      const baseFeatures = (plan.features || [])
+                        .filter(
+                          (f) =>
+                            !overrideTexts.some((ot) =>
+                              f.toLowerCase().includes(ot.toLowerCase()),
+                            ),
+                        )
+                        .map((f) => ({ text: f, included: true }));
 
-                    return baseFeatures;
-                  })()}
-                  // cta={
-                  //   plan.name.toLowerCase().includes("enterprise") ||
-                  //   plan.price === "0.00" ||
-                  //   plan.price === 0
-                  //     ? "Contact Via Mail"
-                  //     : "Start 7-Day Free Trial"
-                  // }
-                  // cta={
-                  //   idx === 0
-                  //     ? "Buy Now"
-                  //     : idx === 1
-                  //       ? "Update to Tier 2"
-                  //       : idx === 2
-                  //         ? "Update to Tier 3"
-                  //         : idx === filteredProfessionalPlans.length - 1 ||
-                  //             plan.name.toLowerCase().includes("enterprise") ||
-                  //             plan.price === "0.00" ||
-                  //             plan.price === 0
-                  //           ? "Contact Via Mail"
-                  //           : "Get Started"
-                  // }
-                  cta = "Get Started"
-                  ctaColor="bg-[#0FA4A9]"
-                  onSelect={() => handlePlanSelection(plan)}
-                  isLoading={loadingPlanId === plan.id}
-                />
-              ))}
+                      // Professional Plan specific card overrides
+                      if (plan.plan_type === "professional") {
+                        if (idx === 1) {
+                          // 2nd Professional Card
+                          return [
+                            ...baseFeatures,
+                            {
+                              text: "Dedicated account manager",
+                              included: false,
+                              isNegative: true,
+                            },
+                          ];
+                        }
+                        if (idx === 2) {
+                          // 3rd Professional Card
+                          return [
+                            ...baseFeatures,
+                            {
+                              text: "Quarterly business reviews",
+                              included: false,
+                              isNegative: true,
+                            },
+                            {
+                              text: "Dedicated account manager",
+                              included: false,
+                              isNegative: true,
+                            },
+                          ];
+                        }
+                        if (plan.name?.toLowerCase().includes("enterprise")) {
+                          return [
+                            ...baseFeatures,
+                            { text: "Dedicated account manager", included: true },
+                            {
+                              text: "Quarterly business reviews",
+                              included: true,
+                            },
+                          ];
+                        }
+                      }
+
+                      return baseFeatures;
+                    })()}
+                    cta={cta}
+                    ctaColor={ctaColor}
+                    disabled={disabled}
+                    disabledMessage={disabledMessage}
+                    onSelect={() => handlePlanSelection(plan)}
+                    isLoading={loadingPlanId === plan.id}
+                  />
+                );
+              })}
             </div>
           </section>
 
@@ -790,16 +838,27 @@ const PricingCard = ({
       </div>
 
       <button
-        onClick={active ? onCancel : onSelect}
-        disabled={isLoading || isCancelling || props.disabled}
+        onClick={() => {
+          if (props.disabled && props.disabledMessage) {
+            toast.error(props.disabledMessage);
+            return;
+          }
+          if (active) onCancel?.();
+          else onSelect?.();
+        }}
+        disabled={isLoading || isCancelling}
         className={cn(
-          "w-full text-center py-3.5 rounded-xl font-bold text-sm text-white hover:bg-opacity-90 transition-all shadow-md group flex items-center justify-center gap-2 cursor-pointer",
+          "w-full text-center py-3.5 rounded-xl font-bold text-sm text-white hover:bg-opacity-90 transition-all shadow-md group flex items-center justify-center gap-2",
           active
-            ? "bg-red-500 shadow-[0_4px_14px_0_rgba(239,68,68,0.3)]"
-            : ctaColor ||
-                "bg-[#3A86FF] shadow-[0_4px_14px_0_rgba(58,134,255,0.3)]",
-          (isLoading || isCancelling || props.disabled) && "opacity-70 cursor-not-allowed",
+            ? "bg-red-500 shadow-[0_4px_14px_0_rgba(239,68,68,0.3)] cursor-pointer"
+            : props.disabled
+            ? "cursor-not-allowed"
+            : "cursor-pointer",
+          ctaColor ||
+            "bg-[#3A86FF] shadow-[0_4px_14px_0_rgba(58,134,255,0.3)]",
+          (isLoading || isCancelling || props.disabled) && "opacity-75 cursor-not-allowed",
         )}
+        title={props.disabledMessage}
       >
         {isLoading || isCancelling ? (
           <>

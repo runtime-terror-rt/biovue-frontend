@@ -33,7 +33,10 @@ import TrialCountdownBanner from "@/components/dashboard/TrialCountdownBanner";
 // --- Main Page ---
 const UserDashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
-  const { data: profileResponse } = useGetProfileQuery(currentUser?.id, { skip: !currentUser?.id });
+  const { data: profileResponse } = useGetProfileQuery(currentUser?.id, {
+    skip: !currentUser?.id,
+    refetchOnMountOrArgChange: true,
+  });
   const userName = profileResponse?.data?.name || currentUser?.name || "User";
   console.log(currentUser, "currentUser");
 
@@ -42,11 +45,22 @@ const UserDashboard = () => {
   const [dataSource, setDataSource] = useState<"device" | "manual">("device");
   const [days, setDays] = useState(7);
 
-  const { data: healthReport, isLoading: isHealthLoading } = useGetHealthReportQuery();
-  const { data: insightsData, isLoading: isInsightsLoading } = useGetInsightsQuery(undefined, { skip: !currentUser?.id });
-  const { data: chartResponse, isLoading: isChartLoading } = useGetUserOverviewChartQuery(days);
-  const { data: stressReport, isLoading: isStressLoading } = useGetStressReportQuery(days);
-  const { data: hydrationReport, isLoading: isHydrationLoading } = useGetHydrationReportQuery(days);
+  const { data: healthReport, isLoading: isHealthLoading } = useGetHealthReportQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const { data: insightsData, isLoading: isInsightsLoading } = useGetInsightsQuery(undefined, {
+    skip: !currentUser?.id,
+    refetchOnMountOrArgChange: true,
+  });
+  const { data: chartResponse, isLoading: isChartLoading } = useGetUserOverviewChartQuery(days, {
+    refetchOnMountOrArgChange: true,
+  });
+  const { data: stressReport, isLoading: isStressLoading } = useGetStressReportQuery(days, {
+    refetchOnMountOrArgChange: true,
+  });
+  const { data: hydrationReport, isLoading: isHydrationLoading } = useGetHydrationReportQuery(days, {
+    refetchOnMountOrArgChange: true,
+  });
 
   const [habitData, setHabitData] = useState({
     weight: "",

@@ -16,7 +16,7 @@ export const hydrationApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["Hydration", "Habit"],
+      invalidatesTags: ["Hydration", "Habit", "HealthHabitOverview", "Reports"],
     }),
     getHydrationReport: builder.query<any, number | void>({
       query: (days) => (days ? `/hydration-report?days=${days}` : "/hydration-report"),

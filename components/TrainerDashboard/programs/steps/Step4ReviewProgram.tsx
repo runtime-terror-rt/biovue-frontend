@@ -8,6 +8,7 @@ import { Check, Search, UserPlus, X } from "lucide-react";
 import { useGetUsersQuery } from "@/redux/features/api/TrainerDashboard/Program/GetUsersList";
 import { useAssignProgramUsersMutation } from "@/redux/features/api/TrainerDashboard/Program/AssignProgram";
 import { toast } from "sonner";
+import { useGetConnectedClientsQuery } from "@/redux/features/api/TrainerDashboard/Clients/YourClients";
 
 interface Step4Props {
   formData: ProgramFormData;
@@ -25,7 +26,7 @@ export default function Step4ReviewProgram({
   programId,
 }: Step4Props) {
   const router = useRouter();
-  const { data, isLoading } = useGetUsersQuery();
+  const { data, isLoading } = useGetConnectedClientsQuery();
   const users = data?.data || [];
   const [assignProgramUsers, { isLoading: assigning }] =
     useAssignProgramUsersMutation();
