@@ -26,6 +26,11 @@ export function getUserPlanType(
   if (
     userType === "professional" ||
     role === "professional" ||
+    role === "trainer" ||
+    role === "trainer_coach" ||
+    role === "nutritionist" ||
+    role === "supplement_supplier" ||
+    role === "supplier" ||
     planType === "professional" ||
     ["trainer_coach", "supplement_supplier", "nutritionist"].includes(
       profession,
@@ -34,7 +39,7 @@ export function getUserPlanType(
     return "professional";
   }
 
-  if (userType === "individual" || role === "individual") {
+  if (userType === "individual" || role === "individual" || role === "user") {
     return "individual";
   }
 

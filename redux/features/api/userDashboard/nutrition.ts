@@ -16,7 +16,7 @@ export const nutritionApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["Nutrition", "Habit"],
+      invalidatesTags: ["Nutrition", "Habit", "HealthHabitOverview", "Reports"],
     }),
     getNutritionReport: builder.query<any, number | void>({
       query: (days) => {
@@ -33,7 +33,7 @@ export const nutritionApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["Nutrition", "Habit"],
+      invalidatesTags: ["Nutrition", "Habit", "HealthHabitOverview", "Reports"],
     }),
     getNutritionShow: builder.query({
       query: () => "/nutrition/show",
@@ -48,7 +48,7 @@ export const nutritionApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["Nutrition", "Habit"],
+      invalidatesTags: ["Nutrition", "Habit", "HealthHabitOverview", "Reports"],
     }),
   }),
 });

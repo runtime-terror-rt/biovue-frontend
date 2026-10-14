@@ -19,14 +19,23 @@ export function useTrialCountdown() {
   const userId = user?.id || user?.user_id;
 
   const { data: profileResponse, isLoading: isProfileLoading } =
-    useGetProfileQuery(userId as string | number, { skip: !userId });
+    useGetProfileQuery(userId as string | number, {
+      skip: !userId,
+      refetchOnMountOrArgChange: true,
+    });
 
   // Query projection limit without skipping on userId since it takes void endpoint
   const { data: limitData, isLoading: isLimitLoading } =
-    useGetProjectionLimitQuery(undefined, { skip: !token });
+    useGetProjectionLimitQuery(undefined, {
+      skip: !token,
+      refetchOnMountOrArgChange: true,
+    });
 
   const { data: summaryData, isLoading: isSummaryLoading } =
-    useGetPaymentSummaryQuery(undefined, { skip: !token });
+    useGetPaymentSummaryQuery(undefined, {
+      skip: !token,
+      refetchOnMountOrArgChange: true,
+    });
 
   const latestPayment = summaryData?.latest_payment;
   const profileData = profileResponse?.data || profileResponse;

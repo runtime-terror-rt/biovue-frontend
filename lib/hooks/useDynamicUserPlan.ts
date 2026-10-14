@@ -31,9 +31,12 @@ export function useDynamicUserPlan(): DynamicUserPlanResult {
     refetch: refetchProfile,
   } = useGetProfileQuery(userId as string | number, {
     skip: !userId,
+    refetchOnMountOrArgChange: true,
   });
 
-  const { data: plansData, isLoading: isPlansLoading } = useGetPlansQuery();
+  const { data: plansData, isLoading: isPlansLoading } = useGetPlansQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
 
   const profileData = profileResponse?.data || profileResponse;
 

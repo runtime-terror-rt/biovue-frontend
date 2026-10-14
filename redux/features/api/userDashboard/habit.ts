@@ -17,7 +17,7 @@ export const cardDataApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["Habit"],
+      invalidatesTags: ["Habit", "HealthHabitOverview", "Reports"],
     }),
   }),
 });

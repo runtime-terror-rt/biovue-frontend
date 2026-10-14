@@ -69,16 +69,18 @@ const ProjectionsPage = () => {
   const { isPremium, isPlus, isPaid, isFree } = useDynamicUserPlan();
 
   // Rules:
-  // - Plus plan: 2K is usable for "6 months" and "1 year". For "5 years", 2K is grayed out/disabled.
   // - Premium plan: 1K, 2K, 6 months, 1 year, 5 years are all usable.
-  // - Free / unpaid: 2K is disabled for all timeframes, and only 1-year is available.
-  const is2KDisabled = !isPremium && (!isPlus || timeHorizon === "5 years");
+  // - Plus plan: 1K, 2K are usable for "6 months" and "1 year". "5 years" is grayed out (Premium only).
+  // - Free / unpaid: Only "1 year" is available, 2K is disabled.
+  const is2KDisabled = !isPremium && !isPlus;
 
   useEffect(() => {
     if (!isPaid && (timeHorizon === "6 months" || timeHorizon === "5 years")) {
       setTimeHorizon("1 year");
+    } else if (!isPremium && timeHorizon === "5 years") {
+      setTimeHorizon("1 year");
     }
-  }, [isPaid, timeHorizon]);
+  }, [isPaid, isPremium, timeHorizon]);
 
   useEffect(() => {
     if (is2KDisabled && resolution === "2k") {
@@ -87,9 +89,15 @@ const ProjectionsPage = () => {
   }, [is2KDisabled, resolution]);
 
   const handleSelectTimeHorizon = (time: TimeHorizon) => {
-    if (!isPaid && (time === "6 months" || time === "5 years")) {
+    if (time === "5 years" && !isPremium) {
       toast.info(
-        `${time === "6 months" ? "6-month" : "5-year"} projection is available on paid plans. Free trial is only available for the 1-year option.`
+        "5-year projection is available exclusively on the Premium plan. Please upgrade to unlock."
+      );
+      return;
+    }
+    if (time === "6 months" && !isPaid) {
+      toast.info(
+        "6-month projection is available on Plus and Premium plans. Please upgrade to unlock."
       );
       return;
     }
@@ -300,18 +308,23 @@ const ProjectionsPage = () => {
                 Choose a time horizon
               </span>
             </div>
-            {!isPaid && (
+            {!isPaid ? (
               <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full flex items-center gap-1 shadow-xs">
                 <Lock size={11} /> 1-Year on Free Trial
               </span>
-            )}
+            ) : !isPremium ? (
+              <span className="text-[11px] font-bold text-[#0FA4A9] bg-[#0FA4A9]/10 border border-[#0FA4A9]/30 px-2.5 py-1 rounded-full flex items-center gap-1 shadow-xs">
+                <Lock size={11} /> 5-Year on Premium
+              </span>
+            ) : null}
           </div>
 
           <div className="flex p-1 bg-[#F8FAFF] border border-gray-200 rounded-xl w-full gap-1">
             {(["6 months", "1 year", "5 years"] as TimeHorizon[]).map(
               (time) => {
                 const isOptionDisabled =
-                  !isPaid && (time === "6 months" || time === "5 years");
+                  (time === "5 years" && !isPremium) ||
+                  (time === "6 months" && !isPaid);
                 const isSelected = timeHorizon === time;
 
                 return (
@@ -329,7 +342,9 @@ const ProjectionsPage = () => {
                     )}
                     title={
                       isOptionDisabled
-                        ? "Available on paid plans. Free trial is only available for the 1-year option."
+                        ? time === "5 years"
+                          ? "5-year projection is available exclusively on the Premium plan."
+                          : "6-month projection is available on Plus and Premium plans."
                         : undefined
                     }
                   >
@@ -339,7 +354,7 @@ const ProjectionsPage = () => {
                     <span>{time}</span>
                     {isOptionDisabled && (
                       <span className="hidden sm:inline-block text-[9px] font-bold uppercase bg-gray-200/80 text-gray-500 px-1.5 py-0.5 rounded">
-                        Paid
+                        {time === "5 years" ? "Premium" : "Paid"}
                       </span>
                     )}
                   </button>
@@ -348,14 +363,21 @@ const ProjectionsPage = () => {
             )}
           </div>
 
-          {!isPaid && (
+          {!isPaid ? (
             <p className="text-xs text-[#5F6F73] flex items-center gap-1.5 pt-1">
               <Info size={13} className="text-[#3A86FF] shrink-0" />
               <span>
                 Free trial is only available for the <strong>1-year</strong> option. Upgrade to Plus or Premium to unlock 6-month and 5-year projections.
               </span>
             </p>
-          )}
+          ) : !isPremium ? (
+            <p className="text-xs text-[#5F6F73] flex items-center gap-1.5 pt-1">
+              <Info size={13} className="text-[#3A86FF] shrink-0" />
+              <span>
+                <strong>5-year</strong> projection is available exclusively on the <strong>Premium</strong> plan. Upgrade to unlock long-term projections.
+              </span>
+            </p>
+          ) : null}
         </div>
 
         {/* Render Settings */}
@@ -410,17 +432,7 @@ const ProjectionsPage = () => {
                 {is2KDisabled && (
                   <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
                     <Crown size={12} fill="currentColor" />
-                    {isPlus && timeHorizon === "5 years" ? "Premium for 5-Year" : "Plus / Premium"}
-                  </span>
-                )}
-                {!is2KDisabled && isPlus && (
-                  <span className="text-[10px] font-bold bg-teal-500/10 text-teal-600 border border-teal-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
-                    Plus Plan
-                  </span>
-                )}
-                {!is2KDisabled && isPremium && (
-                  <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
-                    Unlocked
+                    Plus / Premium
                   </span>
                 )}
               </div>
@@ -439,15 +451,6 @@ const ProjectionsPage = () => {
                 )}
               </div>
             </div>
-
-            {isPlus && timeHorizon === "5 years" && (
-              <p className="text-xs text-[#5F6F73] flex items-center gap-1.5 pt-1">
-                <Info size={13} className="text-[#3A86FF] shrink-0" />
-                <span>
-                  Plus plan includes 2K for 6-month &amp; 1-year projections. Upgrade to <strong>Premium</strong> for 5-year 2K projections.
-                </span>
-              </p>
-            )}
 
             {/* 4K Resolution - Hidden for future use */}
             {/* 
