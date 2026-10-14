@@ -148,7 +148,7 @@ export default function HabitsPage() {
   };
   return (
     <SubscriptionGuard>
-      <div className="flex flex-col min-h-[calc(100vh-80px)] p-2 sm:p-4 md:p-6 w-full max-w-7xl mx-auto min-w-0">
+      <div className="flex flex-col min-h-[calc(100vh-80px)] p-2 sm:p-4 md:p-6 lg:p-14 w-full max-w-8xl mx-auto min-w-0">
         {/* Top Navigation */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
