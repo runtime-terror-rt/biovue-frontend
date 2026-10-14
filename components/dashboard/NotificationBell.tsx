@@ -14,14 +14,11 @@ interface NotificationBellProps {
 
 export default function NotificationBell({ className, iconSize = 20 }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
   const { data: response, isLoading, error } = useGetNotificationsQuery();
   const [markAsRead] = useMarkAsReadMutation();
   const [markSingleAsRead] = useMarkSingleAsReadMutation();
   const [deleteSingleNotification] = useDeleteSingleNotificationMutation();
-
-  console.log("NotificationBell - response:", response);
-  console.log("NotificationBell - isLoading:", isLoading);
-  console.log("NotificationBell - error:", error);
 
   const notifications = response?.data || [];
   const unreadCount = notifications.filter((n) => !n.read_at).length;
@@ -58,6 +55,7 @@ export default function NotificationBell({ className, iconSize = 20 }: Notificat
   return (
     <div className={cn("relative", className)}>
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-1.5 sm:p-2 rounded-full bg-[#F4FBFA] hover:bg-gray-100 transition-colors cursor-pointer flex items-center justify-center"
         aria-label="Notifications"
@@ -77,6 +75,8 @@ export default function NotificationBell({ className, iconSize = 20 }: Notificat
         onMarkSingleAsRead={handleMarkSingleAsRead}
         onDeleteSingleNotification={handleDeleteSingleNotification}
         notifications={notifications}
+        triggerRef={buttonRef}
+        unreadCount={unreadCount}
       />
     </div>
   );

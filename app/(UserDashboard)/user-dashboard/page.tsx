@@ -103,7 +103,7 @@ const UserDashboard = () => {
         <TrainerMotivation />
 
         {/* AI Projections Banner */}
-        <div className="relative overflow-hidden bg-white border-[1.5px] border-[#3A86FF] rounded-2xl p-5 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-5 sm:gap-6 lg:gap-8">
+        <div className="relative overflow-hidden bg-white border-[1.5px] border-[#3A86FF] rounded-2xl p-5 sm:p-6 lg:p-8 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5 sm:gap-6 lg:gap-8">
           <div className="flex-1 flex flex-col items-start gap-3 sm:gap-4 min-w-0">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#3A86FF] leading-snug">
               AI-Powered Body Projections
