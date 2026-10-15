@@ -126,7 +126,7 @@ const PricingPage = () => {
       return (Number(a.price) || 0) - (Number(b.price) || 0);
     });
 
-
+    // handle plan selection
   const handlePlanSelection = async (plan: Plan) => {
     const effectiveToken =
       token ||
@@ -201,6 +201,7 @@ const PricingPage = () => {
     }
   };
 
+  // handle contact form submission
   const handleContactSubmit = async () => {
     if (!contactMessage.trim()) {
       toast.error("Please enter a message.");
