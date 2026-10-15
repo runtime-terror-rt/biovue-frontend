@@ -6,27 +6,56 @@ import Image from "next/image";
 import { ArrowUpRight, User, ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
-import { selectCurrentUser, logout } from "@/redux/features/slice/authSlice";
-import { useLogoutMutation } from "@/redux/features/api/auth/authApi";
+import { selectCurrentUser, selectCurrentToken, logout, updateUser } from "@/redux/features/slice/authSlice";
+import { useLogoutMutation, useGetCurrentUserQuery } from "@/redux/features/api/auth/authApi";
 import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { motion, AnimatePresence } from "framer-motion";
 import TrialCountdownHeaderBadge from "@/components/dashboard/TrialCountdownHeaderBadge";
 import { isInvitedAndAccepted } from "@/lib/inviteHelpers";
+import { getFullImageUrl } from "@/lib/utils";
 
 const Navbar = () => {
   const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const token = useSelector(selectCurrentToken);
   const user = useSelector(selectCurrentUser);
   const dispatch = useDispatch();
   const router = useRouter();
   const [logoutMutation] = useLogoutMutation();
-  const { data: profileResponse } = useGetProfileQuery(user?.id, { skip: !user?.id });
+
+  const { data: profileResponse } = useGetProfileQuery(user?.id, {
+    skip: !token || !user?.id,
+  });
+  const { data: currentUserResponse, error: currentUserError } = useGetCurrentUserQuery(undefined, {
+    skip: !token,
+  });
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Handle 401 Unauthorized by logging out automatically
+  useEffect(() => {
+    if (currentUserError && (currentUserError as any)?.status === 401) {
+      dispatch(logout());
+    }
+  }, [currentUserError, dispatch]);
+
+  // Keep redux user in sync with fresh server data
+  useEffect(() => {
+    if (currentUserResponse?.data || currentUserResponse?.user) {
+      const freshUser =
+        currentUserResponse?.data?.user ||
+        currentUserResponse?.data ||
+        currentUserResponse?.user;
+      if (freshUser && typeof freshUser === "object") {
+        dispatch(updateUser(freshUser));
+      }
+    }
+  }, [currentUserResponse, dispatch]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -39,43 +68,65 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const profileImage =
-    profileResponse?.data?.profile?.image ||
-    user?.profile_image ||
-    user?.image ||
-    user?.avatar ||
-    user?.profile?.image ||
-    user?.photo_url ||
-    user?.photoURL ||
+  const activeUser =
+    currentUserResponse?.data?.user ||
+    currentUserResponse?.data ||
+    user;
+
+  const isAuthenticated = Boolean(
+    mounted &&
+    token &&
+    activeUser &&
+    (activeUser.id || activeUser.email || activeUser.name)
+  );
+
+  const profile = profileResponse?.data?.profile || activeUser?.profile;
+
+  const rawProfileImage =
+    profile?.image ||
+    profileResponse?.data?.profile_image ||
+    profileResponse?.data?.image ||
+    activeUser?.profile_image ||
+    activeUser?.image ||
+    activeUser?.avatar ||
+    activeUser?.profile?.image ||
+    activeUser?.photo_url ||
+    activeUser?.photoURL ||
     null;
+
+  const profileImage = getFullImageUrl(rawProfileImage);
 
   const displayName =
     profileResponse?.data?.name ||
-    user?.name ||
-    user?.fullName ||
-    user?.username ||
-    (user?.email ? user.email.split("@")[0] : "User");
+    activeUser?.name ||
+    activeUser?.fullName ||
+    (activeUser?.first_name
+      ? `${activeUser.first_name} ${activeUser.last_name || ""}`.trim()
+      : null) ||
+    activeUser?.username ||
+    (activeUser?.email ? activeUser.email.split("@")[0] : null) ||
+    "User";
 
   const getDashboardPath = () => {
-    let activeUser = user;
-    if (!activeUser && typeof window !== "undefined") {
+    let targetUser = activeUser;
+    if (!targetUser && typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem("user");
         if (stored && stored !== "null" && stored !== "undefined") {
-          activeUser = JSON.parse(stored);
+          targetUser = JSON.parse(stored);
         }
       } catch {
         // ignore
       }
     }
 
-    if (!activeUser) return "/login";
+    if (!targetUser) return "/login";
 
-    const userRole = String(activeUser?.role || activeUser?.user_type || "").toLowerCase();
-    const userType = String(activeUser?.user_type || activeUser?.role || "").toLowerCase();
-    const professionType = String(activeUser?.profession_type || "").toLowerCase();
-    const planType = String(activeUser?.plan_type || "").toLowerCase();
-    const planName = String(activeUser?.plan_name || "").toLowerCase();
+    const userRole = String(targetUser?.role || targetUser?.user_type || "").toLowerCase();
+    const userType = String(targetUser?.user_type || targetUser?.role || "").toLowerCase();
+    const professionType = String(targetUser?.profession_type || "").toLowerCase();
+    const planType = String(targetUser?.plan_type || "").toLowerCase();
+    const planName = String(targetUser?.plan_name || "").toLowerCase();
 
     if (planType === "api" || planName.includes("api")) {
       return "/api-user";
@@ -90,25 +141,25 @@ const Navbar = () => {
       return "/trainer-dashboard/overview";
     }
 
-    const rawPlanId = activeUser?.plan_id ?? activeUser?.profile?.plan_id;
+    const rawPlanId = targetUser?.plan_id ?? targetUser?.profile?.plan_id;
     const hasPlan =
       rawPlanId !== null &&
       rawPlanId !== undefined &&
       rawPlanId !== "" &&
       Number(rawPlanId) > 0;
 
-    if (!hasPlan && !isInvitedAndAccepted(activeUser)) {
+    if (!hasPlan && !isInvitedAndAccepted(targetUser)) {
       return "/personalize-journey/onboarding/steps";
     }
     return "/user-dashboard";
   };
 
   const getRoleLabel = () => {
-    if (!user) return "Member";
-    const userRole = user?.role || user?.user_type;
-    const professionType = user?.profession_type;
-    const planType = user?.plan_type;
-    const planName = user?.plan_name;
+    if (!activeUser) return "Member";
+    const userRole = activeUser?.role || activeUser?.user_type;
+    const professionType = activeUser?.profession_type;
+    const planType = activeUser?.plan_type;
+    const planName = activeUser?.plan_name;
 
     if (planType === "api" || (typeof planName === "string" && planName.toLowerCase().includes("api"))) {
       return "API Developer";
@@ -159,7 +210,7 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-4">
-          {!mounted || !user ? (
+          {!isAuthenticated ? (
             <>
               <Link
                 href="/login"
@@ -221,7 +272,8 @@ const Navbar = () => {
                   >
                     <div className="px-4 py-3 border-b border-gray-50 mb-1">
                       <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-1">Account Info</p>
-                      <p className="text-sm font-bold text-[#1F2D2E] truncate">{user?.email}</p>
+                      <p className="text-sm font-bold text-[#1F2D2E] truncate">{activeUser?.email || profileResponse?.data?.email || "Account"}</p>
+                      <p className="text-xs text-[#0FA4A9] font-medium mt-0.5">{getRoleLabel()}</p>
                     </div>
 
                     <button
@@ -269,7 +321,7 @@ const Navbar = () => {
       {/* Mobile Navigation */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-b border-gray-100 shadow-xl px-4 py-8 flex flex-col items-center gap-6 animate-in slide-in-from-top duration-300">
-          {!mounted || !user ? (
+          {!isAuthenticated ? (
             <>
               <Link
                 href="/login"
@@ -307,6 +359,7 @@ const Navbar = () => {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-base font-bold text-[#1F2D2E] truncate max-w-[180px]">{displayName}</span>
+                  <span className="text-xs text-[#0FA4A9] font-medium">{getRoleLabel()}</span>
                 </div>
               </div>
 

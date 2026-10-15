@@ -5,27 +5,33 @@ interface AuthState {
   token: string | null;
 }
 
-const getStoredUser = (): any | null => {
+const getStoredToken = (): string | null => {
   if (typeof window === "undefined") return null;
+  const token = localStorage.getItem("token");
+  if (!token || token === "undefined" || token === "null" || token.trim() === "") return null;
+  return token;
+};
+
+const getStoredUser = (token: string | null): any | null => {
+  if (typeof window === "undefined" || !token) return null;
   try {
     const raw = localStorage.getItem("user");
     if (!raw || raw === "undefined" || raw === "null") return null;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Object.keys(parsed).length === 0) return null;
+    if (!parsed.id && !parsed.email && !parsed.name && !parsed.role && !parsed.user_type) return null;
+    return parsed;
   } catch {
     return null;
   }
 };
 
-const getStoredToken = (): string | null => {
-  if (typeof window === "undefined") return null;
-  const token = localStorage.getItem("token");
-  if (!token || token === "undefined" || token === "null") return null;
-  return token;
-};
+const storedToken = getStoredToken();
+const storedUser = getStoredUser(storedToken);
 
 const initialState: AuthState = {
-  user: getStoredUser(),
-  token: getStoredToken(),
+  user: storedUser,
+  token: storedToken,
 };
 
 const authSlice = createSlice({
