@@ -37,6 +37,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 # Copy build output only (small image)
 COPY --from=builder /app/.next ./.next
@@ -47,5 +49,5 @@ COPY --from=builder /app/next.config.* ./
 
 EXPOSE 3000
 
-# Start with Node runtime
-CMD ["npm","start"]
+# Start directly with Next.js runtime
+CMD ["npx", "next", "start", "-H", "0.0.0.0", "-p", "3000"]

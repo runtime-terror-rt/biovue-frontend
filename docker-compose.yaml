@@ -5,6 +5,7 @@ services:
     profiles:
       - prod
     image: softvence/biovue-frontend:latest
+    command: npx next start -H 0.0.0.0 -p 3000
     build:
       context: .
       dockerfile: Dockerfile
