@@ -179,65 +179,73 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
   // }, [existingNutrition]);
 
   useEffect(() => {
-    if (!existingNutrition?.nutrition?.foods) return;
+    const nutri = existingNutrition?.nutrition || existingNutrition?.data?.nutrition;
 
-    const nutri = existingNutrition.nutrition;
-
-    // Daily calorie target from AI target
-    setCalorieTarget(
-      Number(aiNutritionData?.target_nutrition?.calories?.value || 2000),
+    // Daily calorie target from AI target or existing nutrition target
+    const targetVal = Number(
+      aiNutritionData?.target_nutrition?.calories?.value ||
+      nutri?.daily_target ||
+      nutri?.target_calories ||
+      2000
     );
+    setCalorieTarget(targetVal);
+    setTargetCalories(targetVal);
 
-    const apiFoods = nutri.foods.map((f: any, index: number) => {
-      let foodName = "";
-      if (typeof f === "string") {
-        foodName = f;
-      } else if (typeof f?.food === "string") {
-        foodName = f.food;
-      } else if (typeof f?.food?.name === "string") {
-        foodName = f.food.name;
-      } else if (typeof f?.food?.food === "string") {
-        foodName = f.food.food;
-      } else if (typeof f?.name === "string") {
-        foodName = f.name;
-      } else if (Array.isArray(f?.food) && typeof f.food[0] === "string") {
-        foodName = f.food[0];
-      } else if (f?.food) {
-        foodName = String(f.food);
-      }
+    if (nutri?.foods && Array.isArray(nutri.foods)) {
+      const apiFoods = nutri.foods.map((f: any, index: number) => {
+        let foodName = "";
+        if (typeof f === "string") {
+          foodName = f;
+        } else if (typeof f?.food === "string") {
+          foodName = f.food;
+        } else if (typeof f?.food?.name === "string") {
+          foodName = f.food.name;
+        } else if (typeof f?.food?.food === "string") {
+          foodName = f.food.food;
+        } else if (typeof f?.name === "string") {
+          foodName = f.name;
+        } else if (Array.isArray(f?.food) && typeof f.food[0] === "string") {
+          foodName = f.food[0];
+        } else if (f?.food) {
+          foodName = String(f.food);
+        }
 
-      return {
-        id: f.id !== undefined && f.id !== null ? String(f.id) : `api-${index}`,
-        backendId:
-          typeof f.id === "number" ||
-          (typeof f.id === "string" && !f.id.startsWith("api-"))
-            ? f.id
-            : undefined,
-        name: foodName,
-        quantity:
-          typeof f.quantity === "number"
-            ? f.quantity
-            : parseFloat(f.quantity) || 1,
-        unit: typeof f.unit === "string" ? f.unit : "g",
-        isExisting: true,
+        const foodCalories = Number(f?.calories || f?.calorie || f?.total_calories || 0);
+        const foodProtein = Number(f?.protein || f?.macros?.protein || 0);
+        const foodCarbs = Number(f?.carbs || f?.macros?.carbs || 0);
+        const foodFat = Number(f?.fat || f?.fats || f?.macros?.fat || 0);
 
-        // hide per-food calorie breakdown
-        caloriesPerUnit: 0,
-        calories: 0,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
-      };
-    });
+        return {
+          id: f.id !== undefined && f.id !== null ? String(f.id) : `api-${index}`,
+          backendId:
+            typeof f.id === "number" ||
+            (typeof f.id === "string" && !f.id.startsWith("api-"))
+              ? f.id
+              : undefined,
+          name: foodName,
+          quantity:
+            typeof f.quantity === "number"
+              ? f.quantity
+              : parseFloat(f.quantity) || 1,
+          unit: typeof f.unit === "string" ? f.unit : "g",
+          isExisting: true,
+          caloriesPerUnit: foodCalories,
+          calories: foodCalories,
+          protein: foodProtein,
+          carbs: foodCarbs,
+          fat: foodFat,
+        };
+      });
 
-    setMeals([
-      {
-        id: "today-log",
-        type: "breakfast",
-        time: existingNutrition.log_date || new Date().toLocaleDateString(),
-        foods: apiFoods,
-      },
-    ]);
+      setMeals([
+        {
+          id: "today-log",
+          type: "breakfast",
+          time: existingNutrition.log_date || new Date().toLocaleDateString(),
+          foods: apiFoods,
+        },
+      ]);
+    }
   }, [existingNutrition, aiNutritionData]);
 
   const [addingToMeal, setAddingToMeal] = useState<string | null>(null);
@@ -256,26 +264,49 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
   } | null>(null);
 
   const getTotalMacros = () => {
-    // If we have backend summary data, prioritize it for the totals display
-    if (existingNutrition?.nutrition) {
-      const nutri = existingNutrition.nutrition;
+    const nutri = existingNutrition?.nutrition || existingNutrition?.data?.nutrition;
+    if (nutri) {
+      let baseCalories = Number(nutri.calories?.value ?? nutri.total ?? nutri.calories ?? 0);
+      let baseProtein = Number(nutri.macros?.protein?.value ?? nutri.protein ?? 0);
+      let baseCarbs = Number(nutri.macros?.carbs?.value ?? nutri.carbs ?? 0);
+      let baseFat = Number(nutri.macros?.fat?.value ?? nutri.fat ?? 0);
+
+      let newCalories = 0;
+      let newProtein = 0;
+      let newCarbs = 0;
+      let newFat = 0;
+
+      meals.forEach((meal) => {
+        meal.foods.forEach((food) => {
+          if (!food.isExisting && !food.id.toString().startsWith("api-")) {
+            newCalories += food.calories || 0;
+            newProtein += food.protein || 0;
+            newCarbs += food.carbs || 0;
+            newFat += food.fat || 0;
+          } else if (baseCalories === 0) {
+            baseCalories += food.calories || 0;
+            baseProtein += food.protein || 0;
+            baseCarbs += food.carbs || 0;
+            baseFat += food.fat || 0;
+          }
+        });
+      });
+
       return {
-        // Use 'total' from backend as requested
-        // calories: Number(nutri.total || nutri.calories?.value || 0),
-        calories: Number(nutri.calories?.value || 0),
-        protein: Number(nutri.macros?.protein?.value || 0),
-        carbs: Number(nutri.macros?.carbs?.value || 0),
-        fat: Number(nutri.macros?.fat?.value || 0),
+        calories: baseCalories + newCalories,
+        protein: baseProtein + newProtein,
+        carbs: baseCarbs + newCarbs,
+        fat: baseFat + newFat,
       };
     }
 
     const total = { calories: 0, protein: 0, carbs: 0, fat: 0 };
     meals.forEach((meal) => {
       meal.foods.forEach((food) => {
-        total.calories += food.calories;
-        total.protein += food.protein;
-        total.carbs += food.carbs;
-        total.fat += food.fat;
+        total.calories += food.calories || 0;
+        total.protein += food.protein || 0;
+        total.carbs += food.carbs || 0;
+        total.fat += food.fat || 0;
       });
     });
     return total;
@@ -283,25 +314,31 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
 
   const getProgressColor = () => {
     const total = getTotalMacros().calories;
-    const percentage = (total / calorieTarget) * 100;
+    const percentage = calorieTarget > 0 ? (total / calorieTarget) * 100 : 0;
 
-    if (percentage >= 95 && percentage <= 105) return "bg-green-500";
-    if (percentage > 105 && percentage <= 150) return "bg-yellow-500";
-    if (percentage < 95 && percentage >= 50) return "bg-yellow-500";
-    return "bg-red-500";
+    if (percentage > 100) return "bg-red-500";
+    if (percentage >= 90) return "bg-green-500";
+    if (percentage >= 50) return "bg-yellow-500";
+    return "bg-[#3A86FF]";
   };
 
   const getProgressPercentage = () => {
     const total = getTotalMacros().calories;
-    return Math.min((total / calorieTarget) * 100, 100);
+    if (!calorieTarget || calorieTarget <= 0) return 0;
+    return (total / calorieTarget) * 100;
   };
 
-  // Macro targets based on calorie target
+  // Macro targets based on AI suggested target or calorie target
   const getMacroTargets = () => {
+    const aiMacros = aiNutritionData?.target_nutrition?.macros;
+    const p = Number(aiMacros?.protein?.value || targetProtein || 0);
+    const c = Number(aiMacros?.carbs?.value || targetCarbs || 0);
+    const f = Number(aiMacros?.fat?.value || targetFat || 0);
+
     return {
-      protein: (calorieTarget * 0.3) / 4, // 30% of calories from protein (4 cal/g)
-      carbs: (calorieTarget * 0.5) / 4, // 50% of calories from carbs (4 cal/g)
-      fat: (calorieTarget * 0.2) / 9, // 20% of calories from fat (9 cal/g)
+      protein: p > 0 ? p : (calorieTarget * 0.3) / 4,
+      carbs: c > 0 ? c : (calorieTarget * 0.5) / 4,
+      fat: f > 0 ? f : (calorieTarget * 0.2) / 9,
     };
   };
 
@@ -416,6 +453,12 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
       return;
     }
 
+    const parsedQty = parseFloat(foodQuantityInput) || 1;
+    const foodCalories = aiCalorieResult?.calories || 0;
+    const foodProtein = aiCalorieResult?.protein || 0;
+    const foodCarbs = aiCalorieResult?.carbs || 0;
+    const foodFat = aiCalorieResult?.fat || 0;
+
     setMeals(
       meals.map((meal) =>
         meal.id === mealId
@@ -426,16 +469,22 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
               {
                 id: Math.random().toString(),
                 name: foodNameInput,
-                quantity: parseFloat(foodQuantityInput),
+                quantity: parsedQty,
                 unit:
                   foodUnitInput === "custom"
                     ? customUnitInput
                     : foodUnitInput,
-                caloriesPerUnit: 0,
-                calories: 0,
-                protein: 0,
-                carbs: 0,
-                fat: 0,
+                caloriesPerUnit: parsedQty > 0 ? foodCalories / parsedQty : 0,
+                calories: foodCalories,
+                protein: foodProtein,
+                carbs: foodCarbs,
+                fat: foodFat,
+                macroBreakdown: aiCalorieResult ? {
+                  mainIngredients: aiCalorieResult.mainIngredients || [],
+                  proteinSources: aiCalorieResult.proteinSources || [],
+                  carbSources: aiCalorieResult.carbSources || [],
+                  fatSources: aiCalorieResult.fatSources || [],
+                } : undefined,
               },
             ],
           }
@@ -701,7 +750,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
                   "h-full rounded-full transition-all duration-300 flex items-center justify-center text-white font-bold text-sm",
                   getProgressColor(),
                 )}
-                style={{ width: `${caloriePercentage}%` }}
+                style={{ width: `${Math.min(caloriePercentage, 100)}%` }}
               >
                 {caloriePercentage > 10 && `${Math.round(caloriePercentage)}%`}
               </div>
@@ -713,7 +762,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
                 </span>{" "}
                 / {calorieTarget} kcal
               </span>
-              <span>
+              <span className={cn(caloriePercentage > 100 && "text-red-500 font-bold")}>
                 {caloriePercentage > 100
                   ? `+${Math.round(caloriePercentage - 100)}%`
                   : `${Math.round(100 - caloriePercentage)}% remaining`}

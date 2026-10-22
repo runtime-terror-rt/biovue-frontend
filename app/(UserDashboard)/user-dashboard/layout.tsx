@@ -34,7 +34,7 @@ export default function UserDashboardLayout({
     const path = pathname?.toLowerCase();
     if (path === "/user-dashboard") return "Dashboard";
     if (path.includes("/user-dashboard/projections")) return "Projections";
-    if (path.includes("/user-dashboard/projection-galary")) return "Projection Galary";
+    if (path.includes("/user-dashboard/projection-galary")) return "Projection Gallery";
     if (path.includes("/user-dashboard/assigned-programs")) return "Assigned Programs";
     if (path.includes("/user-dashboard/insights")) return "Insights";
     if (path.includes("/user-dashboard/habits")) return "Habits";

@@ -66,7 +66,7 @@ export default function MemberLimitIndicator() {
 
             <div className="flex flex-col">
               <span className="text-[8px] font-bold uppercase tracking-[0.1em] leading-none opacity-90">
-                Members
+                Clients
               </span>
 
               <span className="text-[13px] font-black leading-none mt-1">
