@@ -62,7 +62,7 @@ export const SIDEBAR_MENU: SidebarMenu = {
     { label: "Support", icon: HeartHandshake, href: "/user-dashboard/support" },
     { label: "Message", icon: Mail, href: "/user-dashboard/messages" },
     { label: "Settings", icon: Settings, href: "/user-dashboard/settings" },
-    
+
   ],
 
   trainer: [

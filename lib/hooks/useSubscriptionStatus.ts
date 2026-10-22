@@ -164,7 +164,13 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
     typeof user?.plan_duration === "number" &&
     user.plan_duration > 0
   ) {
-    effectiveExpiryTime = Date.now() + user.plan_duration * 24 * 60 * 60 * 1000;
+    const baseDate = latestPayment?.created_at || user?.created_at;
+    if (baseDate) {
+      const parsedBase = new Date(baseDate).getTime();
+      if (!isNaN(parsedBase)) {
+        effectiveExpiryTime = parsedBase + user.plan_duration * 24 * 60 * 60 * 1000;
+      }
+    }
   }
 
   const now = Date.now();

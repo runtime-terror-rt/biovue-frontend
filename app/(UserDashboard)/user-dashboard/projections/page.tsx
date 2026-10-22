@@ -146,7 +146,7 @@ const ProjectionsPage = () => {
 
   const getFullProjectionUrl = (url?: string) => {
     if (!url) return "";
-    if (url.startsWith("http")) return url;
+    if (url.startsWith("http") || url.startsWith("data:")) return url;
     const base = "https://ai.biovuedigitalwellness.com";
     const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
     return `${base}${normalizedUrl}`;
@@ -728,18 +728,52 @@ const ProjectionsPage = () => {
   };
 
   const renderResultsStep = () => {
-    if (!combinedProjectionData?.data) return null;
+    if (!combinedProjectionData) return null;
 
-    const data = combinedProjectionData.data;
+    const rootData: any =
+      (combinedProjectionData as any)?.data || combinedProjectionData;
+
+    // Support all known API shapes: projections_data, projections, direct current_lifestyle, etc.
+    const projectionsData =
+      rootData?.projections_data ||
+      rootData?.projections ||
+      (rootData?.current_lifestyle ? rootData : null) ||
+      (combinedProjectionData as any)?.projections_data ||
+      (combinedProjectionData as any)?.projections ||
+      ((combinedProjectionData as any)?.current_lifestyle ? combinedProjectionData : null) ||
+      {};
+
+    const currentLifestyle = projectionsData?.current_lifestyle;
+    const futureGoal = projectionsData?.future_goal;
+    const timeframe =
+      rootData?.timeframe ||
+      projectionsData?.timeframe ||
+      timeHorizon ||
+      "1 year";
 
     const renderProjectionCard = (
-      projection: IndividualProjection,
+      projection: IndividualProjection | any,
       isFuture: boolean,
     ) => {
+      if (!projection) {
+        return (
+          <div className="bg-white rounded-[24px] border border-[#3A86FF]/10 shadow-sm p-8 text-center text-gray-400 flex flex-col items-center justify-center min-h-[300px]">
+            <User size={64} className="text-gray-200 mb-4" />
+            <p className="font-medium text-sm text-[#5F6F73]">
+              {isFuture
+                ? "Future goal projection is not available."
+                : "Current lifestyle projection is not available."}
+            </p>
+          </div>
+        );
+      }
+
       const expectedChanges: string[] = Array.isArray(
         projection?.expected_changes,
       )
         ? projection.expected_changes
+        : typeof projection?.expected_changes === "string"
+        ? [projection.expected_changes]
         : [];
 
       const getBodyTypeLabel = () => {
@@ -752,44 +786,49 @@ const ProjectionsPage = () => {
       };
       const bodyType = getBodyTypeLabel();
 
-      let goalTitle = `Achieving your goal in ${data.timeframe}`;
+      let goalTitle = `Achieving your goal in ${timeframe}`;
       if (isFuture) {
-        goalTitle = `Achieving your goal: Reach ${bodyType} physique in ${data.timeframe}`; // Fallback
+        goalTitle = `Achieving your goal: Reach ${bodyType} physique in ${timeframe}`; // Fallback
         if (userProfile?.weight && projection?.est_weight) {
           const currentWeight = parseFloat(userProfile.weight);
-          const futureWeightStr = projection.est_weight
+          const futureWeightStr = String(projection.est_weight)
             .toLowerCase()
             .replace(/[^0-9.]/g, "");
           const futureWeight = parseFloat(futureWeightStr);
           if (!isNaN(currentWeight) && !isNaN(futureWeight)) {
             const diff = currentWeight - futureWeight;
             if (diff > 0) {
-              goalTitle = `Achieving your goal: Lose ${Math.round(diff)} lbs and reach ${bodyType} physique in ${data.timeframe}`;
+              goalTitle = `Achieving your goal: Lose ${Math.round(diff)} lbs and reach ${bodyType} physique in ${timeframe}`;
             } else if (diff < 0) {
-              goalTitle = `Achieving your goal: Gain ${Math.round(Math.abs(diff))} lbs and reach ${bodyType} physique in ${data.timeframe}`;
+              goalTitle = `Achieving your goal: Gain ${Math.round(Math.abs(diff))} lbs and reach ${bodyType} physique in ${timeframe}`;
             } else {
-              goalTitle = `Achieving your goal: Maintain weight and reach ${bodyType} physique in ${data.timeframe}`;
+              goalTitle = `Achieving your goal: Maintain weight and reach ${bodyType} physique in ${timeframe}`;
             }
           }
         }
       }
 
+      const imageSrc =
+        (projection as any)?.image ||
+        (projection as any)?.projection_url ||
+        (projection as any)?.image_base64 ||
+        (projection as any)?.image_url ||
+        "";
+
       return (
         <div className="bg-white rounded-[24px] border border-[#3A86FF]/10 shadow-sm overflow-hidden flex flex-col">
           <div className="p-8 text-center space-y-6 flex-1">
             <h3 className="text-[#8B5CF6] font-bold text-lg min-h-[56px] flex items-center justify-center">
-              {(projection as any).label ||
+              {(projection as any)?.label ||
                 (isFuture
                   ? goalTitle
-                  : `If you continue your current lifestyle without changes for ${data.timeframe}`)}
+                  : `If you continue your current lifestyle without changes for ${timeframe}`)}
             </h3>
             <div className="w-full rounded-2xl overflow-hidden bg-gray-50 shadow-inner border border-gray-100">
-              {(projection as any).image || projection.projection_url ? (
+              {imageSrc ? (
                 <img
-                  key={(projection as any).image || projection.projection_url}
-                  src={getFullProjectionUrl(
-                    (projection as any).image || projection.projection_url,
-                  )}
+                  key={imageSrc}
+                  src={getFullProjectionUrl(imageSrc)}
                   alt="Projection Result"
                   className="w-full h-auto object-contain"
                 />
@@ -804,14 +843,14 @@ const ProjectionsPage = () => {
               {[
                 {
                   label: "Timeframe",
-                  value: data.timeframe,
+                  value: timeframe,
                   icon: Calendar,
                   color: "text-[#8B5CF6]",
                   bg: "bg-[#F3E8FF]",
                 },
                 {
                   label: "Est. BMI:",
-                  value: projection?.est_bmi,
+                  value: projection?.est_bmi || "N/A",
                   icon: Activity,
                   color: "text-[#10B981]",
                   bg: "bg-[#E1F9F0]",
@@ -819,8 +858,8 @@ const ProjectionsPage = () => {
                 {
                   label: "Est. Weight:",
                   value: projection?.est_weight
-                    ? projection.est_weight.toLowerCase().includes("lbs")
-                      ? projection.est_weight
+                    ? String(projection.est_weight).toLowerCase().includes("lbs")
+                      ? String(projection.est_weight)
                       : `${projection.est_weight} lbs`
                     : "N/A",
                   icon: Zap,
@@ -852,14 +891,18 @@ const ProjectionsPage = () => {
             <div className="text-left py-6 border-t border-gray-50 space-y-4">
               <h4 className="font-bold text-[#041228]">Expected Changes:</h4>
               <div className="space-y-3">
-                {expectedChanges.map((text, idx) => (
-                  <div key={idx} className="flex items-start gap-2">
-                    <div className="w-5 h-5 bg-[#0FA4A9] rounded-full flex items-center justify-center mt-0.5 shrink-0">
-                      <CheckCircle2 size={12} className="text-white" />
+                {expectedChanges.length > 0 ? (
+                  expectedChanges.map((text, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <div className="w-5 h-5 bg-[#0FA4A9] rounded-full flex items-center justify-center mt-0.5 shrink-0">
+                        <CheckCircle2 size={12} className="text-white" />
+                      </div>
+                      <span className="text-sm text-[#5F6F73]">{text}</span>
                     </div>
-                    <span className="text-sm text-[#5F6F73]">{text}</span>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-400 italic">No specific changes noted.</p>
+                )}
               </div>
             </div>
           </div>
@@ -874,13 +917,33 @@ const ProjectionsPage = () => {
             Projection Results
           </h1>
           <p className="text-gray-500">
-            Visualizing your trajectory over the next {data.timeframe}.
+            Visualizing your trajectory over the next {timeframe}.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {renderProjectionCard(data.projections_data.current_lifestyle, false)}
-          {renderProjectionCard(data.projections_data.future_goal, true)}
+          {!currentLifestyle && !futureGoal ? (
+            <div className="col-span-full bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-xl mx-auto space-y-4">
+              <AlertCircle className="mx-auto text-amber-500" size={40} />
+              <h3 className="text-lg font-bold text-[#041228]">
+                Projection Results Not Available
+              </h3>
+              <p className="text-sm text-[#5F6F73]">
+                The projection was generated, but the visual data could not be displayed. Please check your Projection Gallery or try generating again.
+              </p>
+              <button
+                onClick={() => setStep("input")}
+                className="px-6 py-2.5 bg-[#0FA4A9] text-white rounded-xl text-sm font-semibold hover:bg-[#0d8d91] transition-all cursor-pointer"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : (
+            <>
+              {renderProjectionCard(currentLifestyle, false)}
+              {renderProjectionCard(futureGoal, true)}
+            </>
+          )}
         </div>
 
         {/* Results Actions */}
