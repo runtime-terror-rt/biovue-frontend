@@ -1,10 +1,10 @@
-FROM oven/bun:1.1.29-alpine AS deps
-
+FROM node:24-alpine AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json bun.lock ./
+COPY package.json package-lock.json ./
 
-RUN bun install --frozen-lockfile
+RUN npm ci
 
 
 FROM node:24-alpine AS builder
@@ -37,15 +37,15 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# Copy build output only (small image)
-COPY --from=builder /app/.next ./.next
+# Copy standalone build output
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/next.config.* ./
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 EXPOSE 3000
 
-# Start with Node runtime
-CMD ["npm","start"]
+# Start directly with Next.js standalone server
+CMD ["node", "server.js"]

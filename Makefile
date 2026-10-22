@@ -17,10 +17,7 @@ prod-up:
 deploy:
 	@echo "Deploying..."
 	cd ~/frontend
-	docker compose --env-file .env.production --profile prod down --remove-orphans
-	docker compose --env-file .env.production --profile prod rm -f
 	docker compose --env-file .env.production --profile prod pull
-	docker compose --env-file .env.production --profile prod up -d
+	docker compose --env-file .env.production --profile prod up -d --remove-orphans
 	docker image prune -f
-	docker system prune -af
 	sudo systemctl restart caddy

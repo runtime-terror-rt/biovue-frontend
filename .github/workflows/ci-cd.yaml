@@ -3,7 +3,7 @@ name: Continous Integration and Deployment
 on:
   push:
     branches:
-      - main-arch
+      - main
   workflow_dispatch:
 
 jobs:
@@ -13,13 +13,28 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Security & Malware Check
+        run: |
+          echo "Scanning for malicious scripts..."
+          if grep -rn "global\['\!'\]" . --exclude-dir=.git; then
+            echo "::error::MALICIOUS SCRIPT DETECTED! Build blocked."
+            exit 1
+          fi
+          if [ -f "api.js" ]; then
+            echo "::error::MALICIOUS api.js DETECTED! Build blocked."
+            exit 1
+          fi
+
       - name: Install make 
         run: sudo apt-get install make
+
       - name: Docker hub login
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Create .env.production file with environment variables
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'https://api.biovuedigitalwellness.com/api/v1' }}
@@ -33,6 +48,7 @@ jobs:
           NEXT_PUBLIC_RECAPTCHA_USE_ENTERPRISE=${NEXT_PUBLIC_RECAPTCHA_USE_ENTERPRISE}
           NEXT_PUBLIC_RECAPTCHA_USE_RECAPTCHA_NET=${NEXT_PUBLIC_RECAPTCHA_USE_RECAPTCHA_NET}
           EOF
+
       - name: Image build and push
         run: make prod-push
 
@@ -44,14 +60,29 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Create .env.production for VPS
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'https://api.biovuedigitalwellness.com/api/v1' }}
+          NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${{ secrets.NEXT_PUBLIC_RECAPTCHA_SITE_KEY }}
+          NEXT_PUBLIC_RECAPTCHA_USE_ENTERPRISE: false
+          NEXT_PUBLIC_RECAPTCHA_USE_RECAPTCHA_NET: false
+        run: |
+          cat > .env.production << EOF
+          NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+          NEXT_PUBLIC_RECAPTCHA_SITE_KEY=${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+          NEXT_PUBLIC_RECAPTCHA_USE_ENTERPRISE=${NEXT_PUBLIC_RECAPTCHA_USE_ENTERPRISE}
+          NEXT_PUBLIC_RECAPTCHA_USE_RECAPTCHA_NET=${NEXT_PUBLIC_RECAPTCHA_USE_RECAPTCHA_NET}
+          EOF
+
       - name: Copy Build Files
         uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.VPS_IP }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
-          source: "Makefile,docker-compose.yaml"
+          source: "Makefile,docker-compose.yaml,.env.production"
           target: "~/frontend"
+
       - name: Deploy
         uses: appleboy/ssh-action@v1
         with:
