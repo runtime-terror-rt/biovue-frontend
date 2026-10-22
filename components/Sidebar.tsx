@@ -40,7 +40,7 @@ export default function Sidebar({ role }: SidebarProps) {
   const isRestricted =
     role === "user" ? (!isPaidUser && (isTrial || restrictionState.restricted)) : false;
 
-  // Items restricted during active free trial (Projections and Projection Galary are unlocked for free trial)
+  // Items restricted during active free trial (Projections and  are unlocked for free trial)
   const trialRestrictedLabels = [
     "insights",
     "habits",
@@ -51,7 +51,7 @@ export default function Sidebar({ role }: SidebarProps) {
   // Items restricted when trial period ends completely and account is unpaid
   const fullRestrictedLabels = [
     "projections",
-    "projection galary",
+    "projection gallery",
     "insights",
     "habits",
     "support",

@@ -47,7 +47,7 @@ export const SIDEBAR_MENU: SidebarMenu = {
       href: "/user-dashboard/projections",
     },
     {
-      label: "Projection Galary",
+      label: "Projection Gallery",
       icon: ImageDownIcon,
       href: "/user-dashboard/projection-galary",
     },

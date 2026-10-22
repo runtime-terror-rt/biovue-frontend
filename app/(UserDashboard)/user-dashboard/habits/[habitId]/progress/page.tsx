@@ -24,6 +24,8 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  Cell,
+  ReferenceLine,
 } from "recharts";
 import LogHabitModal from "@/components/dashboard/LogHabitModal";
 import LogNutritionModal from "@/components/dashboard/LogNutritionModal";
@@ -37,6 +39,7 @@ import { useGetActivityReportQuery } from "@/redux/features/api/userDashboard/ac
 import { useGetStressReportQuery } from "@/redux/features/api/userDashboard/stresslog";
 import { useGetHabitsQuery as _unused } from "@/redux/features/api/userDashboard/habit";
 import { useGetAiSavedHabitsQuery } from "@/redux/features/api/userDashboard/Projection/AIHabitsAPI";
+import { useGetAiSuggestedTargetQuery } from "@/redux/features/api/userDashboard/nutritionAiApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { Loader2, Footprints, Activity as ActivityIcon } from "lucide-react";
@@ -50,6 +53,108 @@ const MOCK_DATA = [
   { name: "S", val: 0, Protein: 35, Carbs: 45, Fats: 20 },
   { name: "S", val: 0, Protein: 35, Carbs: 45, Fats: 20 },
 ];
+
+const NUTRITION_MOCK_DATA = [
+  { name: "Mon", date: "Mon", val: 85, calories: 1700, target: 2000, Protein: 120, Carbs: 180, Fats: 55 },
+  { name: "Tue", date: "Tue", val: 100, calories: 2000, target: 2000, Protein: 140, Carbs: 210, Fats: 65 },
+  { name: "Wed", date: "Wed", val: 50, calories: 1000, target: 2000, Protein: 70, Carbs: 110, Fats: 30 },
+  { name: "Thu", date: "Thu", val: 95, calories: 1900, target: 2000, Protein: 130, Carbs: 200, Fats: 60 },
+  { name: "Fri", date: "Fri", val: 130, calories: 2600, target: 2000, Protein: 175, Carbs: 280, Fats: 85 },
+  { name: "Sat", date: "Sat", val: 115, calories: 2300, target: 2000, Protein: 155, Carbs: 240, Fats: 75 },
+  { name: "Sun", date: "Sun", val: 110, calories: 2200, target: 2000, Protein: 145, Carbs: 230, Fats: 70 },
+];
+
+const calculateNutritionChartItem = (
+  item: any,
+  userCalorieTarget: number,
+  macroTargets?: { protein: number; carbs: number; fat: number }
+) => {
+  const rawTarget = Number(item.target || item.target_calories || userCalorieTarget || 2000);
+  let rawProtein = Number(item.protein ?? item.Protin ?? item.Protein ?? item.p ?? 0);
+  let rawCarbs = Number(item.carbs ?? item.Carbs ?? item.c ?? 0);
+  let rawFats = Number(item.fats ?? item.Fats ?? item.fat ?? item.f ?? 0);
+
+  let rawCalories = item.calories !== undefined && item.calories !== null
+    ? Number(item.calories)
+    : item.total_calories !== undefined && item.total_calories !== null
+    ? Number(item.total_calories)
+    : (rawProtein * 4) + (rawCarbs * 4) + (rawFats * 9);
+
+  if (rawCalories === 0 && item.val !== undefined && item.val !== null) {
+    rawCalories = Number(item.val);
+  }
+
+  // If macros are not logged individually, estimate them from calories based on targets
+  if (rawProtein === 0 && rawCarbs === 0 && rawFats === 0 && rawCalories > 0) {
+    if (macroTargets && (macroTargets.protein > 0 || macroTargets.carbs > 0 || macroTargets.fat > 0)) {
+      const targetCals = (macroTargets.protein * 4) + (macroTargets.carbs * 4) + (macroTargets.fat * 9);
+      if (targetCals > 0) {
+        rawProtein = Math.round((rawCalories * ((macroTargets.protein * 4) / targetCals)) / 4);
+        rawCarbs = Math.round((rawCalories * ((macroTargets.carbs * 4) / targetCals)) / 4);
+        rawFats = Math.round((rawCalories * ((macroTargets.fat * 9) / targetCals)) / 9);
+      }
+    } else {
+      rawProtein = Math.round((rawCalories * 0.3) / 4);
+      rawCarbs = Math.round((rawCalories * 0.5) / 4);
+      rawFats = Math.round((rawCalories * 0.2) / 9);
+    }
+  }
+
+  const proteinCals = rawProtein * 4;
+  const carbsCals = rawCarbs * 4;
+  const fatsCals = rawFats * 9;
+  const sumCals = proteinCals + carbsCals + fatsCals;
+  const effectiveCalories = rawCalories > 0 ? rawCalories : sumCals;
+
+  const calculatedPercentage = item.percentage !== undefined
+    ? Number(item.percentage)
+    : item.adherence !== undefined
+    ? Number(item.adherence)
+    : rawTarget > 0
+    ? Math.round((effectiveCalories / rawTarget) * 100)
+    : 0;
+
+  // Determine the macro share ratios
+  let ratioP = 0.3;
+  let ratioC = 0.5;
+  let ratioF = 0.2;
+
+  if (sumCals > 0) {
+    ratioP = proteinCals / sumCals;
+    ratioC = carbsCals / sumCals;
+    ratioF = fatsCals / sumCals;
+  } else if (macroTargets && (macroTargets.protein > 0 || macroTargets.carbs > 0 || macroTargets.fat > 0)) {
+    const targetCals = (macroTargets.protein * 4) + (macroTargets.carbs * 4) + (macroTargets.fat * 9);
+    if (targetCals > 0) {
+      ratioP = (macroTargets.protein * 4) / targetCals;
+      ratioC = (macroTargets.carbs * 4) / targetCals;
+      ratioF = (macroTargets.fat * 9) / targetCals;
+    }
+  }
+
+  // Base portion (up to 100%) is filled with the 3 macros proportionally
+  const basePct = Math.min(calculatedPercentage, 100);
+  const proteinPct = Math.round(basePct * ratioP * 10) / 10;
+  const carbsPct = Math.round(basePct * ratioC * 10) / 10;
+  const fatsPct = Math.max(0, Math.round((basePct - proteinPct - carbsPct) * 10) / 10);
+  // Any portion above 100% is displayed as overage (red bar segment)
+  const overagePct = calculatedPercentage > 100 ? Math.round((calculatedPercentage - 100) * 10) / 10 : 0;
+
+  return {
+    name: item.label || item.day || item.name || item.date,
+    date: item.date || item.label,
+    val: calculatedPercentage,
+    calories: Math.round(effectiveCalories),
+    target: rawTarget,
+    Protein: Math.round(rawProtein),
+    Carbs: Math.round(rawCarbs),
+    Fats: Math.round(rawFats),
+    ProteinPct: proteinPct,
+    CarbsPct: carbsPct,
+    FatsPct: fatsPct,
+    OveragePct: overagePct,
+  };
+};
 
 const HABIT_META: Record<string, any> = {
   sleep: {
@@ -158,6 +263,38 @@ export default function HabitProgressPage() {
   const { data: nutritionReport, isLoading: isNutritionLoading } = useGetNutritionReportQuery(days, {
     skip: habitId !== 'nutrition'
   });
+
+  const { data: aiNutritionData } = useGetAiSuggestedTargetQuery(userId, {
+    skip: habitId !== 'nutrition' || !userId,
+  });
+
+  const userCalorieTarget = Number(
+    aiNutritionData?.target_nutrition?.calories?.value ||
+    nutritionReport?.statistics?.target_calories ||
+    nutritionReport?.data?.statistics?.target_calories ||
+    2000
+  );
+
+  const macroTargets = {
+    protein: Number(
+      aiNutritionData?.target_nutrition?.macros?.protein?.value ||
+      nutritionReport?.statistics?.target_protein ||
+      nutritionReport?.data?.statistics?.target_protein ||
+      Math.round((userCalorieTarget * 0.3) / 4)
+    ),
+    carbs: Number(
+      aiNutritionData?.target_nutrition?.macros?.carbs?.value ||
+      nutritionReport?.statistics?.target_carbs ||
+      nutritionReport?.data?.statistics?.target_carbs ||
+      Math.round((userCalorieTarget * 0.5) / 4)
+    ),
+    fat: Number(
+      aiNutritionData?.target_nutrition?.macros?.fat?.value ||
+      nutritionReport?.statistics?.target_fat ||
+      nutritionReport?.data?.statistics?.target_fat ||
+      Math.round((userCalorieTarget * 0.2) / 9)
+    ),
+  };
 
   const { data: activityReport, isLoading: isActivityLoading } = useGetActivityReportQuery(days, {
     skip: habitId !== 'activity'
@@ -303,6 +440,11 @@ export default function HabitProgressPage() {
     }
   }
 
+  const nutritionRawChart =
+    nutritionReport?.data?.chart_data ||
+    nutritionReport?.chart_data ||
+    nutritionReport?.data?.statistics?.chart_data;
+
   const chartData = habitId === 'sleep' && Array.isArray(sleepData?.chart_data) ?
     sleepData.chart_data.map((item: any) => ({
       name: item.label, // Mon, Tue etc.
@@ -312,13 +454,15 @@ export default function HabitProgressPage() {
       activityData.chart_data.map((item: any) => ({
         name: item.label,
         val: item.steps || 0,
-      })) : habitId === 'nutrition' && Array.isArray(nutritionReport?.data?.chart_data || nutritionReport?.chart_data || nutritionReport?.data?.statistics?.chart_data) ?
-        (nutritionReport?.data?.chart_data || nutritionReport?.chart_data || nutritionReport?.data?.statistics?.chart_data).map((item: any) => ({
-          name: item.label || item.date || item.name,
-          Protein: Number(item.protein || item.Protin || 0),
-          Carbs: Number(item.carbs || item.Carbs || 0),
-          Fats: Number(item.fats || item.Fats || 0)
-        })) : habitId === 'hydration' && (hydrationReport?.hydration?.chart || hydrationReport?.hydration?.chart_data || hydrationReport?.chart_data || hydrationReport?.data?.chart_data) ?
+      })) : habitId === 'nutrition' ?
+        (Array.isArray(nutritionRawChart) && nutritionRawChart.length > 0
+          ? nutritionRawChart.map((item: any) =>
+              calculateNutritionChartItem(item, userCalorieTarget, macroTargets)
+            )
+          : NUTRITION_MOCK_DATA.map((item: any) =>
+              calculateNutritionChartItem(item, userCalorieTarget, macroTargets)
+            )
+        ) : habitId === 'hydration' && (hydrationReport?.hydration?.chart || hydrationReport?.hydration?.chart_data || hydrationReport?.chart_data || hydrationReport?.data?.chart_data) ?
           (() => {
             const rawChart = hydrationReport?.hydration?.chart || hydrationReport?.hydration?.chart_data || hydrationReport?.chart_data || hydrationReport?.data?.chart_data;
             if (Array.isArray(rawChart)) {
@@ -339,14 +483,27 @@ export default function HabitProgressPage() {
               mood: item.mood
             })) : MOCK_DATA;
 
+  // Dynamic nutrition average calculation if backend statistics is not populated yet
+  if (habitId === 'nutrition' && habit) {
+    let dynamicNutritionAvg = nutritionReport?.data?.statistics?.average || nutritionReport?.statistics?.average;
+    if (!dynamicNutritionAvg || dynamicNutritionAvg === "0 kcal" || dynamicNutritionAvg === "0") {
+      if (Array.isArray(chartData) && chartData.length > 0) {
+        const loggedDays = chartData.filter((d: any) => (d.calories || 0) > 0);
+        if (loggedDays.length > 0) {
+          const totalCals = loggedDays.reduce((acc: number, d: any) => acc + (d.calories || 0), 0);
+          habit.avgStr = `${Math.round(totalCals / loggedDays.length)} kcal`;
+        }
+      }
+    }
+  }
 
   const handleLogClick = () => {
-    if (habitId === "stress") {
+    if (habitId === "stress" || habitId === "nutrition") {
       setView("logging");
     } else {
       setIsLogModalOpen(true);
     }
-  }
+  };
 
   if (isSleepLoading || isNutritionLoading || isHydrationLoading || isActivityLoading || isStressLoading || isHabitLoading) {
     return (
@@ -430,99 +587,239 @@ export default function HabitProgressPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 p-1 bg-white border border-[#E2E8F0] rounded-xl self-start sm:self-auto shrink-0 w-full sm:w-auto overflow-x-auto">
-                  {["Weekly", "Monthly", "Last 3 months"].map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setTimeframe(t)}
-                      className={cn(
-                        "flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer text-center whitespace-nowrap shrink-0",
-                        t === timeframe
-                          ? "bg-[#D9E6FF] text-[#1F2D2E]"
-                          : "text-[#5F6F73] hover:bg-gray-50",
-                      )}
-                    >
-                      {t}
-                    </button>
-                  ))}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-3 self-start xl:self-auto shrink-0">
+                  {habitId === "nutrition" && (
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                      {/* Protein Badge */}
+                      <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold bg-[#EBF7EE] text-[#1E7E34] border border-[#C3E6CB] shadow-xs">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#3AAB67] shrink-0" />
+                        <span>Protein</span>
+                        <span className="font-bold text-[#155724] ml-0.5">{macroTargets.protein}g</span>
+                      </div>
+                      {/* Carbs Badge */}
+                      <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] shadow-xs">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#60A5FA] shrink-0" />
+                        <span>Carbs</span>
+                        <span className="font-bold text-[#1E40AF] ml-0.5">{macroTargets.carbs}g</span>
+                      </div>
+                      {/* Fat Badge */}
+                      <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA] shadow-xs">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#FB923C] shrink-0" />
+                        <span>Fat</span>
+                        <span className="font-bold text-[#9A3412] ml-0.5">{macroTargets.fat}g</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1 p-1 bg-white border border-[#E2E8F0] rounded-xl self-start sm:self-auto shrink-0 w-full sm:w-auto overflow-x-auto">
+                    {["Weekly", "Monthly", "Last 3 months"].map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setTimeframe(t)}
+                        className={cn(
+                          "flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer text-center whitespace-nowrap shrink-0",
+                          t === timeframe
+                            ? "bg-[#D9E6FF] text-[#1F2D2E]"
+                            : "text-[#5F6F73] hover:bg-gray-50",
+                        )}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="h-64 sm:h-72 md:h-80 w-full min-w-0 mt-2 sm:mt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  {habitId === "nutrition" ? (
-                    <BarChart
-                      data={chartData}
-                      margin={{ top: 10, right: 30, left: 20, bottom: 0 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="#F1F5F9"
-                      />
-                      <XAxis
-                        dataKey="name"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{
-                          fontSize: 14,
-                          fill: "#94A3B8",
-                          fontWeight: 500,
-                        }}
-                        dy={15}
-                      />
-                      <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{
-                          fontSize: 12,
-                          fill: "#94A3B8",
-                          fontWeight: 500,
-                        }}
-                        tickFormatter={(val) => `${val}%`}
-                        domain={[0, 100]}
-                      />
-                      <Tooltip
-                        cursor={{ fill: "transparent" }}
-                        contentStyle={{
-                          borderRadius: "12px",
-                          border: "none",
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                        }}
-                      />
-                      <Legend
-                        verticalAlign="bottom"
-                        height={36}
-                        iconType="circle"
-                        formatter={(val) => (
-                          <span className="text-gray-400 font-medium text-xs ml-1 mr-4">
-                            {val}
-                          </span>
-                        )}
-                      />
-                      <Bar
-                        dataKey="Protein"
-                        stackId="a"
-                        fill="#3AAB67"
-                        barSize={12}
-                        radius={[0, 0, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="Carbs"
-                        stackId="a"
-                        fill="#60A5FA"
-                        barSize={12}
-                        radius={[0, 0, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="Fats"
-                        stackId="a"
-                        fill="#FB923C"
-                        barSize={12}
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  ) : (
+              <div className="h-72 sm:h-80 md:h-88 w-full min-w-0 mt-2 sm:mt-4">
+                {habitId === "nutrition" ? (
+                  <div className="h-full w-full flex flex-col">
+                    <div className="flex-1 w-full min-h-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={chartData}
+                          margin={{ top: 15, right: 30, left: 10, bottom: 5 }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                            stroke="#F1F5F9"
+                          />
+                          <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{
+                              fontSize: 13,
+                              fill: "#94A3B8",
+                              fontWeight: 600,
+                            }}
+                            dy={8}
+                          />
+                          <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{
+                              fontSize: 12,
+                              fill: "#94A3B8",
+                              fontWeight: 500,
+                            }}
+                            tickFormatter={(val) => `${val}%`}
+                            domain={[
+                              0,
+                              (dataMax: number) =>
+                                Math.max(140, Math.ceil((dataMax + 15) / 20) * 20),
+                            ]}
+                          />
+                          <ReferenceLine
+                            y={100}
+                            stroke="#10B981"
+                            strokeDasharray="4 4"
+                            strokeWidth={1.5}
+                            label={{
+                              value: "100% Target",
+                              position: "insideTopRight",
+                              fill: "#10B981",
+                              fontSize: 11,
+                              fontWeight: "bold",
+                            }}
+                          />
+                          <Tooltip
+                            cursor={{ fill: "rgba(241, 245, 249, 0.6)" }}
+                            content={({ active, payload }) => {
+                              if (!active || !payload || !payload.length) return null;
+                              const data = payload[0].payload;
+                              const isOver = (data.val || 0) > 100;
+                              return (
+                                <div className="bg-white p-3.5 rounded-xl shadow-xl border border-gray-100 text-xs flex flex-col gap-2 min-w-[200px]">
+                                  <div className="flex items-center justify-between border-b border-gray-100 pb-2 gap-2">
+                                    <span className="font-bold text-[#1F2D2E]">
+                                      {data.name} {data.date && data.date !== data.name ? `(${data.date})` : ""}
+                                    </span>
+                                    <span
+                                      className={cn(
+                                        "font-bold px-2 py-0.5 rounded-full text-[10px]",
+                                        isOver
+                                          ? "bg-red-50 text-red-600 border border-red-200"
+                                          : "bg-teal-50 text-[#0FA4A9] border border-teal-200",
+                                      )}
+                                    >
+                                      {data.val}%
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-gray-600">
+                                    <span>Calories:</span>
+                                    <span className="font-bold text-[#1F2D2E]">
+                                      {data.calories ? `${data.calories}` : `${data.val}%`}
+                                      {data.target ? ` / ${data.target} kcal` : " kcal"}
+                                    </span>
+                                  </div>
+                                  {isOver && (
+                                    <div className="text-red-500 font-semibold text-[11px] bg-red-50/50 p-1 rounded">
+                                      +{Math.round(data.val - 100)}% over daily calorie target
+                                    </div>
+                                  )}
+                                  <div className="pt-2 border-t border-gray-100 space-y-1.5">
+                                    <div className="flex justify-between items-center text-[11px]">
+                                      <span className="flex items-center gap-1.5 text-gray-600">
+                                        <span className="w-2 h-2 rounded-full bg-[#3AAB67]" />
+                                        Protein:
+                                      </span>
+                                      <span className="font-bold text-gray-800">{data.Protein}g ({data.ProteinPct}%)</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[11px]">
+                                      <span className="flex items-center gap-1.5 text-gray-600">
+                                        <span className="w-2 h-2 rounded-full bg-[#60A5FA]" />
+                                        Carbs:
+                                      </span>
+                                      <span className="font-bold text-gray-800">{data.Carbs}g ({data.CarbsPct}%)</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[11px]">
+                                      <span className="flex items-center gap-1.5 text-gray-600">
+                                        <span className="w-2 h-2 rounded-full bg-[#FB923C]" />
+                                        Fat:
+                                      </span>
+                                      <span className="font-bold text-gray-800">{data.Fats}g ({data.FatsPct}%)</span>
+                                    </div>
+                                    {data.OveragePct > 0 && (
+                                      <div className="flex justify-between items-center text-[11px]">
+                                        <span className="flex items-center gap-1.5 text-red-600">
+                                          <span className="w-2 h-2 rounded-full bg-[#EF4444]" />
+                                          Over Target:
+                                        </span>
+                                        <span className="font-bold text-red-600">+{data.OveragePct}%</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            }}
+                          />
+                          <Bar
+                            dataKey="ProteinPct"
+                            name="Protein"
+                            stackId="a"
+                            fill="#3AAB67"
+                            barSize={20}
+                            radius={[0, 0, 0, 0]}
+                            animationDuration={1000}
+                          />
+                          <Bar
+                            dataKey="CarbsPct"
+                            name="Carbs"
+                            stackId="a"
+                            fill="#60A5FA"
+                            barSize={20}
+                            radius={[0, 0, 0, 0]}
+                            animationDuration={1000}
+                          />
+                          <Bar
+                            dataKey="FatsPct"
+                            name="Fat"
+                            stackId="a"
+                            fill="#FB923C"
+                            barSize={20}
+                            radius={[3, 3, 0, 0]}
+                            animationDuration={1000}
+                          />
+                          <Bar
+                            dataKey="OveragePct"
+                            name="Over Target"
+                            stackId="a"
+                            fill="#EF4444"
+                            barSize={20}
+                            radius={[4, 4, 0, 0]}
+                            animationDuration={1000}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Legend */}
+                    <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 pt-3 text-xs font-semibold shrink-0 border-t border-gray-50">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#3AAB67]" />
+                        <span className="text-[#5F6F73]">Protein</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#60A5FA]" />
+                        <span className="text-[#5F6F73]">Carbs</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#FB923C]" />
+                        <span className="text-[#5F6F73]">Fat</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+                        <span className="text-[#5F6F73]">Over Target (&gt; 100%)</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-3.5 h-0.5 border-t-2 border-dashed border-[#10B981]" />
+                        <span className="text-[#10B981]">100% Target Goal</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                       data={chartData}
                       margin={{ top: 10, right: 10, left: 30, bottom: 10 }}
@@ -585,8 +882,8 @@ export default function HabitProgressPage() {
                         fill="url(#colorGreen)"
                       />
                     </AreaChart>
-                  )}
-                </ResponsiveContainer>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 

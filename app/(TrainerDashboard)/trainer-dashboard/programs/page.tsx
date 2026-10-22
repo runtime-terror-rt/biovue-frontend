@@ -121,7 +121,10 @@ export default function ProgramsPage() {
         </div>
       </div>
 
-      <ProgramsTable programs={filteredPrograms} />
+      <ProgramsTable
+        key={`${searchTerm}-${sortOption}`}
+        programs={filteredPrograms}
+      />
 
       <CreateProgramModal
         isOpen={isCreateModalOpen}
