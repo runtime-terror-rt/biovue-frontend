@@ -33,7 +33,7 @@ export default function SubscriptionGuard({ children }: SubscriptionGuardProps) 
   // Helper to detect projection-related routes (Creation routes only - Gallery remains accessible even when credits are 0)
   const isProjectionRoute = (p?: string | null) => {
     if (!p) return false;
-    if (p.includes("projection-galary")) return false;
+    if (p.includes("projection-gallery")) return false;
     return (
       p.includes("/user-dashboard/projections") ||
       p.includes("/projections")

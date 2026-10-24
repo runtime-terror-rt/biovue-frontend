@@ -51,35 +51,55 @@ export default function ExpiryIndicator({
     isOver: false,
   });
 
+  // Resolve a stable target timestamp once
+  const resolvedTargetTime = useMemo(() => {
+    if (status.expiryTimestamp) return status.expiryTimestamp;
+    if (accessUntil) {
+      const parsed = new Date(accessUntil).getTime();
+      if (!isNaN(parsed)) return parsed;
+    }
+    return null;
+  }, [status.expiryTimestamp, accessUntil]);
+
   useEffect(() => {
-    const updateCountdown = () => {
-      let targetTime = status.expiryTimestamp;
-
-      if (!targetTime && accessUntil) {
-        const parsed = new Date(accessUntil).getTime();
-        if (!isNaN(parsed)) {
-          targetTime = parsed;
-        }
-      }
-
-      if (!targetTime && diffDays > 0) {
-        targetTime = Date.now() + diffDays * 24 * 60 * 60 * 1000;
-      }
-
-      if (!targetTime) {
-        return;
-      }
-
-      const diffMs = targetTime - Date.now();
-
-      if (diffMs <= 0) {
-        setCountdown({
+    if (!resolvedTargetTime) {
+      setCountdown((prev) => {
+        if (!prev.formatted && !prev.isOver && prev.days === 0) return prev;
+        return {
           days: 0,
           hours: 0,
           minutes: 0,
           seconds: 0,
-          formatted: "Expired",
-          isOver: true,
+          formatted: "",
+          isOver: false,
+        };
+      });
+      return;
+    }
+
+    const updateCountdown = () => {
+      const diffMs = resolvedTargetTime - Date.now();
+
+      if (diffMs <= 0) {
+        setCountdown((prev) => {
+          if (
+            prev.isOver &&
+            prev.formatted === "Expired" &&
+            prev.days === 0 &&
+            prev.hours === 0 &&
+            prev.minutes === 0 &&
+            prev.seconds === 0
+          ) {
+            return prev;
+          }
+          return {
+            days: 0,
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+            formatted: "Expired",
+            isOver: true,
+          };
         });
         return;
       }
@@ -98,20 +118,32 @@ export default function ExpiryIndicator({
         formatted = `${minutes}m ${seconds}s`;
       }
 
-      setCountdown({
-        days,
-        hours,
-        minutes,
-        seconds,
-        formatted,
-        isOver: false,
+      setCountdown((prev) => {
+        if (
+          prev.days === days &&
+          prev.hours === hours &&
+          prev.minutes === minutes &&
+          prev.seconds === seconds &&
+          prev.formatted === formatted &&
+          prev.isOver === false
+        ) {
+          return prev;
+        }
+        return {
+          days,
+          hours,
+          minutes,
+          seconds,
+          formatted,
+          isOver: false,
+        };
       });
     };
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [status.expiryTimestamp, accessUntil, diffDays]);
+  }, [resolvedTargetTime]);
 
   // Format expiration date for paid plans (Plus / Premium) - must be called before early returns
   const formattedExpiryDate = useMemo(() => {
