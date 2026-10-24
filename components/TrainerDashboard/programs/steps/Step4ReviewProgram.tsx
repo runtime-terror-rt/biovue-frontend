@@ -215,6 +215,56 @@ export default function Step4ReviewProgram({
                 </div>
               ))}
             </div>
+
+            {/* Workout Types & Routine */}
+            {((formData.workoutTypes && formData.workoutTypes.length > 0) || formData.workoutRoutine) && (
+              <div className="bg-white rounded-xl shadow-md p-6 space-y-4">
+                <p className="text-sm uppercase font-semibold tracking-wide text-[#6B7280]">
+                  Workout Program & Routine
+                </p>
+
+                {formData.workoutTypes && formData.workoutTypes.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Selected Workout Types:
+                    </p>
+                    <div className="flex gap-2 flex-wrap">
+                      {formData.workoutTypes.map((type) => (
+                        <span
+                          key={type}
+                          className="px-3.5 py-1.5 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-bold"
+                        >
+                          ✓ {type}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {formData.workoutRoutine && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                      Program Routine / Structure:
+                    </p>
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap bg-gray-50 p-4 rounded-xl border border-gray-100 font-mono">
+                      {formData.workoutRoutine}
+                    </p>
+                  </div>
+                )}
+
+                {formData.notes && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                      Trainer Notes:
+                    </p>
+                    <p className="text-sm text-gray-600 italic bg-amber-50/50 p-3 rounded-lg border border-amber-100">
+                      {formData.notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Wellness Macros */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <p className="text-sm uppercase font-semibold tracking-wide text-[#6B7280] mb-4">

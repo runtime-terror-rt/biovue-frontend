@@ -30,6 +30,12 @@ export interface FutureGoalProjection {
 
   confidence_score: string | null;
 
+  primary_goal?: string | null;
+  months_to_target?: number | string | null;
+  current_weight?: number | string | null;
+  future_weight?: number | string | null;
+  description?: string | null;
+
   created_at: string;
   updated_at: string;
 }

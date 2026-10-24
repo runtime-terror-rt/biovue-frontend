@@ -7,6 +7,7 @@ import { usePostStressLogMutation } from "@/redux/features/api/userDashboard/str
 import { toast } from "sonner";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
+import { triggerConfetti } from "@/lib/confetti";
 
 interface LogStressViewProps {
   onSave: () => void;
@@ -47,6 +48,7 @@ export default function LogStressView({ onSave, onBack }: LogStressViewProps) {
       
       const response = await postStressLog(payload).unwrap();
       if (response.success || response.status === "success") {
+        triggerConfetti();
         toast.success("Stress data logged successfully!");
         onSave(); // Close or return
       } else {

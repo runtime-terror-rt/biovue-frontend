@@ -38,6 +38,9 @@ export interface ProgramFormData {
     proteinOptional: boolean;
     creatineOptional: boolean;
   };
+  workoutTypes: string[];
+  workoutRoutine: string;
+  notes: string;
 }
 
 interface CreateProgramModalProps {
@@ -81,6 +84,9 @@ export default function CreateProgramModal({
       proteinOptional: false,
       creatineOptional: false,
     },
+    workoutTypes: [],
+    workoutRoutine: "",
+    notes: "",
   });
   const [createProgram, { isLoading }] = useCreateProgramMutation();
   const buildRequestBody = () => {
@@ -129,6 +135,11 @@ export default function CreateProgramModal({
 
       supplement_recommendation: selectedSupplements || [],
       supplement: selectedSupplements || [],
+
+      // Workout program fields
+      workout_types: formData.workoutTypes || [],
+      description: formData.workoutRoutine || "",
+      notes: formData.notes || "",
     };
   };
   // inside CreateProgramModal
@@ -165,6 +176,9 @@ export default function CreateProgramModal({
           proteinOptional: false,
           creatineOptional: false,
         },
+        workoutTypes: [],
+        workoutRoutine: "",
+        notes: "",
       });
       setShowSuccess(false); // also reset success modal
       setCreatedProgramId(null);

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, BarChart2, CheckCircle2, Bed, Apple, Footprints, Frown, Droplets, Plus, Activity as ActivityIcon } from "lucide-react";
+import { ArrowLeft, BarChart2, CheckCircle2, Bed, Apple, Footprints, Frown, Droplets, Plus, Scale, Activity as ActivityIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetCardDataQuery } from "@/redux/features/api/userDashboard/habit";
 import { useGetAiSavedHabitsQuery } from "@/redux/features/api/userDashboard/Projection/AIHabitsAPI";
@@ -31,10 +31,10 @@ const HABIT_DETAILS: Record<string, any> = {
     status: "ON TRACK",
     statusBg: "bg-teal-100 text-[#0FA4A9]",
     why: "consistent sleep supports physical recovery, neuroplasticity, and emotional stability.",
-    target: "7.5-8 Hrs",
-    avg: "7.4 Hrs",
-    consistency: "71%",
-    daysLogged: "5/7",
+    target: "0",
+    avg: "0 Hrs",
+    consistency: "0%",
+    daysLogged: "0/7",
     logType: "Sleep"
   },
   "nutrition": {
@@ -44,10 +44,10 @@ const HABIT_DETAILS: Record<string, any> = {
     status: "Need Attention",
     statusBg: "bg-pink-100 text-pink-500",
     why: "proper nutrition provides essential macronutrients and micros for sustained energy.",
-    target: "2000 Calories",
-    avg: "3 Servings",
-    consistency: "28%",
-    daysLogged: "2/7",
+    target: "0",
+    avg: "0 kcal",
+    consistency: "0%",
+    daysLogged: "0/7",
     logType: "Nutrition"
   },
   "activity": {
@@ -57,10 +57,10 @@ const HABIT_DETAILS: Record<string, any> = {
     status: "ON TRACK",
     statusBg: "bg-teal-100 text-[#0FA4A9]",
     why: "daily movement improves cardiovascular health and boosts cognitive function.",
-    target: "8,000 Steps",
-    avg: "8,420 Steps",
-    consistency: "85%",
-    daysLogged: "6/7",
+    target: "0",
+    avg: "0 Steps",
+    consistency: "0%",
+    daysLogged: "0/7",
     logType: "Activity"
   },
   "stress": {
@@ -70,10 +70,10 @@ const HABIT_DETAILS: Record<string, any> = {
     status: "ON TRACK",
     statusBg: "bg-teal-100 text-[#0FA4A9]",
     why: "managing stress lowers cortisol levels and prevents chronic inflammation.",
-    target: "< 5/10",
-    avg: "4/10",
-    consistency: "57%",
-    daysLogged: "4/7",
+    target: "0",
+    avg: "0/10",
+    consistency: "0%",
+    daysLogged: "0/7",
     logType: "Stress"
   },
   "hydration": {
@@ -83,11 +83,24 @@ const HABIT_DETAILS: Record<string, any> = {
     status: "Need Attention",
     statusBg: "bg-pink-100 text-pink-500",
     why: "adequate water intake is crucial for cellular function and metabolism.",
-    target: "64 ounces",
-    avg: "45 ounces",
-    consistency: "14%",
-    daysLogged: "1/7",
+    target: "0",
+    avg: "0 Ounces",
+    consistency: "0%",
+    daysLogged: "0/7",
     logType: "Hydration"
+  },
+  "weight": {
+    title: "Weight",
+    icon: <Scale size={32} className="text-[#3A86FF]" />,
+    iconBg: "bg-blue-50/50 border-blue-200",
+    status: "ON TRACK",
+    statusBg: "bg-teal-100 text-[#0FA4A9]",
+    why: "regular weight logging helps monitor body composition trends and calorie balance over time.",
+    target: "0",
+    avg: "0 lbs",
+    consistency: "0%",
+    daysLogged: "0/7",
+    logType: "Weight"
   }
 };
 
@@ -102,13 +115,21 @@ export default function HabitDetailPage() {
   const { data: habitData, isLoading: isHabitLoading } = useGetAiSavedHabitsQuery(userId, { skip: !userId });
 
   const { data: sleepReport, isLoading: isSleepLoading } = useGetSleepReportQuery(7, { skip: habitId !== 'sleep' });
-  const { data: activityReport, isLoading: isActivityLoading } = useGetActivityReportQuery(7, { skip: habitId !== 'activity' });
+  const { data: activityReport, isLoading: isActivityLoading } = useGetActivityReportQuery(7, { skip: habitId !== 'activity' && habitId !== 'weight' });
   const { data: stressReport, isLoading: isStressLoading } = useGetStressReportQuery(7, { skip: habitId !== 'stress' });
   const { data: hydrationReport, isLoading: isHydrationLoading } = useGetHydrationReportQuery(7, { skip: habitId !== 'hydration' });
   const { data: nutritionReport, isLoading: isNutritionLoading } = useGetNutritionReportQuery(7, { skip: habitId !== 'nutrition' });
   const { data: aiNutritionData } = useGetAiSuggestedTargetQuery(userId, { skip: habitId !== 'nutrition' || !userId });
 
-  const isAnyLoading = isCardLoading || isHabitLoading || isSleepLoading || isActivityLoading || isStressLoading || isHydrationLoading || isNutritionLoading;
+  // Fast non-blocking load check: do not block on external AI API
+  const isReportLoading =
+    (habitId === 'sleep' && isSleepLoading && !sleepReport) ||
+    ((habitId === 'activity' || habitId === 'weight') && isActivityLoading && !activityReport) ||
+    (habitId === 'stress' && isStressLoading && !stressReport) ||
+    (habitId === 'hydration' && isHydrationLoading && !hydrationReport) ||
+    (habitId === 'nutrition' && isNutritionLoading && !nutritionReport);
+
+  const isInitialLoading = (isCardLoading && !cardData) || isReportLoading;
 
   console.log("habitData", habitData);
   console.log("cardData", cardData);
@@ -116,7 +137,7 @@ export default function HabitDetailPage() {
   const [view, setView] = useState<"details" | "logging">("details");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
 
-  if (isAnyLoading) {
+  if (isInitialLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
         <Loader2 className="animate-spin text-[#3A86FF]" size={48} />
@@ -126,7 +147,12 @@ export default function HabitDetailPage() {
 
   const habitMetrics = cardData?.data?.consistency_metrics?.find(
     (m: any) => m.title.toLowerCase() === habitId.toLowerCase()
-  );
+  ) || (habitId === 'weight' && cardData?.data?.health_overview?.weight ? {
+    title: "Weight",
+    avg: `${cardData.data.health_overview.weight.current} ${cardData.data.health_overview.weight.unit || 'lbs'} latest`,
+    status: "ON TRACK",
+    ratio: "1/7 Days"
+  } : undefined);
 
   const insight = habitData?.habits?.[habitId.toLowerCase()];
 
@@ -146,6 +172,17 @@ export default function HabitDetailPage() {
       avg: aData.statistics?.average_steps,
       ratio: aData.statistics?.best_streak ? `${aData.statistics.best_streak}` : undefined,
       target: aData.statistics?.steps_target,
+      consistency: aData.statistics?.consistency
+    };
+  } else if (habitId === 'weight' && activityReport) {
+    const aData = activityReport.data || activityReport;
+    const currentWeight = aData.statistics?.current_weight || cardData?.data?.health_overview?.weight?.current;
+    const targetWeight = aData.statistics?.target_weight || cardData?.data?.health_overview?.weight?.target;
+    const unit = aData.statistics?.weight_unit || cardData?.data?.health_overview?.weight?.unit || "lbs";
+    reportStats = {
+      avg: currentWeight ? `${currentWeight} ${unit}` : undefined,
+      ratio: aData.statistics?.best_streak ? `${aData.statistics.best_streak}` : undefined,
+      target: targetWeight ? `${targetWeight} ${unit}` : undefined,
       consistency: aData.statistics?.consistency
     };
   } else if (habitId === 'stress' && stressReport) {
@@ -188,7 +225,7 @@ export default function HabitDetailPage() {
       avg: reportStats.avg || habitMetrics?.avg || (HABIT_DETAILS[habitId] || HABIT_DETAILS["sleep"]).avg,
       daysLogged: reportStats.ratio || habitMetrics?.ratio || (HABIT_DETAILS[habitId] || HABIT_DETAILS["sleep"]).daysLogged,
       consistency: reportStats.consistency || (habitMetrics ? (parseInt(habitMetrics.ratio.split('/')[0]) / 7 * 100).toFixed(0) + '%' : (HABIT_DETAILS[habitId] || HABIT_DETAILS["sleep"]).consistency),
-      target: reportStats.target || (HABIT_DETAILS[habitId] || HABIT_DETAILS["sleep"]).target
+      target: reportStats.target || "0"
     } : {}),
     ...(insight ? {
       why: insight.why_this_matters,

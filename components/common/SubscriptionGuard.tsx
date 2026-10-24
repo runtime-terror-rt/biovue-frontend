@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useSubscriptionStatus } from "@/lib/hooks/useSubscriptionStatus";
 import { Loader2 } from "lucide-react";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 
 interface SubscriptionGuardProps {
   children: React.ReactNode;
@@ -14,6 +16,7 @@ export default function SubscriptionGuard({ children }: SubscriptionGuardProps) 
   const router = useRouter();
   const { restricted, isLoading, projection_limit, hasExpiry, expiryOver, projectionZero } = useSubscriptionStatus();
   const pathname = usePathname();
+  const currentUser = useSelector(selectCurrentUser);
 
   useEffect(() => {
     // Only fully redirect if account is fully restricted (trial ended)
@@ -22,7 +25,8 @@ export default function SubscriptionGuard({ children }: SubscriptionGuardProps) 
     }
   }, [isLoading, restricted, router]);
 
-  if (isLoading) {
+  // Only show blocking loader if user is completely unknown / initial auth load
+  if (isLoading && !currentUser) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-[#0FA4A9]" />

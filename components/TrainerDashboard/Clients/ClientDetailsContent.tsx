@@ -276,7 +276,7 @@ export default function ClientDetailsContent({
             goals={clientDetails.coachSetGoals}
             clientDetails={clientDetails}
           />
-          <CoachActions />
+          <CoachActions clientDetails={clientDetails} />
           <ProgressTrends clientId={clientDetails.id as any} />
           <CoachNotes userId={clientDetails.id} />
           {/* <VisibilityControls /> */}

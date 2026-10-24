@@ -36,7 +36,15 @@ export const nutritionApi = baseApi.injectEndpoints({
       invalidatesTags: ["Nutrition", "Habit", "HealthHabitOverview", "Reports"],
     }),
     getNutritionShow: builder.query({
-      query: () => "/nutrition/show",
+      query: (params?: any) => {
+        if (!params) return "/nutrition/show";
+        if (typeof params === "string") return `/nutrition/show?date=${params}`;
+        const queryParams = new URLSearchParams();
+        if (params.date) queryParams.append("date", params.date);
+        if (params.user_id) queryParams.append("user_id", String(params.user_id));
+        const str = queryParams.toString();
+        return str ? `/nutrition/show?${str}` : "/nutrition/show";
+      },
       providesTags: ["Nutrition"],
     }),
     deleteFood: builder.mutation<

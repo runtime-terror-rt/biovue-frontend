@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Apple } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { triggerConfetti } from "@/lib/confetti";
 
 interface LogNutritionModalProps {
   isOpen: boolean;
@@ -44,6 +46,12 @@ export default function LogNutritionModal({
   const [carbQuality, setCarbQuality] = useState("mixed");
   const [fatSource, setFatSource] = useState("Fried/Processed");
   const [vegServings, setVegServings] = useState(2);
+
+  const handleSave = () => {
+    triggerConfetti();
+    toast.success("Nutrition data logged successfully!");
+    onClose();
+  };
 
   return (
     <AnimatePresence>
@@ -232,7 +240,7 @@ export default function LogNutritionModal({
                   {/* Save Button Placeholder for spacing or just the button */}
                   <div className="mt-auto pt-4 hidden md:block">
                     <button
-                      onClick={onClose}
+                      onClick={handleSave}
                       className="w-full bg-[#0FA4A9] text-white py-4 rounded-xl font-bold text-[17px] hover:bg-opacity-90 transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20"
                     >
                       Save Today&apos;s Nutrition
@@ -244,7 +252,7 @@ export default function LogNutritionModal({
               {/* Mobile Save Button */}
               <div className="md:hidden">
                 <button
-                  onClick={onClose}
+                  onClick={handleSave}
                   className="w-full bg-[#0FA4A9] text-white py-4 rounded-xl font-bold text-[17px] hover:bg-opacity-90 transition-all cursor-pointer shadow-lg shadow-[#0FA4A9]/20"
                 >
                   Save Today&apos;s Nutrition

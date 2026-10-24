@@ -16,6 +16,19 @@ export interface TargetGoal {
   water_target: number | string | null;
   supplement_recommendation: string[];
 
+  // Macro & supplement additions
+  calories?: number | string | null;
+  protein?: number | string | null;
+  carbs?: number | string | null;
+  fat?: number | string | null;
+  macros?: {
+    calories?: number;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+  } | null;
+  supplement_notes?: string | null;
+
   is_active: boolean | number;
 
   start_date: string;
@@ -43,6 +56,12 @@ export interface TargetGoalRequest {
 
   water_target?: string | number | null;
   supplement_recommendation?: string[];
+
+  calories?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fat?: number | null;
+  supplement_notes?: string | null;
 
   start_date: string;
   end_date: string;

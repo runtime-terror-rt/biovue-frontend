@@ -22,6 +22,14 @@ export const baseApi = createApi({
 
       // Add ngrok skip warning header for development
       headers.set("ngrok-skip-browser-warning", "any");
+      if (typeof window !== "undefined") {
+        try {
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          if (tz) headers.set("X-Timezone", tz);
+        } catch (e) {
+          // ignore
+        }
+      }
       // headers.set("Accept", "application/json");
       return headers;
     },

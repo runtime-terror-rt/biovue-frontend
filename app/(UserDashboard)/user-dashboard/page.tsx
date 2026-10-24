@@ -35,7 +35,6 @@ const UserDashboard = () => {
   const currentUser = useSelector(selectCurrentUser);
   const { data: profileResponse } = useGetProfileQuery(currentUser?.id, {
     skip: !currentUser?.id,
-    refetchOnMountOrArgChange: true,
   });
   const userName = profileResponse?.data?.name || currentUser?.name || "User";
   console.log(currentUser, "currentUser");
@@ -45,22 +44,13 @@ const UserDashboard = () => {
   const [dataSource, setDataSource] = useState<"device" | "manual">("device");
   const [days, setDays] = useState(7);
 
-  const { data: healthReport, isLoading: isHealthLoading } = useGetHealthReportQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data: healthReport, isLoading: isHealthLoading } = useGetHealthReportQuery(undefined);
   const { data: insightsData, isLoading: isInsightsLoading } = useGetInsightsQuery(undefined, {
     skip: !currentUser?.id,
-    refetchOnMountOrArgChange: true,
   });
-  const { data: chartResponse, isLoading: isChartLoading } = useGetUserOverviewChartQuery(days, {
-    refetchOnMountOrArgChange: true,
-  });
-  const { data: stressReport, isLoading: isStressLoading } = useGetStressReportQuery(days, {
-    refetchOnMountOrArgChange: true,
-  });
-  const { data: hydrationReport, isLoading: isHydrationLoading } = useGetHydrationReportQuery(days, {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data: chartResponse, isLoading: isChartLoading } = useGetUserOverviewChartQuery(days);
+  const { data: stressReport, isLoading: isStressLoading } = useGetStressReportQuery(days);
+  const { data: hydrationReport, isLoading: isHydrationLoading } = useGetHydrationReportQuery(days);
 
   const [habitData, setHabitData] = useState({
     weight: "",
@@ -77,7 +67,7 @@ const UserDashboard = () => {
     water: "",
   });
 
-  if (isHealthLoading) {
+  if (isHealthLoading && !healthReport) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-10 h-10 animate-spin text-[#0FA4A9]" />

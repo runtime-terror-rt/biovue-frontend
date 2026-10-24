@@ -1,6 +1,4 @@
-"use client";
-
-import { AlertCircle, X } from "lucide-react";
+import { AlertCircle, X, Dumbbell, FileText } from "lucide-react";
 import { ProgramFormData } from "../CreateProgramsModal";
 
 interface Step2Props {
@@ -8,6 +6,19 @@ interface Step2Props {
   setFormData: (data: ProgramFormData) => void;
   onClose: () => void;
 }
+
+const workoutTypeOptions = [
+  "Cardio",
+  "Weight Lifting",
+  "Sprints",
+  "Yoga",
+  "Walking",
+  "Cycling",
+  "HIIT",
+  "Swimming",
+  "Pilates",
+  "Strength Training",
+];
 
 const focusAreaOptions = [
   { id: "weight-loss", label: "Weight Loss" },
@@ -22,6 +33,17 @@ export default function Step2GoalsAndFocus({
   setFormData,
   onClose,
 }: Step2Props) {
+  const toggleWorkoutType = (type: string) => {
+    const current = formData.workoutTypes || [];
+    const updated = current.includes(type)
+      ? current.filter((t) => t !== type)
+      : [...current, type];
+
+    setFormData({
+      ...formData,
+      workoutTypes: updated,
+    });
+  };
   const handleToggleFocusArea = (areaId: string) => {
     const updatedFocusAreas = formData.focusAreas.includes(areaId)
       ? formData.focusAreas.filter((id) => id !== areaId)
@@ -146,14 +168,79 @@ export default function Step2GoalsAndFocus({
         </div>
       </div>
 
+      {/* C. Workout Types (Select Multiple) */}
+      <div>
+        <div className="flex justify-between mb-3 items-center">
+          <label className="text-lg font-medium text-gray-700 flex items-center gap-2">
+            <Dumbbell size={20} className="text-teal-600" />
+            C. Workout Types
+          </label>
+          <span className="text-sm text-[#5F6F73]">Select all that apply</span>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          {workoutTypeOptions.map((wType) => {
+            const isSelected = (formData.workoutTypes || []).includes(wType);
+            return (
+              <button
+                key={wType}
+                type="button"
+                onClick={() => toggleWorkoutType(wType)}
+                className={`px-4 py-2 rounded-full text-sm border cursor-pointer font-semibold transition-all ${
+                  isSelected
+                    ? "bg-teal-600 text-white border-teal-600 shadow-xs"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                {isSelected ? `✓ ${wType}` : `+ ${wType}`}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* D. Workout Program Routine & Structure */}
+      <div>
+        <label className="text-lg font-medium text-gray-700 flex items-center gap-2 mb-2">
+          <FileText size={20} className="text-teal-600" />
+          D. Workout Program Routine / Routine Structure
+        </label>
+        <p className="text-sm text-[#5F6F73] mb-3">
+          Write workout programs, weekly routines, exercise plans, sets, reps, or progression notes for your clients.
+        </p>
+        <textarea
+          value={formData.workoutRoutine || ""}
+          onChange={(e) =>
+            setFormData({ ...formData, workoutRoutine: e.target.value })
+          }
+          placeholder="e.g. Day 1: Upper Body Strength (Bench Press 4x8, Pull-ups 3x10, DB Shoulder Press 3x12)&#10;Day 2: Cardio & Core (30 mins HIIT + Plank intervals)&#10;Day 3: Lower Body (Squats 4x8, Romanian Deadlifts 3x10)..."
+          rows={5}
+          className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-sm transition-all bg-white"
+        />
+      </div>
+
+      {/* E. Program Notes & Instructions */}
+      <div>
+        <label className="block text-lg font-medium text-gray-700 mb-2">
+          E. Trainer Notes & Instructions (Optional)
+        </label>
+        <textarea
+          value={formData.notes || ""}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          placeholder="Write any special instructions, warmup recommendations, or intensity guidance..."
+          rows={3}
+          className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none text-sm transition-all bg-white"
+        />
+      </div>
+
       {/* Info Box */}
       <div className="bg-[#0FA4A91A] rounded-lg px-7 py-4">
         <div className="flex gap-3">
           <AlertCircle className="w-5 h-5 text-[#0FA4A9]" />
 
           <p className="text-sm text-[#0FA4A9]">
-            These goals guide insights and progress tracking. Clients can view
-            goals but cannot edit them.
+            These workout types and routines guide insights and progress tracking. Clients can view
+            goals and programs but cannot edit them.
           </p>
         </div>
       </div>

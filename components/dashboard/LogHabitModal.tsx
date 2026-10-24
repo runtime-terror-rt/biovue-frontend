@@ -11,6 +11,9 @@ import {
   Frown,
   Scale,
   Loader2,
+  Dumbbell,
+  Timer,
+  Flame,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
@@ -18,6 +21,7 @@ import { usePostSleepLogMutation } from "@/redux/features/api/userDashboard/slee
 import { usePostActivityLogMutation } from "@/redux/features/api/userDashboard/activitylog";
 import { usePostHydrationLogMutation } from "@/redux/features/api/userDashboard/hydration";
 import { toast } from "sonner";
+import { triggerConfetti } from "@/lib/confetti";
 
 interface LogHabitModalProps {
   isOpen: boolean;
@@ -48,10 +52,15 @@ export default function LogHabitModal({
     daily_steps: "",
     sleep_hours: "",
     water_glasses: "",
+    workout_type: "",
+    workout_time: "",
+    workout_calories: "",
   });
   const [weightUnit, setWeightUnit] = useState<"lbs" | "kg">("lbs");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -59,14 +68,19 @@ export default function LogHabitModal({
   const handleSubmit = async () => {
     const type = habitType.toLowerCase();
 
-    if (type !== "sleep" && type !== "activity" && type !== "hydration") {
+    if (type !== "sleep" && type !== "activity" && type !== "hydration" && type !== "weight") {
       toast.info(`${habitType} logging not fully implemented yet.`);
       onClose();
       return;
     }
 
     // Validate mandatory fields based on log type
-    if (type === "sleep") {
+    if (type === "weight") {
+      if (!formData.weight || Number(formData.weight) <= 0) {
+        toast.error("Please enter a valid weight.");
+        return;
+      }
+    } else if (type === "sleep") {
       if (!formData.sleep_hours) {
         toast.error("Please enter sleep hours.");
         return;
@@ -74,10 +88,6 @@ export default function LogHabitModal({
     } else if (type === "activity") {
       if (!formData.daily_steps) {
         toast.error("Please enter daily steps.");
-        return;
-      }
-      if (!formData.weight) {
-        toast.error("Please enter weight (required for activity logging).");
         return;
       }
     } else if (type === "hydration") {
@@ -98,17 +108,26 @@ export default function LogHabitModal({
           d.getSeconds(),
         )}`;
 
-      const payload = {
+      let payload: any = {
         user_id: userId || 3,
-        weight: formData.weight ? Number(formData.weight) : 0,
-        // send unit as metric/imperial
-        unit: weightUnit === "kg" ? "metric" : "imperial",
-        daily_steps: formData.daily_steps ? Number(formData.daily_steps) : 0,
-        sleep_hours: formData.sleep_hours ? Number(formData.sleep_hours) : 0,
-        water_glasses: formData.water_glasses ? Number(formData.water_glasses) : 0,
-        // default to date-only for non-sleep logs
         log_date: formatLocalDate(),
       };
+
+      if (type === "weight") {
+        payload.weight = Number(formData.weight);
+        payload.unit = weightUnit === "kg" ? "metric" : "imperial";
+      } else if (type === "activity") {
+        payload.daily_steps = Number(formData.daily_steps) || 0;
+        if (formData.workout_type) payload.workout_type = formData.workout_type;
+        if (formData.workout_time) payload.workout_time = Number(formData.workout_time);
+        if (formData.workout_calories) payload.workout_calories = Number(formData.workout_calories);
+      } else if (type === "sleep") {
+        payload.sleep_hours = Number(formData.sleep_hours) || 0;
+        payload.log_date = formatLocalDateTime();
+      } else if (type === "hydration") {
+        payload.water_glasses = Number(formData.water_glasses) || 0;
+        payload.water_oz = Number(formData.water_glasses) || 0;
+      }
 
       console.log(`Sending ${habitType} Log Payload:`, payload);
 
@@ -117,7 +136,7 @@ export default function LogHabitModal({
         // sleep expects a timestamp (local)
         const sleepPayload = { ...payload, log_date: formatLocalDateTime() };
         response = await postSleepLog(sleepPayload).unwrap();
-      } else if (type === "activity") {
+      } else if (type === "activity" || type === "weight") {
         response = await postActivityLog(payload).unwrap();
       } else {
         response = await postHydrationLog(payload).unwrap();
@@ -131,6 +150,7 @@ export default function LogHabitModal({
           response.sleep_hours !== undefined ||
           Object.keys(response).length > 0)
       ) {
+        triggerConfetti();
         toast.success(`${habitType} data logged successfully!`);
         onClose();
       } else {
@@ -173,8 +193,10 @@ export default function LogHabitModal({
         return <Droplets size={20} className="text-[#3A86FF]" />;
       case "stress":
         return <Frown size={20} className="text-[#A855F7]" />;
+      case "weight":
+        return <Scale size={20} className="text-[#3A86FF]" />;
       default:
-        return <Bed size={20} className="text-[#3A86FF]" />;
+        return <Scale size={20} className="text-[#3A86FF]" />;
     }
   };
 
@@ -204,30 +226,32 @@ export default function LogHabitModal({
                   <h2 className="text-lg sm:text-[22px] font-bold text-[#3A86FF]">
                     Logging: {habitType}
                   </h2>
-                  <div className="flex bg-gray-100/80 rounded-lg p-1 border border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => setWeightUnit("lbs")}
-                      className={`px-3 sm:px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
-                        weightUnit === "lbs"
-                          ? "bg-white text-[#3A86FF] shadow-sm"
-                          : "text-gray-400 hover:text-gray-600"
-                      }`}
-                    >
-                      Imperial (lbs)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setWeightUnit("kg")}
-                      className={`px-3 sm:px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
-                        weightUnit === "kg"
-                          ? "bg-white text-[#3A86FF] shadow-sm"
-                          : "text-gray-400 hover:text-gray-600"
-                      }`}
-                    >
-                      Metric (kg)
-                    </button>
-                  </div>
+                  {habitType.toLowerCase() === "weight" && (
+                    <div className="flex bg-gray-100/80 rounded-lg p-1 border border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setWeightUnit("lbs")}
+                        className={`px-3 sm:px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                          weightUnit === "lbs"
+                            ? "bg-white text-[#3A86FF] shadow-sm"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        Imperial (lbs)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWeightUnit("kg")}
+                        className={`px-3 sm:px-4 py-1 text-[10px] font-black rounded-md transition-all cursor-pointer ${
+                          weightUnit === "kg"
+                            ? "bg-white text-[#3A86FF] shadow-sm"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        Metric (kg)
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={onClose}
@@ -253,28 +277,54 @@ export default function LogHabitModal({
               </div> */}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Weight Input (Optional for Sleep/Hydration, Mandatory for Activity) */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between ml-1">
-                    <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider flex items-center gap-2">
-                      <Scale size={14} className="text-[#3A86FF]" />
-                      Weight
-                      {habitType.toLowerCase() === "activity" && (
-                        <span className="text-red-500">*</span>
-                      )}
-                    </label>
+                {/* Weight Input (ONLY for Weight habit) */}
+                {habitType.toLowerCase() === "weight" && (
+                  <div className="flex flex-col gap-3 md:col-span-2">
+                    <div className="flex items-center justify-between ml-1">
+                      <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider flex items-center gap-2">
+                        <Scale size={15} className="text-[#3A86FF]" />
+                        Current Body Weight <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-xs text-gray-400 font-semibold">
+                        Unit: {weightUnit === "kg" ? "Kilograms (kg)" : "Pounds (lbs)"}
+                      </span>
+                    </div>
+                    <div className="relative flex items-center">
+                      <input
+                        type="number"
+                        step="0.1"
+                        name="weight"
+                        value={formData.weight}
+                        onChange={handleChange}
+                        placeholder={`Enter weight (e.g. ${weightUnit === "kg" ? "70" : "155"})...`}
+                        className="w-full bg-gray-50/70 border border-gray-200 rounded-2xl px-5 py-3.5 text-[#1F2D2E] text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300 pr-16"
+                      />
+                      <span className="absolute right-5 text-sm font-black text-gray-400 uppercase pointer-events-none">
+                        {weightUnit}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                      <span className="text-xs text-gray-400 font-semibold">Quick Adjust:</span>
+                      {[-1, -0.5, +0.5, +1].map((delta) => (
+                        <button
+                          key={delta}
+                          type="button"
+                          onClick={() => {
+                            const cur = parseFloat(formData.weight) || 0;
+                            const next = Math.max(0, cur + delta);
+                            setFormData((prev) => ({
+                              ...prev,
+                              weight: (Math.round(next * 10) / 10).toString(),
+                            }));
+                          }}
+                          className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-200 bg-white hover:bg-blue-50 text-gray-600 hover:text-[#3A86FF] transition-all cursor-pointer shadow-xs"
+                        >
+                          {delta > 0 ? `+${delta}` : delta}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="weight"
-                      value={formData.weight}
-                      onChange={handleChange}
-                      placeholder={`Enter value in ${weightUnit === "kg" ? "metric (kg)" : "imperial (lbs)"}...`}
-                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
-                    />
-                  </div>
-                </div>
+                )}
 
                 {/* Steps (Mandatory - Activity only) */}
                 {habitType.toLowerCase() === "activity" && (
@@ -289,55 +339,175 @@ export default function LogHabitModal({
                       name="daily_steps"
                       value={formData.daily_steps}
                       onChange={handleChange}
-                      placeholder="Enter value..."
-                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
+                      placeholder="Enter steps (e.g. 8000)..."
+                      className="w-full bg-gray-50/70 border border-gray-200 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
                     />
                   </div>
                 )}
 
-                {/* Sleep Hours (Mandatory - Sleep only) */}
-                {habitType.toLowerCase() === "sleep" && (
+                {/* Workout Type Dropdown (Activity only) */}
+                {habitType.toLowerCase() === "activity" && (
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
-                      <Bed size={14} className="text-[#3A86FF]" />
-                      Sleep Hours
-                      <span className="text-red-500">*</span>
+                      <Dumbbell size={14} className="text-[#3A86FF]" />
+                      Workout Type (Optional)
+                    </label>
+                    <select
+                      name="workout_type"
+                      value={formData.workout_type}
+                      onChange={handleChange}
+                      className="w-full bg-gray-50/70 border border-gray-200 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all cursor-pointer"
+                    >
+                      <option value="">Select Workout Type...</option>
+                      <option value="Cardio">Cardio</option>
+                      <option value="Weight Lifting">Weight Lifting</option>
+                      <option value="Sprints">Sprints</option>
+                      <option value="Yoga">Yoga</option>
+                      <option value="Walking">Walking</option>
+                      <option value="Cycling">Cycling</option>
+                      <option value="HIIT">HIIT</option>
+                      <option value="Swimming">Swimming</option>
+                      <option value="Pilates">Pilates</option>
+                      <option value="Strength Training">Strength Training</option>
+                      <option value="Other">Other Workout</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Workout Time / Duration (Activity only) */}
+                {habitType.toLowerCase() === "activity" && (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
+                      <Timer size={14} className="text-[#3A86FF]" />
+                      Workout Time (Minutes)
                     </label>
                     <input
                       type="number"
-                      step="0.1"
-                      name="sleep_hours"
-                      value={formData.sleep_hours}
+                      name="workout_time"
+                      value={formData.workout_time}
                       onChange={handleChange}
-                      placeholder="Enter value..."
-                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
+                      placeholder="e.g. 45 mins"
+                      className="w-full bg-gray-50/70 border border-gray-200 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
                     />
                   </div>
                 )}
 
-                {/* Water Ounces (Mandatory - Hydration only) */}
-                {habitType.toLowerCase() === "hydration" && (
+                {/* Workout Calories Burned (Activity only) - Balanced in 2nd Column */}
+                {habitType.toLowerCase() === "activity" && (
                   <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
-                        <Droplets size={14} className="text-[#3A86FF]" />
-                        Water (Ounces)
-                        <span className="text-red-500">*</span>
+                    <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
+                      <Flame size={14} className="text-[#3A86FF]" />
+                      Workout Calories (Burned)
+                    </label>
+                    <input
+                      type="number"
+                      name="workout_calories"
+                      value={formData.workout_calories}
+                      onChange={handleChange}
+                      placeholder="e.g. 350 kcal"
+                      className="w-full bg-gray-50/70 border border-gray-200 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
+                    />
+                  </div>
+                )}
+
+                {/* Sleep Hours (Mandatory - Sleep only) - Full Width */}
+                {habitType.toLowerCase() === "sleep" && (
+                  <div className="flex flex-col gap-3 md:col-span-2">
+                    <div className="flex items-center justify-between ml-1">
+                      <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider flex items-center gap-2">
+                        <Bed size={15} className="text-[#3A86FF]" />
+                        Sleep Duration <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-xs text-gray-400 font-semibold">
+                        Recommended: 7 - 9 hours
+                      </span>
+                    </div>
+                    <div className="relative flex items-center">
+                      <input
+                        type="number"
+                        step="0.1"
+                        name="sleep_hours"
+                        value={formData.sleep_hours}
+                        onChange={handleChange}
+                        placeholder="Enter hours (e.g. 7.5)..."
+                        className="w-full bg-gray-50/70 border border-gray-200 rounded-2xl px-5 py-3.5 text-[#1F2D2E] text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300 pr-16"
+                      />
+                      <span className="absolute right-5 text-sm font-black text-gray-400 uppercase pointer-events-none">
+                        HRS
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                      <span className="text-xs text-gray-400 font-semibold">Quick Presets:</span>
+                      {[6, 6.5, 7, 7.5, 8, 8.5].map((hrs) => (
+                        <button
+                          key={hrs}
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              sleep_hours: hrs.toString(),
+                            }))
+                          }
+                          className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-200 bg-white hover:bg-blue-50 text-gray-600 hover:text-[#3A86FF] transition-all cursor-pointer shadow-xs"
+                        >
+                          {hrs} hrs
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Water Ounces (Mandatory - Hydration only) - Full Width */}
+                {habitType.toLowerCase() === "hydration" && (
+                  <div className="flex flex-col gap-3 md:col-span-2">
+                    <div className="flex items-center justify-between ml-1">
+                      <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider flex items-center gap-2">
+                        <Droplets size={15} className="text-[#3A86FF]" />
+                        Water Intake <span className="text-red-500">*</span>
                       </label>
                       {formData.water_glasses && Number(formData.water_glasses) > 0 && (
-                        <span className="text-xs font-semibold text-[#0FA4A9] bg-[#0FA4A9]/10 px-2 py-0.5 rounded-md">
+                        <span className="text-xs font-semibold text-[#0FA4A9] bg-[#0FA4A9]/10 px-2.5 py-1 rounded-md">
                           ≈ {(Number(formData.water_glasses) / 8).toFixed(1).replace(/\.0$/, "")} glasses (1 glass = 8 oz)
                         </span>
                       )}
                     </div>
-                    <input
-                      type="number"
-                      name="water_glasses"
-                      value={formData.water_glasses}
-                      onChange={handleChange}
-                      placeholder="e.g. 64"
-                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
-                    />
+                    <div className="relative flex items-center">
+                      <input
+                        type="number"
+                        name="water_glasses"
+                        value={formData.water_glasses}
+                        onChange={handleChange}
+                        placeholder="Enter total ounces (e.g. 64)..."
+                        className="w-full bg-gray-50/70 border border-gray-200 rounded-2xl px-5 py-3.5 text-[#1F2D2E] text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300 pr-16"
+                      />
+                      <span className="absolute right-5 text-sm font-black text-gray-400 uppercase pointer-events-none">
+                        OZ
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                      <span className="text-xs text-gray-400 font-semibold">Quick Add:</span>
+                      {[
+                        { label: "+8 oz (1 Glass)", val: 8 },
+                        { label: "+16 oz (Bottle)", val: 16 },
+                        { label: "+24 oz", val: 24 },
+                        { label: "+32 oz", val: 32 },
+                      ].map((chip) => (
+                        <button
+                          key={chip.val}
+                          type="button"
+                          onClick={() => {
+                            const cur = parseInt(formData.water_glasses, 10) || 0;
+                            setFormData((prev) => ({
+                              ...prev,
+                              water_glasses: (cur + chip.val).toString(),
+                            }));
+                          }}
+                          className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-200 bg-white hover:bg-blue-50 text-gray-600 hover:text-[#3A86FF] transition-all cursor-pointer shadow-xs"
+                        >
+                          {chip.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

@@ -17,6 +17,7 @@ import { useSelector } from "react-redux";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { triggerConfetti } from "@/lib/confetti";
 
 interface FoodItem {
   id: string;
@@ -70,8 +71,14 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
   const currentUser = useSelector(selectCurrentUser);
   const userId = currentUser?.id || currentUser?.user_id;
 
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const localToday = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  })();
+
   const { data: existingNutrition, isLoading: isLoadingExisting } =
-    useGetNutritionShowQuery(undefined);
+    useGetNutritionShowQuery({ date: localToday });
 
   const [calculateNutrition, { isLoading: loadingCalories }] =
     useCalculateNutritionMutation();
@@ -626,7 +633,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
 
     setIsSubmitting(true);
     try {
-      const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+      const today = localToday; // Use local date so logging doesn't bleed into yesterday or tomorrow
 
       // Collect all foods for calculation, excluding previously saved ones
       const newFoodsToSave = meals.flatMap((m) =>
@@ -666,12 +673,14 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
           console.error("Nutrition log submission error for", food, err);
           toast.error(err.message || `An error occurred while saving ${food.food}.`, { id: "log-status" });
           if (successCount > 0) {
+            triggerConfetti();
             onSave();
           }
           return;
         }
       }
 
+      triggerConfetti();
       toast.success("Nutrition data logged successfully!", {
         id: "log-status",
       });

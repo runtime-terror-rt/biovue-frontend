@@ -1,7 +1,5 @@
-"use client";
-
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, CheckCircle2, Loader2, Save } from "lucide-react";
+import { Calendar, CheckCircle2, Loader2, Save, Plus, Trash2, Utensils, Pill } from "lucide-react";
 import { ClientDetails } from "../../overview/data";
 import { useEffect, useState } from "react";
 import {
@@ -46,6 +44,16 @@ export default function CoachSetGoals({
   );
   const [selectedSupplements, setSelectedSupplements] = useState<string[]>([]);
 
+  // Individual client macros
+  const [calories, setCalories] = useState<string>("");
+  const [protein, setProtein] = useState<string>("");
+  const [carbs, setCarbs] = useState<string>("");
+  const [fat, setFat] = useState<string>("");
+
+  // Custom supplement suggestions & notes
+  const [customSupplementInput, setCustomSupplementInput] = useState<string>("");
+  const [supplementNotes, setSupplementNotes] = useState<string>("");
+
   const [createTargetGoal, { isLoading }] =
     useCreateOrUpdateTargetGoalMutation();
   const { data: goalData, isLoading: goalLoading } = useGetTargetGoalQuery(
@@ -66,7 +74,7 @@ export default function CoachSetGoals({
 
   useEffect(() => {
     if (goalData && goalData.length > 0) {
-      const latestGoal = goalData.find((g) => g.is_active) || goalData[0];
+      const latestGoal = goalData.find((g: any) => g.is_active) || goalData[0];
 
       setGoalId(latestGoal.id); 
 
@@ -76,6 +84,23 @@ export default function CoachSetGoals({
       setSleepTarget(latestGoal.sleep_target?.toString() ?? "");
       setSelectedSupplements(latestGoal.supplement_recommendation ?? []);
       setWaterTarget(latestGoal.water_target?.toString() ?? "");
+
+      // Macros
+      if (latestGoal.calories) setCalories(latestGoal.calories.toString());
+      if (latestGoal.protein) setProtein(latestGoal.protein.toString());
+      if (latestGoal.carbs) setCarbs(latestGoal.carbs.toString());
+      if (latestGoal.fat) setFat(latestGoal.fat.toString());
+
+      if (latestGoal.macros) {
+        if (latestGoal.macros.calories) setCalories(latestGoal.macros.calories.toString());
+        if (latestGoal.macros.protein) setProtein(latestGoal.macros.protein.toString());
+        if (latestGoal.macros.carbs) setCarbs(latestGoal.macros.carbs.toString());
+        if (latestGoal.macros.fat) setFat(latestGoal.macros.fat.toString());
+      }
+
+      if (latestGoal.supplement_notes) {
+        setSupplementNotes(latestGoal.supplement_notes);
+      }
     }
   }, [goalData]);
 
@@ -85,6 +110,18 @@ export default function CoachSetGoals({
     } else {
       setSelectedSupplements((prev) => prev.filter((s) => s !== label));
     }
+  };
+
+  const handleAddCustomSupplement = () => {
+    if (!customSupplementInput.trim()) return;
+    const trimmed = customSupplementInput.trim();
+    if (!selectedSupplements.includes(trimmed)) {
+      setSelectedSupplements((prev) => [...prev, trimmed]);
+      toast.success(`Added "${trimmed}" to client supplement suggestions`);
+    } else {
+      toast.info(`"${trimmed}" is already in the list`);
+    }
+    setCustomSupplementInput("");
   };
 
   // const handleSave = async () => {
@@ -125,8 +162,8 @@ export default function CoachSetGoals({
         .toISOString()
         .split("T")[0];
 
-      const payload = {
-        ...(goalId && { id: goalId }), // ✅ UPDATE support
+      const payload: any = {
+        ...(goalId && { id: goalId }),
 
         user_id: clientDetails.id,
         target_weight: Number(targetWeight),
@@ -134,8 +171,16 @@ export default function CoachSetGoals({
         daily_step_goal: Number(dailyStepGoal),
         sleep_target: Number(sleepTarget),
 
-        water_target: waterTarget || null, // ✅ added
+        water_target: waterTarget || null,
         supplement_recommendation: selectedSupplements,
+
+        // Personalized client macros
+        calories: calories ? Number(calories) : null,
+        protein: protein ? Number(protein) : null,
+        carbs: carbs ? Number(carbs) : null,
+        fat: fat ? Number(fat) : null,
+
+        supplement_notes: supplementNotes || null,
 
         start_date: startDate,
         end_date: endDate,
@@ -143,7 +188,7 @@ export default function CoachSetGoals({
 
       const res = await createTargetGoal(payload).unwrap();
 
-      toast.success(res.message || "Goal saved successfully");
+      toast.success(res.message || "Client goals & macros saved successfully");
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to save goal");
     }
@@ -238,16 +283,87 @@ export default function CoachSetGoals({
             </div>
           </div>
 
+          {/* Client Nutrition & Macro Targets (Per Client) */}
+          <div className="mt-8 pt-8 border-t border-[#E5E7EB]">
+            <div className="flex items-center gap-2 mb-2">
+              <Utensils size={18} className="text-[#0D9488]" />
+              <h3 className="text-lg font-medium text-[#111827]">
+                Client Nutrition & Macro Targets
+              </h3>
+            </div>
+            <p className="text-sm text-[#666666] mb-5">
+              Set custom macronutrient and calorie targets specifically for this client (overrides generic program defaults)
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="text-sm font-semibold text-[#374151] block mb-2">
+                  Daily Calories (kcal)
+                </label>
+                <input
+                  type="number"
+                  value={calories}
+                  onChange={(e) => setCalories(e.target.value)}
+                  placeholder="e.g. 2200"
+                  className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg focus:ring-2 focus:ring-[#0D9488] outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-[#374151] block mb-2">
+                  Protein (grams)
+                </label>
+                <input
+                  type="number"
+                  value={protein}
+                  onChange={(e) => setProtein(e.target.value)}
+                  placeholder="e.g. 165"
+                  className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg focus:ring-2 focus:ring-[#0D9488] outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-[#374151] block mb-2">
+                  Carbohydrates (grams)
+                </label>
+                <input
+                  type="number"
+                  value={carbs}
+                  onChange={(e) => setCarbs(e.target.value)}
+                  placeholder="e.g. 220"
+                  className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg focus:ring-2 focus:ring-[#0D9488] outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-[#374151] block mb-2">
+                  Fats (grams)
+                </label>
+                <input
+                  type="number"
+                  value={fat}
+                  onChange={(e) => setFat(e.target.value)}
+                  placeholder="e.g. 70"
+                  className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg focus:ring-2 focus:ring-[#0D9488] outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Supplement Recommendations */}
-          <div className="mt-10 pt-10 border-t border-[#E5E7EB]">
-            <h4 className="font-medium text-lg text-gray-900 mb-6">
-              Supplement Recommendations (Optional)
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="mt-8 pt-8 border-t border-[#E5E7EB]">
+            <div className="flex items-center gap-2 mb-2">
+              <Pill size={18} className="text-[#0D9488]" />
+              <h4 className="font-medium text-lg text-gray-900">
+                Supplement Recommendations & Suggestions
+              </h4>
+            </div>
+            <p className="text-sm text-[#666666] mb-5">
+              Select standard supplements or add personalized supplement suggestions for this client
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
               {supplementOptions.map((supplement) => (
                 <label
                   key={supplement.id}
-                  className="flex items-center gap-3 p-4 border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 transition-all group"
+                  className="flex items-center gap-3 p-3.5 border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 transition-all group"
                 >
                   <input
                     type="checkbox"
@@ -262,6 +378,76 @@ export default function CoachSetGoals({
                   </span>
                 </label>
               ))}
+
+              {/* Display any custom added supplements not in the standard list */}
+              {selectedSupplements
+                .filter((s) => !supplementOptions.some((opt) => opt.label === s))
+                .map((customSup) => (
+                  <div
+                    key={customSup}
+                    className="flex items-center justify-between p-3.5 border border-teal-200 bg-teal-50/50 rounded-xl"
+                  >
+                    <span className="text-sm font-semibold text-[#0D9488]">
+                      ✓ {customSup}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedSupplements((prev) =>
+                          prev.filter((s) => s !== customSup),
+                        )
+                      }
+                      className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                      title="Remove suggestion"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                ))}
+            </div>
+
+            {/* Text box to add additional supplement suggestions */}
+            <div className="bg-gray-50/70 p-4 rounded-xl border border-gray-200/80 mb-5 space-y-3">
+              <label className="text-sm font-bold text-gray-800 block">
+                Add Additional Supplement Suggestion:
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customSupplementInput}
+                  onChange={(e) => setCustomSupplementInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddCustomSupplement();
+                    }
+                  }}
+                  placeholder="e.g. Ashwagandha 500mg, Zinc Picolinate, Glutamine..."
+                  className="flex-1 px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#0D9488] outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomSupplement}
+                  className="px-4 py-2 bg-[#0D9488] text-white rounded-lg text-sm font-semibold hover:bg-[#0A7A6F] flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                >
+                  <Plus size={16} />
+                  Add Suggestion
+                </button>
+              </div>
+            </div>
+
+            {/* Custom Notes / Instructions for Supplements */}
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-800 block">
+                Specific Supplement Instructions & Guidance:
+              </label>
+              <textarea
+                value={supplementNotes}
+                onChange={(e) => setSupplementNotes(e.target.value)}
+                placeholder="Write specific timing, dosage instructions, or recommendations for this client (e.g. Take 5g Creatine post-workout with simple carbs; take Magnesium 30 mins before sleep)..."
+                rows={3}
+                className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#0D9488] outline-none resize-none"
+              />
             </div>
           </div>
 

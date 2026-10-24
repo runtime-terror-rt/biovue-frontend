@@ -23,6 +23,7 @@ import { usePostSleepLogMutation } from "@/redux/features/api/userDashboard/slee
 import { usePostActivityLogMutation } from "@/redux/features/api/userDashboard/activitylog";
 import { usePostHydrationLogMutation } from "@/redux/features/api/userDashboard/hydration";
 import { toast } from "sonner";
+import { triggerConfetti } from "@/lib/confetti";
 
 interface LogTodayModalProps {
   isOpen: boolean;
@@ -94,6 +95,7 @@ const LogTodayModal = ({
       const response = await postSleepLog(payload).unwrap();
 
       if (response.success !== false && (response.success || response.status === "success" || response.id || response.sleep_hours !== undefined || Object.keys(response).length > 0)) {
+        triggerConfetti();
         toast.success("Daily habits logged successfully!");
         onClose();
       } else {

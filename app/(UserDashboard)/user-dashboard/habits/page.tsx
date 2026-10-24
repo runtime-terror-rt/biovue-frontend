@@ -11,6 +11,7 @@ import {
   Droplets,
   Calendar,
   ArrowRight,
+  Scale,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetCardDataQuery } from "@/redux/features/api/userDashboard/habit";
@@ -29,16 +30,22 @@ const DEFAULT_HABITS = [
     ratio: "7/7 Days",
   },
   {
-    title: "Nutrition",
-    status: "Need Attention",
-    avg: "2100 kcal Average",
-    ratio: "5/7 Days",
-  },
-  {
     title: "Activity",
     status: "Good",
     avg: "8,500 Steps Average",
     ratio: "6/7 Days",
+  },
+  {
+    title: "Hydration",
+    status: "Good",
+    avg: "64 Ounces Average",
+    ratio: "7/7 Days",
+  },
+  {
+    title: "Nutrition",
+    status: "Need Attention",
+    avg: "2100 kcal Average",
+    ratio: "5/7 Days",
   },
   {
     title: "Stress",
@@ -47,10 +54,10 @@ const DEFAULT_HABITS = [
     ratio: "7/7 Days",
   },
   {
-    title: "Hydration",
+    title: "Weight",
     status: "Good",
-    avg: "64 Ounces Average",
-    ratio: "7/7 Days",
+    avg: "175 lbs Latest",
+    ratio: "6/7 Days",
   },
 ];
 
@@ -80,7 +87,9 @@ export default function HabitsPage() {
     }
   };
 
-  if (isLoadingCards || isLoadingHabits) {
+  // Only block full page render if local cardData is not available yet
+  // Do NOT block on external AI habits API so page renders in milliseconds
+  if (isLoadingCards && !cardData) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
         <Loader2 className="w-10 h-10 animate-spin text-[#0FA4A9]" />
@@ -90,8 +99,24 @@ export default function HabitsPage() {
 
   // Merge habits from habitData into the card format
   const getConsistencyMetrics = () => {
-    const baseMetrics = cardData?.data?.consistency_metrics || DEFAULT_HABITS;
+    let baseMetrics = cardData?.data?.consistency_metrics || DEFAULT_HABITS;
     
+    // Ensure Weight card is always present
+    const hasWeight = baseMetrics.some((m: any) => m.title.toLowerCase() === "weight");
+    if (!hasWeight) {
+      const weightOverview = cardData?.data?.health_overview?.weight;
+      const weightVal = weightOverview?.current ? `${weightOverview.current} ${weightOverview.unit || 'lbs'} latest` : "Track weight";
+      baseMetrics = [
+        ...baseMetrics,
+        {
+          title: "Weight",
+          status: "Good",
+          avg: weightVal,
+          ratio: "1/7 Days",
+        }
+      ];
+    }
+
     if (!habitData?.habits) return baseMetrics;
 
     return baseMetrics.map((metric: any) => {
@@ -134,6 +159,8 @@ export default function HabitsPage() {
         return <Frown size={24} className="text-[#A855F7]" />;
       case "hydration":
         return <Droplets size={24} className="text-[#3A86FF]" />;
+      case "weight":
+        return <Scale size={24} className="text-[#3A86FF]" />;
       default:
         return <ActivityIcon size={24} className="text-[#3A86FF]" />;
     }
@@ -145,6 +172,7 @@ export default function HabitsPage() {
     activity: "bg-blue-100",
     stress: "bg-purple-100",
     hydration: "bg-blue-100",
+    weight: "bg-blue-100",
   };
   return (
     <SubscriptionGuard>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -11,6 +11,11 @@ import {
   Sparkles,
   User,
   Droplets,
+  Flame,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Scale,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -35,8 +40,9 @@ import LogStressView from "@/components/dashboard/LogStressView";
 import { useGetSleepReportQuery } from "@/redux/features/api/userDashboard/sleeplog";
 import { useGetNutritionReportQuery } from "@/redux/features/api/userDashboard/nutrition";
 import { useGetHydrationReportQuery } from "@/redux/features/api/userDashboard/hydration";
-import { useGetActivityReportQuery } from "@/redux/features/api/userDashboard/activitylog";
+import { useGetActivityReportQuery, useGetActivityLogsQuery } from "@/redux/features/api/userDashboard/activitylog";
 import { useGetStressReportQuery } from "@/redux/features/api/userDashboard/stresslog";
+import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { useGetHabitsQuery as _unused } from "@/redux/features/api/userDashboard/habit";
 import { useGetAiSavedHabitsQuery } from "@/redux/features/api/userDashboard/Projection/AIHabitsAPI";
 import { useGetAiSuggestedTargetQuery } from "@/redux/features/api/userDashboard/nutritionAiApi";
@@ -230,6 +236,21 @@ const HABIT_META: Record<string, any> = {
     coachName: "",
     coachTime: "",
   },
+  weight: {
+    title: "Weight",
+    icon: <Scale size={24} className="text-[#3A86FF]" />,
+    iconBg: "bg-blue-100/50",
+    avgStr: "0 lbs",
+    unit: "lbs",
+    consistency: "0%",
+    streak: "0 DAYS",
+    trend: "Stable",
+    trendColor: "text-[#10B981]",
+    insight: "Log your weight regularly to track progress.",
+    coachNote: "",
+    coachName: "",
+    coachTime: "",
+  },
 };
 
 export default function HabitProgressPage() {
@@ -297,8 +318,44 @@ export default function HabitProgressPage() {
   };
 
   const { data: activityReport, isLoading: isActivityLoading } = useGetActivityReportQuery(days, {
-    skip: habitId !== 'activity'
+    skip: habitId !== 'activity' && habitId !== 'weight'
   });
+
+  const { data: activityLogsResponse } = useGetActivityLogsQuery(undefined, {
+    skip: habitId !== 'activity' && habitId !== 'weight'
+  });
+
+  const { data: profileResponse } = useGetProfileQuery(currentUser?.id, {
+    skip: !currentUser?.id || habitId !== 'weight'
+  });
+
+  const rawActivityLogs: any[] = useMemo(() => {
+    if (Array.isArray(activityLogsResponse)) return activityLogsResponse;
+    if (Array.isArray(activityLogsResponse?.data)) return activityLogsResponse.data;
+    return [];
+  }, [activityLogsResponse]);
+
+  const loggedWeights = useMemo(() => {
+    return rawActivityLogs.filter((l: any) => l.weight !== null && l.weight !== undefined && Number(l.weight) > 0);
+  }, [rawActivityLogs]);
+
+  const profileWeight = Number(profileResponse?.data?.weight || currentUser?.weight || 0);
+  const userWeightUnit = profileResponse?.data?.weight_unit || profileResponse?.data?.unit || 'lbs';
+
+  const calculatedAverageWeight = useMemo(() => {
+    if (loggedWeights.length > 0) {
+      const sum = loggedWeights.reduce((acc: number, curr: any) => acc + Number(curr.weight), 0);
+      return (Math.round((sum / loggedWeights.length) * 10) / 10).toString();
+    }
+    return null;
+  }, [loggedWeights]);
+
+  const latestLoggedWeight = useMemo(() => {
+    if (loggedWeights.length > 0) {
+      return Number(loggedWeights[0].weight);
+    }
+    return profileWeight > 0 ? profileWeight : null;
+  }, [loggedWeights, profileWeight]);
 
   const { data: hydrationReport, isLoading: isHydrationLoading } = useGetHydrationReportQuery(days, {
     skip: habitId !== 'hydration'
@@ -382,6 +439,26 @@ export default function HabitProgressPage() {
     coachNote: activityCoach.coachNote,
     coachName: activityCoach.coachName,
     coachTime: activityCoach.coachTime,
+  } : habitId === 'weight' ? {
+    title: "Weight",
+    icon: <Scale size={24} className="text-[#3A86FF]" />,
+    iconBg: "bg-blue-100/50",
+    avgStr: calculatedAverageWeight && Number(calculatedAverageWeight) > 0
+      ? `${calculatedAverageWeight} ${activityData?.statistics?.weight_unit || userWeightUnit}`
+      : (activityData?.statistics?.average_weight && Number(activityData?.statistics?.average_weight) > 0
+        ? `${activityData.statistics.average_weight} ${activityData.statistics.weight_unit || userWeightUnit}`
+        : (profileWeight > 0
+          ? `${profileWeight} ${userWeightUnit} (Profile)`
+          : "Not logged yet")),
+    unit: activityData?.statistics?.weight_unit || userWeightUnit,
+    consistency: activityData?.statistics?.weight_consistency || (loggedWeights.length > 0 ? `${Math.round((loggedWeights.length / days) * 100)}%` : "0%"),
+    streak: activityData?.statistics?.weight_streak || (loggedWeights.length > 0 ? `${loggedWeights.length} DAYS` : "0 DAYS"),
+    trend: activityData?.statistics?.current_trend || "Stable",
+    trendColor: "text-[#10B981]",
+    insight: "Consistent weight logging helps track body composition trends and calorie balance.",
+    coachNote: activityCoach.coachNote,
+    coachName: activityCoach.coachName,
+    coachTime: activityCoach.coachTime,
   } : habitId === 'nutrition' && (nutritionReport?.data || nutritionReport?.statistics) ? {
     title: "Nutrition",
     icon: <Apple size={24} className="text-[#0FA4A9]" />,
@@ -454,7 +531,38 @@ export default function HabitProgressPage() {
       activityData.chart_data.map((item: any) => ({
         name: item.label,
         val: item.steps || 0,
-      })) : habitId === 'nutrition' ?
+      })) : habitId === 'weight' ?
+      (() => {
+        let mapped = Array.isArray(activityData?.chart_data)
+          ? activityData.chart_data.map((item: any) => {
+              let dayWeight = item.weight !== null && item.weight !== undefined && Number(item.weight) > 0 ? Number(item.weight) : null;
+              if (!dayWeight && item.date && loggedWeights.length > 0) {
+                const match = loggedWeights.find((l: any) => l.log_date === item.date || (typeof l.log_date === 'string' && l.log_date.startsWith(item.date)));
+                if (match && Number(match.weight) > 0) {
+                  dayWeight = Number(match.weight);
+                }
+              }
+              return {
+                name: item.label,
+                date: item.date,
+                val: dayWeight,
+              };
+            })
+          : [];
+
+        if ((!mapped.length || !mapped.some((d: any) => d.val !== null)) && loggedWeights.length > 0) {
+          mapped = loggedWeights.slice(0, 7).reverse().map((l: any) => {
+            const d = new Date(l.log_date);
+            const dayName = !isNaN(d.getTime()) ? d.toLocaleDateString('en-US', { weekday: 'short' }) : (l.log_date || "Day");
+            return {
+              name: dayName,
+              date: l.log_date,
+              val: Number(l.weight),
+            };
+          });
+        }
+        return mapped;
+      })() : habitId === 'nutrition' ?
         (Array.isArray(nutritionRawChart) && nutritionRawChart.length > 0
           ? nutritionRawChart.map((item: any) =>
               calculateNutritionChartItem(item, userCalorieTarget, macroTargets)
@@ -630,10 +738,10 @@ export default function HabitProgressPage() {
                 </div>
               </div>
 
-              <div className="h-72 sm:h-80 md:h-88 w-full min-w-0 mt-2 sm:mt-4">
+              <div className={cn("w-full min-w-0 mt-2 sm:mt-4", habitId === "nutrition" ? "min-h-[440px] flex flex-col" : "h-72 sm:h-80 md:h-88")}>
                 {habitId === "nutrition" ? (
-                  <div className="h-full w-full flex flex-col">
-                    <div className="flex-1 w-full min-h-0">
+                  <div className="w-full flex flex-col gap-4">
+                    <div className="h-72 sm:h-80 md:h-88 w-full min-h-0">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                           data={chartData}
@@ -817,12 +925,134 @@ export default function HabitProgressPage() {
                         <span className="text-[#10B981]">100% Target Goal</span>
                       </div>
                     </div>
+
+                    {/* Current Day Calorie Intake Total Box Underneath the Graph */}
+                    {(() => {
+                      const calorieBox =
+                        nutritionReport?.data?.current_day_calorie_box ||
+                        nutritionReport?.current_day_calorie_box;
+
+                      const intake = Number(calorieBox?.intake_calories ?? 0);
+                      const target = Number(calorieBox?.target_calories ?? userCalorieTarget ?? 2000);
+                      const diff = Number(calorieBox?.difference ?? (intake - target));
+                      const absDiff = Math.abs(diff);
+                      const isOver = diff > 0;
+                      const isUnder = diff < 0;
+                      const pct = target > 0 ? Math.round((intake / target) * 100) : 0;
+
+                      return (
+                        <div className="mt-2 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-teal-50/80 via-blue-50/50 to-slate-50 border border-teal-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <div
+                              className={cn(
+                                "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-xs",
+                                isOver
+                                  ? "bg-red-100 text-red-600 border border-red-200/60"
+                                  : "bg-teal-100 text-[#0FA4A9] border border-teal-200/60",
+                              )}
+                            >
+                              <Flame size={24} />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs font-bold uppercase tracking-wider text-[#5F6F73]">
+                                  Today&apos;s Calorie Intake
+                                </span>
+                                <span className="text-[11px] font-semibold text-gray-500 bg-white/90 px-2 py-0.5 rounded-md border border-gray-200/60 shadow-xs">
+                                  {calorieBox?.date || "Today"}
+                                </span>
+                              </div>
+                              <div className="flex items-baseline gap-2 mt-0.5">
+                                <span className="text-2xl font-black text-[#1F2D2E]">
+                                  {intake.toLocaleString()}
+                                </span>
+                                <span className="text-xs font-bold text-[#5F6F73]">
+                                  / {target.toLocaleString()} kcal goal
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Progress bar in center */}
+                          <div className="flex-1 max-w-sm flex flex-col gap-1.5 w-full">
+                            <div className="flex justify-between text-xs font-semibold text-[#5F6F73]">
+                              <span>Daily Goal Progress</span>
+                              <span
+                                className={cn(
+                                  "font-bold",
+                                  isOver ? "text-red-600" : "text-[#0FA4A9]",
+                                )}
+                              >
+                                {pct}%
+                              </span>
+                            </div>
+                            <div className="w-full h-2.5 bg-gray-200/80 rounded-full overflow-hidden">
+                              <div
+                                className={cn(
+                                  "h-full rounded-full transition-all duration-700",
+                                  isOver ? "bg-red-500" : "bg-[#0FA4A9]",
+                                )}
+                                style={{ width: `${Math.min(100, pct)}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Over / Under indicator badge */}
+                          <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+                            {intake === 0 ? (
+                              <div className="px-3.5 py-2 rounded-xl bg-gray-100 text-gray-600 text-xs font-bold border border-gray-200 flex items-center gap-1.5 shadow-xs">
+                                <Target size={15} />
+                                <span>No meals logged yet today</span>
+                              </div>
+                            ) : isOver ? (
+                              <div className="px-3.5 py-2 rounded-xl bg-red-50 text-red-700 border border-red-200 text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                                <TrendingUp size={15} className="text-red-600" />
+                                <span>+{absDiff.toLocaleString()} kcal over target</span>
+                              </div>
+                            ) : isUnder ? (
+                              <div className="px-3.5 py-2 rounded-xl bg-teal-50 text-[#0FA4A9] border border-teal-200 text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                                <TrendingDown size={15} className="text-[#0FA4A9]" />
+                                <span>{absDiff.toLocaleString()} kcal under target</span>
+                              </div>
+                            ) : (
+                              <div className="px-3.5 py-2 rounded-xl bg-emerald-50 text-[#10B981] border border-emerald-200 text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                                <Target size={15} />
+                                <span>100% Right On Target!</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                ) : habitId === "weight" && (!Array.isArray(chartData) || !chartData.some((d: any) => d.val !== null && Number(d.val) > 0)) ? (
+                  <div className="h-full min-h-[280px] flex flex-col items-center justify-center p-6 text-center border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#3A86FF] flex items-center justify-center mb-3 shadow-xs">
+                      <Scale size={24} />
+                    </div>
+                    <h4 className="text-base font-bold text-[#1F2D2E] mb-1">
+                      {profileWeight > 0
+                        ? `Starting Weight: ${profileWeight} ${userWeightUnit}`
+                        : "No Weight Logs Recorded Yet"}
+                    </h4>
+                    <p className="text-xs text-gray-500 max-w-sm mb-4">
+                      {profileWeight > 0
+                        ? "Your initial profile weight is recorded. Log your weight today to start plotting your daily progress curve and trends."
+                        : "You haven't logged your body weight for this period. Log your weight to see your progress curve and trends."}
+                    </p>
+                    <button
+                      onClick={() => setIsLogModalOpen(true)}
+                      className="px-5 py-2.5 bg-[#3A86FF] text-white rounded-xl text-xs font-bold shadow-md hover:bg-blue-600 transition-all cursor-pointer flex items-center gap-2"
+                    >
+                      <Scale size={15} />
+                      Log Today&apos;s Weight
+                    </button>
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                       data={chartData}
-                      margin={{ top: 10, right: 10, left: 30, bottom: 10 }}
+                      margin={{ top: 15, right: habitId === "weight" ? 25 : 10, left: habitId === "weight" ? 20 : 30, bottom: 10 }}
                     >
                       <defs>
                         <linearGradient
@@ -845,27 +1075,43 @@ export default function HabitProgressPage() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid
-                        strokeDasharray="0"
+                        strokeDasharray="3 3"
                         vertical={false}
-                        stroke="#F8FAFC"
+                        stroke="#F1F5F9"
                       />
                       <XAxis
                         dataKey="name"
                         axisLine={false}
                         tickLine={false}
                         tick={{
-                          fontSize: 14,
+                          fontSize: 13,
                           fill: "#94A3B8",
                           fontWeight: 500,
                         }}
                         dy={15}
                       />
                       <YAxis
-                        hide
+                        hide={habitId !== "weight"}
                         axisLine={false}
                         tickLine={false}
+                        tick={{
+                          fontSize: 11,
+                          fill: "#94A3B8",
+                          fontWeight: 500,
+                        }}
+                        tickFormatter={(v) => `${v} ${habit.unit || ''}`}
+                        domain={[
+                          (dataMin: number) => Math.max(0, Math.floor(dataMin - 5)),
+                          (dataMax: number) => Math.ceil(dataMax + 5),
+                        ]}
                       />
                       <Tooltip
+                        formatter={(value: any) => [
+                          value !== null && Number(value) > 0
+                            ? `${value} ${habit.unit || ''}`.trim()
+                            : "Not logged",
+                          habitId === "weight" ? "Body Weight" : habit.title,
+                        ]}
                         contentStyle={{
                           borderRadius: "12px",
                           border: "none",
@@ -880,6 +1126,7 @@ export default function HabitProgressPage() {
                         strokeWidth={2}
                         fillOpacity={1}
                         fill="url(#colorGreen)"
+                        connectNulls
                       />
                     </AreaChart>
                   </ResponsiveContainer>
