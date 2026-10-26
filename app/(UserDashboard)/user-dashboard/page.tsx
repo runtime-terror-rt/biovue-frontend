@@ -13,6 +13,10 @@ import {
   Dumbbell,
   Scale,
   Loader2,
+  Footprints,
+  Flame,
+  Droplets,
+  Smile,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSelector } from "react-redux";
@@ -203,121 +207,331 @@ const UserDashboard = () => {
 
         {/* Current Health Overview */}
         <div className="flex items-center justify-between mt-2 sm:mt-4">
-          <h2 className="text-lg sm:text-xl font-bold text-[#1F2D2E]">
-            Current Health Overview
-          </h2>
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-lg sm:text-xl font-bold text-[#1F2D2E]">
+              Current Health Overview
+            </h2>
+            <span className="hidden sm:inline-block text-[11px] font-semibold text-slate-500 bg-slate-100/90 px-2.5 py-0.5 rounded-full">
+              Live Metrics
+            </span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 md:gap-6">
-          {[
-            {
-              label: "Current Weight",
-              // backend returns weight as a string including unit (e.g. "160 lbs") — show as-is
-              value: weightCurrent || "N/A",
-              unit: "",
-              status: healthOverview?.weight?.status || "N/A",
-              desc: `Target: ${healthOverview?.weight?.coach_target || "N/A"}`,
-              color: "text-[#3A86FF]",
-            },
-            {
-              label: "BMI",
-              value: healthOverview?.bmi?.current || "N/A",
-              unit: "",
-              status: healthOverview?.bmi?.status || "N/A",
-              desc: `Ideal Range: ${healthOverview?.bmi?.ideal_range || "N/A"}`,
-              color: "text-[#F59E0B]",
-            },
-            {
-              label: "Nutrition",
-              // show total calories as primary value and include breakdown in description
-              value: (nutrition?.total_calories) ?? 0,
-              unit: "kcal",
-              status: nutrition?.last_meal_balance || "N/A",
-              desc: (() => {
-                const n = nutrition;
-                if (!n) return "Macro Nutrients";
-                const p = typeof n.total_protein === "number" ? `${n.total_protein.toFixed(2)}g` : "0g";
-                const c = typeof n.total_carbs === "number" ? `${n.total_carbs.toFixed(2)}g` : "0g";
-                const f = typeof n.total_fat === "number" ? `${n.total_fat.toFixed(2)}g` : "0g";
-                return `Protein: ${p} • Carbs: ${c} • Fat: ${f}`;
-              })(),
-              color: "text-[#2DD4BF]",
-            },
-            {
-              label: "Daily Steps",
-              value: healthOverview?.daily_steps?.current || 0,
-              unit: "",
-              status: "Coach Plan",
-              desc: healthOverview?.daily_steps?.coach_plan || "N/A",
-              color: "text-[#EF4444]",
-            },
-            {
-              label: "Sleep Hours",
-              value: healthOverview?.sleep_hours?.current || 0,
-              // unit: "hrs",
-              status: "Coach Plan",
-              desc: healthOverview?.sleep_hours?.coach_plan || "N/A",
-              color: "text-[#3A86FF]",
-            },
-            {
-              label: "Hydration",
-              value: healthOverview?.hydration?.current_oz || 0,
-              // unit: "Ounces",
-              status: "Target",
-              desc: (healthOverview?.hydration?.target || "N/A"),
-              color: "text-[#3A86FF]",
-            },
-            {
-              label: "Stress & Mood",
-              value: healthOverview?.stress_and_mood?.avg_stress_level || 0,
-              unit: "/ 10",
-              status: "Latest Mood",
-              desc: healthOverview?.stress_and_mood?.latest_mood || "N/A",
-              color: "text-[#F59E0B]",
-            },
-          ].map((metric, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-2 sm:gap-3"
-            >
-              <span className="text-[#5F6F73] text-[10px] font-bold uppercase tracking-wider">
-                {metric.label}
-              </span>
-              <div className="flex items-baseline gap-1">
-                <span className={cn("text-2xl sm:text-3xl font-bold", metric.color)}>
-                  {metric.value === "N/A" ? "N/A" :
-                    typeof metric.value === "number"
-                      ? Number.isInteger(metric.value)
-                        ? metric.value
-                        : metric.value.toFixed(2)
-                      : metric.value}
-                </span>
-                <span className="text-[#5F6F73] text-xs sm:text-sm font-medium">
-                  {metric.unit}
-                </span>
+        {(() => {
+          // 1. Daily Steps calculation
+          const stepCurrent = typeof healthOverview?.daily_steps?.current === "string"
+            ? parseInt(healthOverview.daily_steps.current.replace(/,/g, "")) || 0
+            : (healthOverview?.daily_steps?.current || 0);
+          const stepTarget = parseInt(String(healthOverview?.daily_steps?.coach_plan || "6000").replace(/[^0-9]/g, "")) || 6000;
+          const stepPct = Math.min(100, Math.round((stepCurrent / Math.max(1, stepTarget)) * 100));
+
+          // 2. Sleep calculation
+          const sleepCurrent = parseFloat(String(healthOverview?.sleep_hours?.current || 0).replace(/[^0-9.]/g, "")) || 0;
+          const sleepTarget = parseFloat(String(healthOverview?.sleep_hours?.coach_plan || 7).replace(/[^0-9.]/g, "")) || 7;
+          const sleepPct = Math.min(100, Math.round((sleepCurrent / Math.max(1, sleepTarget)) * 100));
+
+          // 3. Hydration calculation
+          const hydroCurrent = parseFloat(String(healthOverview?.hydration?.current_oz || 0).replace(/[^0-9.]/g, "")) || 0;
+          const hydroTarget = parseFloat(String(healthOverview?.hydration?.target || 80).replace(/[^0-9.]/g, "")) || 80;
+          const hydroPct = Math.min(100, Math.round((hydroCurrent / Math.max(1, hydroTarget)) * 100));
+
+          // 4. Nutrition Macros calculation
+          const pVal = Number(nutrition?.total_protein || 0);
+          const cVal = Number(nutrition?.total_carbs || 0);
+          const fVal = Number(nutrition?.total_fat || 0);
+          const macroSum = pVal + cVal + fVal;
+          const pPct = macroSum > 0 ? Math.round((pVal / macroSum) * 100) : 0;
+          const cPct = macroSum > 0 ? Math.round((cVal / macroSum) * 100) : 0;
+          const fPct = macroSum > 0 ? Math.max(0, 100 - pPct - cPct) : 0;
+
+          // 5. Stress & Mood
+          const stressVal = Number(healthOverview?.stress_and_mood?.avg_stress_level || 0);
+          const stressPct = Math.min(100, Math.max(10, Math.round((stressVal / 10) * 100)));
+          const moodText = healthOverview?.stress_and_mood?.latest_mood || "Normal";
+
+          // 6. Weight diff
+          const weightStatus = healthOverview?.weight?.status || "On track";
+          const isWeightAbove = weightStatus.toLowerCase().includes("above");
+
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+              {/* Card 1: Current Weight */}
+              <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(58,134,255,0.06)] hover:border-blue-100 transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#3A86FF] flex items-center justify-center border border-blue-100/70 group-hover:scale-105 transition-transform">
+                        <Scale className="w-4 h-4" />
+                      </div>
+                      <span className="text-[#5F6F73] text-[11px] font-bold uppercase tracking-wider">
+                        Current Weight
+                      </span>
+                    </div>
+                    <span
+                      className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap",
+                        isWeightAbove
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      )}
+                    >
+                      {weightStatus}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5 my-1">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#041228] tracking-tight">
+                      {weightCurrent || "N/A"}
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-slate-100/80 flex items-center justify-between text-xs text-[#5F6F73] mt-2">
+                  <span>Target: <strong className="text-[#041228] font-semibold">{healthOverview?.weight?.coach_target || "N/A"}</strong></span>
+                  <span className="text-[11px] text-slate-400">
+                    {(healthOverview?.weight as any)?.diff || "Target goal"}
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col gap-1 mt-0.5 sm:mt-1">
-                <span
-                  className={cn(
-                    "text-xs font-semibold",
-                    metric.color.includes("EF4444")
-                      ? "text-[#EF4444]"
-                      : metric.color.includes("3A86FF")
-                        ? "text-[#3A86FF]"
-                        : metric.color.includes("2DD4BF")
-                          ? "text-[#2DD4BF]"
-                          : "text-[#F59E0B]",
-                  )}
-                >
-                  {metric.status}
-                </span>
-                <span className="text-[#5F6F73] text-[11px] leading-tight break-words">
-                  {metric.desc}
-                </span>
+
+              {/* Card 2: BMI */}
+              <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(245,158,11,0.08)] hover:border-amber-100 transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100/70 group-hover:scale-105 transition-transform">
+                        <Activity className="w-4 h-4" />
+                      </div>
+                      <span className="text-[#5F6F73] text-[11px] font-bold uppercase tracking-wider">
+                        BMI Score
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200 whitespace-nowrap">
+                      {healthOverview?.bmi?.status || "Healthy"}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5 my-1">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#041228] tracking-tight">
+                      {healthOverview?.bmi?.current || "N/A"}
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-slate-100/80 flex items-center justify-between text-xs text-[#5F6F73] mt-2">
+                  <span>Ideal: <strong className="text-[#041228] font-semibold">{healthOverview?.bmi?.ideal_range || "18.5 - 24.9"}</strong></span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">
+                    Normal
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 3: Daily Steps */}
+              <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(239,68,68,0.08)] hover:border-rose-100 transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center border border-rose-100/70 group-hover:scale-105 transition-transform">
+                        <Footprints className="w-4 h-4" />
+                      </div>
+                      <span className="text-[#5F6F73] text-[11px] font-bold uppercase tracking-wider">
+                        Daily Steps
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-slate-50 text-slate-600 border-slate-200 whitespace-nowrap">
+                      Plan: {healthOverview?.daily_steps?.coach_plan || "6,000"}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5 my-1">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#041228] tracking-tight">
+                      {(healthOverview?.daily_steps?.current !== undefined && healthOverview?.daily_steps?.current !== null) ? String(healthOverview.daily_steps.current) : 0}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-400">steps</span>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-slate-100/80 space-y-1.5 mt-2">
+                  <div className="flex items-center justify-between text-[11px] font-medium text-[#5F6F73]">
+                    <span>Goal Completion</span>
+                    <span className="font-bold text-[#041228]">{stepPct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-rose-400 to-rose-500 rounded-full transition-all duration-500"
+                      style={{ width: `${stepPct}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 4: Sleep Hours */}
+              <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(99,102,241,0.08)] hover:border-indigo-100 transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center border border-indigo-100/70 group-hover:scale-105 transition-transform">
+                        <Moon className="w-4 h-4" />
+                      </div>
+                      <span className="text-[#5F6F73] text-[11px] font-bold uppercase tracking-wider">
+                        Sleep Hours
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200 whitespace-nowrap">
+                      Goal: {healthOverview?.sleep_hours?.coach_plan || "7 Hrs"}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5 my-1">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#041228] tracking-tight">
+                      {healthOverview?.sleep_hours?.current || 0}
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-slate-100/80 space-y-1.5 mt-2">
+                  <div className="flex items-center justify-between text-[11px] font-medium text-[#5F6F73]">
+                    <span>Recovery Target</span>
+                    <span className="font-bold text-[#041228]">{sleepPct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-indigo-400 to-indigo-600 rounded-full transition-all duration-500"
+                      style={{ width: `${sleepPct}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 5: Nutrition & Macros (Double-Width Card - Spans 2 columns on lg) */}
+              <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(20,184,166,0.08)] hover:border-teal-100 transition-all duration-300 flex flex-col justify-between sm:col-span-2 group">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center border border-teal-100/70 group-hover:scale-105 transition-transform">
+                        <Flame className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-[#5F6F73] text-[11px] font-bold uppercase tracking-wider">
+                          Nutrition & Intake
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-teal-50 text-teal-700 border-teal-200 whitespace-nowrap">
+                      {nutrition?.last_meal_balance || "Today's Log"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl sm:text-3xl font-extrabold text-[#041228] tracking-tight">
+                          {nutrition?.total_calories ?? 0}
+                        </span>
+                        <span className="text-xs sm:text-sm font-semibold text-slate-400">kcal</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 font-medium mt-0.5">Total energy logged</p>
+                    </div>
+
+                    {/* Macro Breakdown Pills */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-blue-50/70 border border-blue-100/80 rounded-xl px-2.5 py-1.5 text-center">
+                        <span className="block text-[9px] font-bold text-blue-600 uppercase tracking-wider">Protein</span>
+                        <span className="text-xs font-extrabold text-blue-900">{pVal.toFixed(1)}g</span>
+                      </div>
+                      <div className="flex-1 bg-amber-50/70 border border-amber-100/80 rounded-xl px-2.5 py-1.5 text-center">
+                        <span className="block text-[9px] font-bold text-amber-600 uppercase tracking-wider">Carbs</span>
+                        <span className="text-xs font-extrabold text-amber-900">{cVal.toFixed(1)}g</span>
+                      </div>
+                      <div className="flex-1 bg-rose-50/70 border border-rose-100/80 rounded-xl px-2.5 py-1.5 text-center">
+                        <span className="block text-[9px] font-bold text-rose-600 uppercase tracking-wider">Fat</span>
+                        <span className="text-xs font-extrabold text-rose-900">{fVal.toFixed(1)}g</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Macro Ratio Bar */}
+                <div className="pt-3 border-t border-slate-100/80 space-y-1.5 mt-2">
+                  <div className="flex items-center justify-between text-[11px] font-medium text-[#5F6F73]">
+                    <span>Macro Distribution</span>
+                    <span className="text-slate-400 text-[10px]">P: {pPct}% • C: {cPct}% • F: {fPct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                    <div style={{ width: `${pPct}%` }} className="h-full bg-blue-500 transition-all duration-500" />
+                    <div style={{ width: `${cPct}%` }} className="h-full bg-amber-500 transition-all duration-500" />
+                    <div style={{ width: `${fPct}%` }} className="h-full bg-rose-500 transition-all duration-500" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 6: Hydration */}
+              <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(6,182,212,0.08)] hover:border-cyan-100 transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center border border-cyan-100/70 group-hover:scale-105 transition-transform">
+                        <Droplets className="w-4 h-4" />
+                      </div>
+                      <span className="text-[#5F6F73] text-[11px] font-bold uppercase tracking-wider">
+                        Hydration
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-cyan-50 text-cyan-700 border-cyan-200 whitespace-nowrap">
+                      Target: {healthOverview?.hydration?.target || "80 oz"}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5 my-1">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#041228] tracking-tight">
+                      {healthOverview?.hydration?.current_oz || 0}
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-slate-100/80 space-y-1.5 mt-2">
+                  <div className="flex items-center justify-between text-[11px] font-medium text-[#5F6F73]">
+                    <span>Hydration Level</span>
+                    <span className="font-bold text-[#041228]">{hydroPct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-400 to-sky-500 rounded-full transition-all duration-500"
+                      style={{ width: `${hydroPct}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 7: Stress & Mood */}
+              <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(139,92,246,0.08)] hover:border-violet-100 transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100/70 group-hover:scale-105 transition-transform">
+                        <Smile className="w-4 h-4" />
+                      </div>
+                      <span className="text-[#5F6F73] text-[11px] font-bold uppercase tracking-wider">
+                        Stress & Mood
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-violet-50 text-violet-700 border-violet-200 capitalize whitespace-nowrap">
+                      {moodText}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5 my-1">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#041228] tracking-tight">
+                      {healthOverview?.stress_and_mood?.avg_stress_level || 0}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-400">/ 10</span>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-slate-100/80 space-y-1.5 mt-2">
+                  <div className="flex items-center justify-between text-[11px] font-medium text-[#5F6F73]">
+                    <span>Mood Status</span>
+                    <span className="font-semibold text-slate-700 capitalize">{moodText}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-400 rounded-full transition-all duration-500"
+                      style={{ width: `${stressPct}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })()}
 
         {/* Your Progress & Trends */}
         <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:gap-6">
@@ -354,6 +568,7 @@ const UserDashboard = () => {
             isLoading={isChartLoading}
             isStressLoading={isStressLoading}
             isHydrationLoading={isHydrationLoading}
+            unitSystem={summary?.unit_system || currentUser?.profile?.unit || "imperial"}
           />
         </div>
 

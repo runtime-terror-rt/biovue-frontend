@@ -7,6 +7,7 @@ import {
   Loader2,
   UserPlus,
   Users,
+  Dumbbell,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -30,6 +31,9 @@ interface ProgramViewProps {
     focusCount: number;
     habitFocus: string[];
     programFocus: string[];
+    workoutTypes?: string[];
+    workoutRoutine?: string;
+    notes?: string;
     wellnessMacros: {
       calories: number;
       protein: number;
@@ -208,6 +212,57 @@ export default function ProgramView({ program }: ProgramViewProps) {
                 ))}
               </div>
             </div>
+
+            {/* Workout Types & Routine */}
+            {((program.workoutTypes && program.workoutTypes.length > 0) || program.workoutRoutine) && (
+              <div className="bg-white p-5 rounded-xl shadow-md space-y-4">
+                <div className="text-base font-semibold text-black flex items-center gap-2">
+                  <Dumbbell size={18} className="text-teal-600" />
+                  <span>Workout Types & Routine</span>
+                </div>
+
+                {program.workoutTypes && program.workoutTypes.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Selected Workout Types:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {program.workoutTypes.map((type) => (
+                        <span
+                          key={type}
+                          className="px-3.5 py-1.5 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-bold"
+                        >
+                          ✓ {type}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {program.workoutRoutine && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                      Program Routine / Structure:
+                    </p>
+                    <div className="text-sm text-gray-800 whitespace-pre-wrap bg-gray-50 p-4 rounded-xl border border-gray-200/70 font-mono">
+                      {program.workoutRoutine}
+                    </div>
+                  </div>
+                )}
+
+                {program.notes && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                      Trainer Notes:
+                    </p>
+                    <p className="text-sm text-gray-600 italic bg-amber-50/50 p-3 rounded-lg border border-amber-100">
+                      {program.notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Connected Clients & Add Clients Section */}
             <div className="flex flex-col gap-6 mt-6">
               {/* Connected Clients */}

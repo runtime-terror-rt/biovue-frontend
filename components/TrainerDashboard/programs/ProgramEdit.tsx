@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Dumbbell, FileText } from "lucide-react";
 import { useUpdateProgramMutation } from "@/redux/features/api/TrainerDashboard/Program/UpdateProgram";
 import { toast } from "sonner";
 import {
@@ -23,6 +23,8 @@ interface Program {
   focusCount: number;
   habitFocus: string[];
   programFocus: string[];
+  workoutTypes?: string[];
+  workoutRoutine?: string;
   weeklyActivityTarget: string;
   wellnessMacros: {
     calories: number;
@@ -73,6 +75,19 @@ const PROGRAM_FOCUS_OPTIONS = [
   "Strength Training",
   "Flexibility",
   "Mental Wellness",
+];
+
+const WORKOUT_TYPE_OPTIONS = [
+  "Cardio",
+  "Weight Lifting",
+  "Sprints",
+  "Yoga",
+  "Walking",
+  "Cycling",
+  "HIIT",
+  "Swimming",
+  "Pilates",
+  "Strength Training",
 ];
 
 const SUPPLEMENT_OPTIONS = [
@@ -159,6 +174,15 @@ export default function ProgramEdit({ program }: ProgramEditProps) {
     }));
   };
 
+  const handleWorkoutTypeToggle = (type: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      workoutTypes: (prev.workoutTypes || []).includes(type)
+        ? (prev.workoutTypes || []).filter((t) => t !== type)
+        : [...(prev.workoutTypes || []), type],
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -178,6 +202,9 @@ export default function ProgramEdit({ program }: ProgramEditProps) {
         focus_areas: formData.programFocus,
 
         habit_focus: formData.habitFocus,
+
+        workout_types: formData.workoutTypes || [],
+        description: formData.workoutRoutine || "",
 
         calories: formData.wellnessMacros.calories,
         protein: formData.wellnessMacros.protein,
@@ -382,6 +409,65 @@ export default function ProgramEdit({ program }: ProgramEditProps) {
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Workout Program & Types */}
+          <div className="bg-white space-y-5 rounded-lg p-6 shadow-sm border border-gray-200">
+            <h2 className="text-lg md:text-xl font-medium text-[#0FA4A9] flex items-center gap-2">
+              <Dumbbell size={20} className="text-[#0FA4A9]" />
+              <span>Workout Program & Types</span>
+            </h2>
+
+            {/* Workout Types (Select Multiple Buttons) */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label className="text-gray-700 text-md md:text-lg font-medium">
+                  Workout Types (Select Multiple)
+                </Label>
+                <span className="text-xs text-gray-500">Select all that apply</span>
+              </div>
+              <div className="flex flex-wrap gap-2.5 mt-2">
+                {WORKOUT_TYPE_OPTIONS.map((wType) => {
+                  const isSelected = (formData.workoutTypes || []).includes(wType);
+                  return (
+                    <button
+                      key={wType}
+                      type="button"
+                      onClick={() => handleWorkoutTypeToggle(wType)}
+                      className={`px-4 py-2 rounded-full text-sm font-semibold transition-all border cursor-pointer ${
+                        isSelected
+                          ? "bg-teal-600 text-white border-teal-600 shadow-xs"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {isSelected ? `✓ ${wType}` : `+ ${wType}`}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Workout Program Routine Text Field */}
+            <div>
+              <Label
+                htmlFor="workoutRoutine"
+                className="text-gray-700 text-md md:text-lg font-medium flex items-center gap-2 mb-1.5"
+              >
+                <FileText size={18} className="text-teal-600" />
+                <span>Workout Program Routine / Exercise Plan</span>
+              </Label>
+              <p className="text-xs text-gray-500 mb-2">
+                Write detailed workout routines, daily exercises, sets, repetitions, or progression schedules for your clients.
+              </p>
+              <Textarea
+                id="workoutRoutine"
+                name="workoutRoutine"
+                value={formData.workoutRoutine || ""}
+                onChange={handleInputChange}
+                placeholder="e.g. Day 1: Upper Body (Bench Press 4x8, Pull-ups 3x10, DB Overhead Press 3x12)&#10;Day 2: Cardio & Core (30 mins HIIT + 15 mins Ab Circuit)&#10;Day 3: Lower Body (Barbell Squats 4x8, Romanian Deadlifts 3x10)..."
+                className="min-h-36 font-mono text-sm placeholder:text-gray-400 bg-white"
+              />
             </div>
           </div>
 

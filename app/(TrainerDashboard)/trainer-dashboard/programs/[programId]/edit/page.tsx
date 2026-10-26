@@ -15,6 +15,8 @@ function mapProgramToEdit(program: Program) {
     focusCount: program.focus_areas?.length ?? 0,
     habitFocus: program.habit_focus ?? [],
     programFocus: program.program_focus ?? [],
+    workoutTypes: program.workout_types ?? [],
+    workoutRoutine: program.description ?? "",
     weeklyActivityTarget: "4–5 sessions/week",
     wellnessMacros: {
       calories: program.calories ?? 0,

@@ -203,6 +203,13 @@ export default function CoachSetGoals({
 
   const isInvalid =
     !targetWeight || !weeklyWorkoutGoal || !dailyStepGoal || !sleepTarget;
+  const clientUnit =
+    (clientDetails as any)?.unit_system ||
+    (clientDetails as any)?.unit ||
+    (clientDetails as any)?.profile?.unit ||
+    ((clientDetails as any)?.height && Number((clientDetails as any).height) > 110 ? "metric" : "imperial");
+  const weightUnitLabel = clientUnit === "metric" ? "kg" : "lbs";
+
   return (
     <Card className="border-none ">
       <div className="">
@@ -221,14 +228,14 @@ export default function CoachSetGoals({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="">
               <label className="text-lg font-medium text-[#374151]">
-                Target weight (lbs)
+                Target weight ({weightUnitLabel})
               </label>
               <input
                 type="number"
                 value={targetWeight}
                 onChange={(e) => setTargetWeight(e.target.value)}
                 className="w-full mt-5 px-4 py-3 bg-white border border-[#E5E7EB] rounded-lg focus:ring-2 focus:ring-[#0D9488] focus:border-transparent outline-none transition-all placeholder:text-[#9AAEB2]"
-                placeholder="190"
+                placeholder={weightUnitLabel === "kg" ? "80" : "190"}
               />
             </div>
 

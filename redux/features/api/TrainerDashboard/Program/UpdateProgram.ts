@@ -24,6 +24,7 @@ export interface UpdateProgramRequest {
 
   description?: string | null;
   notes?: string | null;
+  workout_types?: string[];
 
   weekly_targets: string[];
 }
@@ -37,6 +38,7 @@ export interface UpdatedProgram {
 
   description: string | null;
   notes: string | null;
+  workout_types?: string[];
 
   weekly_targets: string[];
 

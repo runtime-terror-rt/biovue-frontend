@@ -9,6 +9,7 @@ export interface Program {
   target_intensity: string;
   description?: string | null;
   notes?: string | null;
+  workout_types?: string[];
   weekly_targets?: string | null;
   habit_focus_areas: string[];
   program_focus: string[];

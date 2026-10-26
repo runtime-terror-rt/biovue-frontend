@@ -8,6 +8,7 @@ import { useGetProfileQuery, useCreateUpdateProfileMutation } from "@/redux/feat
 import { User, Plus, Loader2, X, Check, ChevronDown } from "lucide-react";
 import SettingsSection from "./SettingsSection";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function ProfilePreferences() {
   const currentUser = useSelector(selectCurrentUser);
@@ -15,6 +16,7 @@ export default function ProfilePreferences() {
   const [createUpdateProfile, { isLoading: isUpdatingProfile }] = useCreateUpdateProfileMutation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("metric");
   const [formData, setFormData] = useState({
     name: "",
     age: "",
@@ -70,6 +72,14 @@ export default function ProfilePreferences() {
         prof_service_type: pData?.prof_service_type || currentUser?.profile?.prof_service_type || "local",
       }));
 
+      const initialUnit =
+        pData?.unit === "imperial" || pData?.unit_system === "imperial"
+          ? (pData?.height && Number(pData.height) > 110 && !pData?.unit_system ? "metric" : "imperial")
+          : (pData?.unit === "metric" || pData?.unit_system === "metric"
+              ? "metric"
+              : (pData?.height && Number(pData.height) > 110 ? "metric" : "imperial"));
+      setUnitSystem(initialUnit);
+
       setBio(pData?.bio || "");
       
       if (pData?.specialties && Array.isArray(pData.specialties)) {
@@ -85,6 +95,45 @@ export default function ProfilePreferences() {
     }
   }, [currentUser, profileResponse]);
 
+  const handleToggleUnit = (newUnit: "metric" | "imperial") => {
+    if (newUnit === unitSystem) return;
+
+    setFormData((prev) => {
+      let newHeight = prev.height;
+      let newWeight = prev.weight;
+
+      if (prev.height && !isNaN(Number(prev.height))) {
+        const val = Number(prev.height);
+        if (newUnit === "imperial") {
+          // cm to inches
+          newHeight = (Math.round((val / 2.54) * 10) / 10).toString();
+        } else {
+          // inches to cm
+          newHeight = (Math.round((val * 2.54) * 10) / 10).toString();
+        }
+      }
+
+      if (prev.weight && !isNaN(Number(prev.weight))) {
+        const val = Number(prev.weight);
+        if (newUnit === "imperial") {
+          // kg to lbs
+          newWeight = (Math.round((val * 2.20462) * 10) / 10).toString();
+        } else {
+          // lbs to kg
+          newWeight = (Math.round((val / 2.20462) * 10) / 10).toString();
+        }
+      }
+
+      return {
+        ...prev,
+        height: newHeight,
+        weight: newWeight,
+      };
+    });
+
+    setUnitSystem(newUnit);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -93,10 +142,6 @@ export default function ProfilePreferences() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // if (file.size > 2 * 1024 * 1024) {
-      //   toast.error("Image size should be less than 2MB");
-      //   return;
-      // }
       setImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -145,6 +190,8 @@ export default function ProfilePreferences() {
       data.append("sex", formData.sex);
       data.append("height", formData.height);
       data.append("weight", formData.weight);
+      data.append("unit", unitSystem);
+      data.append("unit_system", unitSystem);
       data.append("location", formData.location);
       data.append("experience_years", formData.experience_years);
       data.append("zipcode", formData.zipcode);
@@ -251,25 +298,83 @@ export default function ProfilePreferences() {
                 <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#98A2B3] pointer-events-none" />
               </div>
             </div>
+            {/* Unit Preference Toggle */}
+            <div className="col-span-full flex items-center justify-between p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+              <div>
+                <span className="text-xs font-bold text-[#1E293B]">Measurement System</span>
+                <p className="text-[11px] text-[#94A3B8]">Switch between Metric and Imperial anytime</p>
+              </div>
+              <div className="flex items-center p-0.5 bg-white rounded-lg border border-gray-200 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => handleToggleUnit("metric")}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                    unitSystem === "metric"
+                      ? "bg-[#8746E7] text-white shadow-xs font-bold"
+                      : "text-gray-500 hover:text-gray-900"
+                  )}
+                >
+                  Metric (cm, kg)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleUnit("imperial")}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                    unitSystem === "imperial"
+                      ? "bg-[#8746E7] text-white shadow-xs font-bold"
+                      : "text-gray-500 hover:text-gray-900"
+                  )}
+                >
+                  Imperial (in, lbs)
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#94A3B8] uppercase tracking-wide">Height (cm)</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#94A3B8] uppercase tracking-wide">
+                  Height ({unitSystem === "metric" ? "cm" : "inch"})
+                </label>
+                {formData.height && !isNaN(Number(formData.height)) && Number(formData.height) > 0 && (
+                  <span className="text-[10px] font-semibold text-[#8746E7] bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
+                    ≈ {unitSystem === "metric"
+                      ? `${Math.round((Number(formData.height) / 2.54) * 10) / 10} in (${Math.floor(Number(formData.height) / 30.48)}'${Math.round((Number(formData.height) % 30.48) / 2.54)}")`
+                      : `${Math.round(Number(formData.height) * 2.54)} cm`}
+                  </span>
+                )}
+              </div>
               <input
                 type="number"
+                step="any"
                 name="height"
                 value={formData.height}
                 onChange={handleChange}
-                placeholder="175"
+                placeholder={unitSystem === "metric" ? "175" : "68.9"}
                 className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-5 py-4 text-sm font-medium focus:outline-none focus:border-[#8746E7] transition-all"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#94A3B8] uppercase tracking-wide">Weight (kg)</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#94A3B8] uppercase tracking-wide">
+                  Weight ({unitSystem === "metric" ? "kg" : "lbs"})
+                </label>
+                {formData.weight && !isNaN(Number(formData.weight)) && Number(formData.weight) > 0 && (
+                  <span className="text-[10px] font-semibold text-[#8746E7] bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
+                    ≈ {unitSystem === "metric"
+                      ? `${Math.round(Number(formData.weight) * 2.20462 * 10) / 10} lbs`
+                      : `${Math.round((Number(formData.weight) / 2.20462) * 10) / 10} kg`}
+                  </span>
+                )}
+              </div>
               <input
                 type="number"
+                step="any"
                 name="weight"
                 value={formData.weight}
                 onChange={handleChange}
-                placeholder="70"
+                placeholder={unitSystem === "metric" ? "70" : "154"}
                 className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-5 py-4 text-sm font-medium focus:outline-none focus:border-[#8746E7] transition-all"
               />
             </div>

@@ -26,6 +26,7 @@ import {
   Eye,
   Columns,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useGetNutritionShowQuery } from "@/redux/features/api/userDashboard/nutrition";
 import { useGetFutureGoalProjectionQuery } from "@/redux/features/api/userDashboard/Projection/GetFutureGoal";
 import { useGetProfileQuery } from "@/redux/features/api/profileApi";
@@ -125,15 +126,50 @@ export default function ClientVisibilityModal({
     ? `${userObj.age} yrs`
     : "N/A";
 
-  const unit = userProfile.unit || "imperial";
-  const heightUnit = unit === "metric" ? "cm" : "in";
+  const unit =
+    userProfile.unit_system ||
+    userProfile.unit ||
+    (userProfile.height && Number(userProfile.height) > 110 ? "metric" : "imperial");
   const weightUnit = unit === "metric" ? "kg" : "lbs";
 
-  const height = userProfile.height
-    ? `${userProfile.height} ${heightUnit}`
-    : userObj.height
-    ? `${userObj.height}`
-    : "N/A";
+  const rawH = userProfile.height || userObj.height;
+  let height = "N/A";
+  if (rawH) {
+    const numH = parseFloat(String(rawH));
+    if (!isNaN(numH) && numH > 0) {
+      if (numH > 100) {
+        // Height stored in cm (e.g. 150-220 cm)
+        if (unit === "imperial") {
+          const totalInches = Math.round((numH / 2.54) * 10) / 10;
+          const feet = Math.floor(totalInches / 12);
+          const remInches = Math.round(totalInches % 12);
+          height = `${totalInches} in (${feet}'${remInches}\")`;
+        } else {
+          height = `${Math.round(numH * 10) / 10} cm`;
+        }
+      } else if (numH <= 10) {
+        // Height in feet
+        if (unit === "metric") {
+          height = `${Math.round(numH * 30.48 * 10) / 10} cm`;
+        } else {
+          const feet = Math.floor(numH);
+          const remInches = Math.round((numH - feet) * 12);
+          height = `${Math.round(numH * 12 * 10) / 10} in (${feet}'${remInches}\")`;
+        }
+      } else {
+        // Height in inches
+        if (unit === "metric") {
+          height = `${Math.round(numH * 2.54 * 10) / 10} cm`;
+        } else {
+          const feet = Math.floor(numH / 12);
+          const remInches = Math.round(numH % 12);
+          height = `${Math.round(numH * 10) / 10} in (${feet}'${remInches}\")`;
+        }
+      }
+    } else {
+      height = `${rawH}`;
+    }
+  }
 
   // Current weight: resolve latest logged weight over static profile weight
   const currentWeightVal =
@@ -180,16 +216,7 @@ export default function ClientVisibilityModal({
 
   // Helper to render medical conditions cleanly
   const renderMedicalHistoryContent = () => {
-    if (!medicalHistory) {
-      return (
-        <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50/80 px-4 py-3 rounded-xl border border-emerald-100 text-xs font-semibold">
-          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-          <span>No chronic medical conditions or risk factors reported (Healthy profile)</span>
-        </div>
-      );
-    }
-
-    let parsedHistory = medicalHistory;
+    let parsedHistory: any = medicalHistory;
     if (typeof medicalHistory === "string") {
       try {
         parsedHistory = JSON.parse(medicalHistory);
@@ -202,72 +229,121 @@ export default function ClientVisibilityModal({
       }
     }
 
-    const conditionsMap: { [key: string]: string } = {
-      diabetes: "Diabetes",
-      high_blood_pressure: "High Blood Pressure",
-      high_cholesterol: "High Cholesterol",
-      heart_disease: "Heart Disease",
-      asthma: "Asthma",
-      athritis: "Arthritis",
-      depression: "Depression",
-      anxiety: "Anxiety",
-      sleep_apnea: "Sleep Apnea",
-      thyroid_issue: "Thyroid Issue",
-    };
+    const allConditions = [
+      { key: "diabetes", label: "Diabetes" },
+      { key: "high_blood_pressure", label: "High Blood Pressure" },
+      { key: "high_cholesterol", label: "High Cholesterol" },
+      { key: "heart_disease", label: "Heart Disease" },
+      { key: "asthma", label: "Asthma" },
+      { key: "athritis", label: "Arthritis" },
+      { key: "depression", label: "Depression" },
+      { key: "anxiety", label: "Anxiety" },
+      { key: "sleep_apnea", label: "Sleep Apnea" },
+      { key: "thyroid_issue", label: "Thyroid Issue" },
+    ];
 
-    const activeConditions = Object.entries(conditionsMap)
-      .filter(
-        ([key]) =>
-          parsedHistory[key] === 1 ||
-          parsedHistory[key] === true ||
-          parsedHistory[key] === "1",
-      )
-      .map(([, label]) => label);
+    const activeList = allConditions.filter(
+      (c) =>
+        parsedHistory &&
+        (parsedHistory[c.key] === 1 ||
+          parsedHistory[c.key] === true ||
+          parsedHistory[c.key] === "1" ||
+          parsedHistory[c.key] === "true")
+    );
 
-    const medication = parsedHistory.current_medication;
-
-    if (activeConditions.length === 0 && !medication) {
-      return (
-        <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50/80 px-4 py-3 rounded-xl border border-emerald-100 text-xs font-semibold">
-          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-          <span>No chronic medical conditions or risk factors reported (Healthy profile)</span>
-        </div>
-      );
-    }
+    const medication = parsedHistory?.current_medication;
 
     return (
-      <div className="space-y-3">
-        {activeConditions.length > 0 && (
-          <div>
-            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
-              Identified Conditions & Considerations:
+      <div className="space-y-4">
+        {/* Overall Status Banner */}
+        {activeList.length > 0 ? (
+          <div className="flex items-center gap-2 text-amber-900 bg-amber-50 px-3.5 py-2.5 rounded-xl border border-amber-200 text-xs font-semibold">
+            <AlertCircle size={16} className="text-amber-600 shrink-0" />
+            <span>
+              {activeList.length} medical condition(s) reported by client. Please review carefully.
             </span>
-            <div className="flex flex-wrap gap-2">
-              {activeConditions.map((cond, i) => (
-                <span
-                  key={i}
-                  className="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs"
-                >
-                  {cond}
-                </span>
-              ))}
-            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-emerald-800 bg-emerald-50 px-3.5 py-2.5 rounded-xl border border-emerald-200 text-xs font-semibold">
+            <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+            <span>
+              No chronic medical conditions reported (All standard conditions marked clear)
+            </span>
           </div>
         )}
 
-        {medication && (
-          <div className="text-xs bg-white p-3 rounded-xl border border-purple-100">
-            <span className="font-bold text-gray-700 block mb-0.5">
-              Current Medication / Regimen:
+        {/* 10 Standard Conditions Intake Checklist */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
+              Medical Conditions Intake Checklist ({allConditions.length} Evaluated):
             </span>
-            <span className="text-gray-600 font-medium">{medication}</span>
+            <span className="text-[11px] font-semibold text-gray-400">
+              {activeList.length} Reported • {allConditions.length - activeList.length} Clear
+            </span>
           </div>
-        )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {allConditions.map((cond) => {
+              const isPositive =
+                parsedHistory &&
+                (parsedHistory[cond.key] === 1 ||
+                  parsedHistory[cond.key] === true ||
+                  parsedHistory[cond.key] === "1" ||
+                  parsedHistory[cond.key] === "true");
+
+              return (
+                <div
+                  key={cond.key}
+                  className={cn(
+                    "flex items-center justify-between px-3 py-2 rounded-xl border text-xs transition-all",
+                    isPositive
+                      ? "bg-rose-50/90 border-rose-200 text-rose-950 font-semibold"
+                      : "bg-white border-gray-150 text-gray-700 font-medium"
+                  )}
+                >
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "w-2 h-2 rounded-full shrink-0",
+                        isPositive ? "bg-rose-500" : "bg-emerald-400"
+                      )}
+                    />
+                    {cond.label}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0",
+                      isPositive
+                        ? "bg-rose-200 text-rose-800"
+                        : "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                    )}
+                  >
+                    {isPositive ? "Yes / Reported" : "No / Clear"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Current Medication */}
+        <div className="bg-white p-3.5 rounded-xl border border-purple-100 text-xs">
+          <span className="font-bold text-gray-700 block mb-1">
+            Current Medication / Regimen:
+          </span>
+          {medication ? (
+            <p className="text-purple-900 font-semibold bg-purple-50/70 px-3 py-2 rounded-lg border border-purple-100/90">
+              {medication}
+            </p>
+          ) : (
+            <p className="text-gray-400 italic">None reported</p>
+          )}
+        </div>
       </div>
     );
   };
 
-  return (
+    return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm">

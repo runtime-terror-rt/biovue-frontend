@@ -22,6 +22,21 @@ import { usePostActivityLogMutation } from "@/redux/features/api/userDashboard/a
 import { usePostHydrationLogMutation } from "@/redux/features/api/userDashboard/hydration";
 import { toast } from "sonner";
 import { triggerConfetti } from "@/lib/confetti";
+import { cn } from "@/lib/utils";
+
+const WORKOUT_TYPE_OPTIONS = [
+  "Cardio",
+  "Weight Lifting",
+  "Sprints",
+  "Yoga",
+  "Walking",
+  "Cycling",
+  "HIIT",
+  "Swimming",
+  "Pilates",
+  "Strength Training",
+  "Other",
+];
 
 interface LogHabitModalProps {
   isOpen: boolean;
@@ -57,6 +72,13 @@ export default function LogHabitModal({
     workout_calories: "",
   });
   const [weightUnit, setWeightUnit] = useState<"lbs" | "kg">("lbs");
+  const [selectedWorkoutTypes, setSelectedWorkoutTypes] = useState<string[]>([]);
+
+  const toggleWorkoutType = (wType: string) => {
+    setSelectedWorkoutTypes((prev) =>
+      prev.includes(wType) ? prev.filter((t) => t !== wType) : [...prev, wType]
+    );
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -118,7 +140,16 @@ export default function LogHabitModal({
         payload.unit = weightUnit === "kg" ? "metric" : "imperial";
       } else if (type === "activity") {
         payload.daily_steps = Number(formData.daily_steps) || 0;
-        if (formData.workout_type) payload.workout_type = formData.workout_type;
+        if (selectedWorkoutTypes.length > 0) {
+          payload.workout_type = selectedWorkoutTypes.join(", ");
+          payload.workouts = selectedWorkoutTypes.map((wt) => ({
+            type: wt,
+            time: formData.workout_time ? Number(formData.workout_time) : null,
+            calories: formData.workout_calories ? Number(formData.workout_calories) : null,
+          }));
+        } else if (formData.workout_type) {
+          payload.workout_type = formData.workout_type;
+        }
         if (formData.workout_time) payload.workout_time = Number(formData.workout_time);
         if (formData.workout_calories) payload.workout_calories = Number(formData.workout_calories);
       } else if (type === "sleep") {
@@ -326,51 +357,103 @@ export default function LogHabitModal({
                   </div>
                 )}
 
-                {/* Steps (Mandatory - Activity only) */}
+                {/* Steps (Mandatory - Activity only) - Full Width */}
                 {habitType.toLowerCase() === "activity" && (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
-                      <Footprints size={14} className="text-[#3A86FF]" />
-                      Daily Steps
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="daily_steps"
-                      value={formData.daily_steps}
-                      onChange={handleChange}
-                      placeholder="Enter steps (e.g. 8000)..."
-                      className="w-full bg-gray-50/70 border border-gray-200 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300"
-                    />
+                  <div className="flex flex-col gap-2.5 md:col-span-2">
+                    <div className="flex items-center justify-between ml-1">
+                      <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider flex items-center gap-2">
+                        <Footprints size={15} className="text-[#3A86FF]" />
+                        Daily Steps <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-xs text-gray-400 font-semibold">
+                        Recommended: 8,000 - 10,000 steps
+                      </span>
+                    </div>
+                    <div className="relative flex items-center">
+                      <input
+                        type="number"
+                        name="daily_steps"
+                        value={formData.daily_steps}
+                        onChange={handleChange}
+                        placeholder="Enter steps (e.g. 8000)..."
+                        className="w-full bg-gray-50/70 border border-gray-200 rounded-2xl px-5 py-3.5 text-[#1F2D2E] text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder:text-gray-300 pr-20"
+                      />
+                      <span className="absolute right-5 text-xs font-bold text-gray-400 uppercase tracking-wider pointer-events-none">
+                        Steps
+                      </span>
+                    </div>
+                    {/* Quick Step Presets */}
+                    <div className="flex items-center gap-2 flex-wrap pt-0.5 ml-1">
+                      <span className="text-xs text-gray-400 font-semibold">Quick Add:</span>
+                      {[1000, 2500, 5000].map((stepAdd) => (
+                        <button
+                          key={stepAdd}
+                          type="button"
+                          onClick={() => {
+                            const cur = parseInt(formData.daily_steps) || 0;
+                            const next = cur + stepAdd;
+                            setFormData((prev) => ({
+                              ...prev,
+                              daily_steps: next.toString(),
+                            }));
+                          }}
+                          className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-200 bg-white hover:bg-blue-50 text-gray-600 hover:text-[#3A86FF] transition-all cursor-pointer shadow-2xs active:scale-95"
+                        >
+                          +{stepAdd.toLocaleString()}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            daily_steps: "8000",
+                          }));
+                        }}
+                        className="px-2.5 py-1 text-xs font-bold rounded-lg border border-blue-200 bg-blue-50/70 text-[#3A86FF] hover:bg-blue-100 transition-all cursor-pointer shadow-2xs active:scale-95"
+                      >
+                        Goal: 8,000
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {/* Workout Type Dropdown (Activity only) */}
+                {/* Workout Types (Select Multiple Buttons - Activity only) */}
                 {habitType.toLowerCase() === "activity" && (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider ml-1 flex items-center gap-2">
-                      <Dumbbell size={14} className="text-[#3A86FF]" />
-                      Workout Type (Optional)
-                    </label>
-                    <select
-                      name="workout_type"
-                      value={formData.workout_type}
-                      onChange={handleChange}
-                      className="w-full bg-gray-50/70 border border-gray-200 rounded-xl px-4 py-3 text-[#1F2D2E] text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all cursor-pointer"
-                    >
-                      <option value="">Select Workout Type...</option>
-                      <option value="Cardio">Cardio</option>
-                      <option value="Weight Lifting">Weight Lifting</option>
-                      <option value="Sprints">Sprints</option>
-                      <option value="Yoga">Yoga</option>
-                      <option value="Walking">Walking</option>
-                      <option value="Cycling">Cycling</option>
-                      <option value="HIIT">HIIT</option>
-                      <option value="Swimming">Swimming</option>
-                      <option value="Pilates">Pilates</option>
-                      <option value="Strength Training">Strength Training</option>
-                      <option value="Other">Other Workout</option>
-                    </select>
+                  <div className="flex flex-col gap-2.5 md:col-span-2 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                    <div className="flex items-center justify-between ml-1">
+                      <label className="text-[13px] font-bold text-[#5F6F73] uppercase tracking-wider flex items-center gap-2">
+                        <Dumbbell size={15} className="text-[#3A86FF]" />
+                        Workout Types (Select Multiple - Optional)
+                      </label>
+                      <span className="text-xs text-gray-400 font-semibold">
+                        {selectedWorkoutTypes.length > 0
+                          ? `${selectedWorkoutTypes.length} selected`
+                          : "Select all that apply"}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {WORKOUT_TYPE_OPTIONS.map((wType) => {
+                        const isSelected = selectedWorkoutTypes.includes(wType);
+                        return (
+                          <button
+                            key={wType}
+                            type="button"
+                            onClick={() => toggleWorkoutType(wType)}
+                            className={cn(
+                              "px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-2xs",
+                              isSelected
+                                ? "bg-[#0FA4A9] text-white border-[#0FA4A9] shadow-xs"
+                                : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+                            )}
+                          >
+                            <span className="font-bold">{isSelected ? "✓" : "+"}</span>
+                            <span>{wType}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 

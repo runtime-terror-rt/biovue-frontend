@@ -44,7 +44,12 @@ import {
   ChevronDown,
   Check,
   Crown,
+  Lock,
+  Eye,
+  EyeOff,
+  KeyRound,
 } from "lucide-react";
+import { useChangePasswordMutation } from "@/redux/features/api/auth/authApi";
 import { cn, getFullImageUrl } from "@/lib/utils";
 import FreeTrialPlanModal from "@/components/pricing/FreeTrialPlanModal";
 import { isFreeTrialPlan } from "@/lib/planType";
@@ -376,6 +381,35 @@ const SettingsPage = () => {
               Manage Plan
             </button>
           </div>
+
+          {/* Password & Security */}
+          <div className="p-6 flex items-center justify-between hover:bg-gray-50/50 transition-colors border-t border-gray-50">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#F8FAFB] flex items-center justify-center text-[#94A3B8]">
+                <Lock size={20} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-[#1F2D2E]">
+                  Password & Security
+                </span>
+                <span className="text-[11px] text-[#5F6F73] font-medium">
+                  Update your account password
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setView("profile");
+                setTimeout(() => {
+                  const el = document.getElementById("password-section");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }, 300);
+              }}
+              className="text-[#3A86FF] text-xs font-bold hover:underline cursor-pointer"
+            >
+              Change Password
+            </button>
+          </div>
         </div>
       </section>
 
@@ -637,6 +671,68 @@ const ProfileEditView = ({
     useFetchInsightsMutation();
   const [fetchFutureInsights, { isLoading: isFetchingFutureInsights }] =
     useFetchFutureInsightsMutation();
+  const [changePassword, { isLoading: isChangingPassword }] =
+    useChangePasswordMutation();
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handlePasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!passwordData.currentPassword) {
+      toast.error("Please enter your current password");
+      return;
+    }
+    if (!passwordData.newPassword) {
+      toast.error("Please enter a new password");
+      return;
+    }
+    if (passwordData.newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters");
+      return;
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New password and confirm password do not match");
+      return;
+    }
+
+    try {
+      const res = await changePassword({
+        current_password: passwordData.currentPassword,
+        new_password: passwordData.newPassword,
+        new_password_confirmation: passwordData.confirmPassword,
+      }).unwrap();
+
+      toast.success(res.message || "Password changed successfully!");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error: any) {
+      const errorMsg =
+        error?.data?.message ||
+        error?.data?.error ||
+        (error?.data?.errors
+          ? Object.values(error.data.errors).flat().join(", ")
+          : "Failed to change password. Please check your current password.");
+      toast.error(errorMsg);
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: currentUser?.name || "",
@@ -728,7 +824,12 @@ const ProfileEditView = ({
         thyroid_issue: m?.thyroid_issue || 0,
         current_medication: m?.current_medication || "",
         profile_id: p?.id?.toString() || "",
-        unit_system: p?.unit_system || "imperial",
+        unit_system:
+          p?.unit === "metric" || p?.unit_system === "metric"
+            ? "metric"
+            : (p?.unit === "imperial" || p?.unit_system === "imperial"
+                ? "imperial"
+                : (p?.height && Number(p.height) > 110 ? "metric" : "imperial")),
       });
 
       if (p?.image) {
@@ -782,6 +883,44 @@ const ProfileEditView = ({
       updated[field] = 1;
 
       return updated;
+    });
+  };
+
+  const handleToggleUnit = (newUnit: "metric" | "imperial") => {
+    if (newUnit === formData.unit_system) return;
+
+    setFormData((prev) => {
+      let newHeight = prev.height;
+      let newWeight = prev.weight;
+
+      if (prev.height && !isNaN(Number(prev.height))) {
+        const val = Number(prev.height);
+        if (newUnit === "imperial") {
+          // cm to inches
+          newHeight = (Math.round((val / 2.54) * 10) / 10).toString();
+        } else {
+          // inches to cm
+          newHeight = (Math.round((val * 2.54) * 10) / 10).toString();
+        }
+      }
+
+      if (prev.weight && !isNaN(Number(prev.weight))) {
+        const val = Number(prev.weight);
+        if (newUnit === "imperial") {
+          // kg to lbs
+          newWeight = (Math.round((val * 2.20462) * 10) / 10).toString();
+        } else {
+          // lbs to kg
+          newWeight = (Math.round((val / 2.20462) * 10) / 10).toString();
+        }
+      }
+
+      return {
+        ...prev,
+        unit_system: newUnit,
+        height: newHeight,
+        weight: newWeight,
+      };
     });
   };
 
@@ -990,31 +1129,87 @@ const ProfileEditView = ({
             </div>
           </div>
 
+          {/* Measurement System Switcher */}
+          <div className="flex items-center justify-between col-span-full border-t border-gray-100 pt-4">
+            <div>
+              <span className="text-xs font-bold text-[#1F2D2E] uppercase tracking-wider">
+                Measurement System
+              </span>
+              <p className="text-[11px] text-[#94A3B8]">Choose between Metric and Imperial units</p>
+            </div>
+            <div className="flex items-center p-0.5 bg-gray-100 rounded-lg border border-gray-200">
+              <button
+                type="button"
+                onClick={() => handleToggleUnit("metric")}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                  formData.unit_system === "metric"
+                    ? "bg-white text-[#3A86FF] shadow-xs font-bold"
+                    : "text-gray-500 hover:text-gray-900"
+                )}
+              >
+                Metric (cm, kg)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleUnit("imperial")}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer",
+                  formData.unit_system === "imperial"
+                    ? "bg-white text-[#3A86FF] shadow-xs font-bold"
+                    : "text-gray-500 hover:text-gray-900"
+                )}
+              >
+                Imperial (in, lbs)
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-3">
-              <label className="text-xs text-[#5F6F73] font-bold uppercase tracking-widest">
-                HEIGHT ({formData.unit_system === "metric" ? "metric (cm)" : "imperial (inch)"})
-              </label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-[#5F6F73] font-bold uppercase tracking-widest">
+                  Height ({formData.unit_system === "metric" ? "cm" : "inch"})
+                </label>
+                {formData.height && !isNaN(Number(formData.height)) && Number(formData.height) > 0 && (
+                  <span className="text-[11px] font-medium text-[#3A86FF] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                    ≈ {formData.unit_system === "metric"
+                      ? `${Math.round((Number(formData.height) / 2.54) * 10) / 10} in (${Math.floor(Number(formData.height) / 30.48)}'${Math.round((Number(formData.height) % 30.48) / 2.54)}")`
+                      : `${Math.round(Number(formData.height) * 2.54)} cm`}
+                  </span>
+                )}
+              </div>
               <input
                 type="number"
                 step="any"
                 name="height"
                 value={formData.height}
                 onChange={handleInputChange}
-                className="w-full bg-white border border-gray-200 rounded-[12px] py-4 px-6 text-sm md:text-base outline-none"
+                placeholder={formData.unit_system === "metric" ? "175" : "68.9"}
+                className="w-full bg-white border border-gray-200 rounded-[12px] py-4 px-6 text-sm md:text-base outline-none focus:ring-2 focus:ring-[#3A86FF]/10 transition-all"
               />
             </div>
-            <div className="flex flex-col gap-3">
-              <label className="text-xs text-[#5F6F73] font-bold uppercase tracking-widest">
-                WEIGHT ({formData.unit_system === "metric" ? "metric (kg)" : "imperial (lbs)"})
-              </label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-[#5F6F73] font-bold uppercase tracking-widest">
+                  Weight ({formData.unit_system === "metric" ? "kg" : "lbs"})
+                </label>
+                {formData.weight && !isNaN(Number(formData.weight)) && Number(formData.weight) > 0 && (
+                  <span className="text-[11px] font-medium text-[#3A86FF] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                    ≈ {formData.unit_system === "metric"
+                      ? `${Math.round(Number(formData.weight) * 2.20462 * 10) / 10} lbs`
+                      : `${Math.round((Number(formData.weight) / 2.20462) * 10) / 10} kg`}
+                  </span>
+                )}
+              </div>
               <input
                 type="number"
                 step="any"
                 name="weight"
                 value={formData.weight}
                 onChange={handleInputChange}
-                className="w-full bg-white border border-gray-200 rounded-[12px] py-4 px-6 text-sm md:text-base outline-none"
+                placeholder={formData.unit_system === "metric" ? "70" : "154"}
+                className="w-full bg-white border border-gray-200 rounded-[12px] py-4 px-6 text-sm md:text-base outline-none focus:ring-2 focus:ring-[#3A86FF]/10 transition-all"
               />
             </div>
           </div>
@@ -1277,6 +1472,135 @@ const ProfileEditView = ({
             className="w-full bg-white border border-gray-200 rounded-[12px] p-6 text-sm outline-none resize-none"
           />
         </div>
+      </div>
+
+      {/* Security & Password Section */}
+      <div
+        id="password-section"
+        className="bg-white rounded-[24px] p-8 border border-[#3A86FF]/20 shadow-sm flex flex-col gap-6"
+      >
+        <div className="flex items-center justify-between border-b border-gray-100 pb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#EAFBF7] flex items-center justify-center text-[#0FA4A9]">
+              <Lock size={20} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-[#1F2D2E]">
+                Security & Password
+              </h2>
+              <p className="text-xs text-[#5F6F73] font-medium mt-0.5">
+                Update your account password to keep your profile secure
+              </p>
+            </div>
+          </div>
+          <span className="hidden sm:inline-flex text-[11px] font-semibold text-[#0FA4A9] bg-[#EAFBF7] px-3 py-1 rounded-full border border-[#0FA4A9]/20">
+            Min. 8 characters
+          </span>
+        </div>
+
+        <form onSubmit={handleUpdatePassword} className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Current Password */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs text-[#5F6F73] font-bold uppercase tracking-wider">
+                Current Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showCurrentPassword ? "text" : "password"}
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter current password"
+                  className="w-full bg-white border border-gray-200 rounded-[12px] py-3.5 pl-4 pr-11 text-sm outline-none focus:ring-2 focus:ring-[#0FA4A9]/20 focus:border-[#0FA4A9] transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* New Password */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs text-[#5F6F73] font-bold uppercase tracking-wider">
+                New Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="At least 8 characters"
+                  className="w-full bg-white border border-gray-200 rounded-[12px] py-3.5 pl-4 pr-11 text-sm outline-none focus:ring-2 focus:ring-[#0FA4A9]/20 focus:border-[#0FA4A9] transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                >
+                  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm New Password */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs text-[#5F6F73] font-bold uppercase tracking-wider">
+                Confirm New Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Re-enter new password"
+                  className="w-full bg-white border border-gray-200 rounded-[12px] py-3.5 pl-4 pr-11 text-sm outline-none focus:ring-2 focus:ring-[#0FA4A9]/20 focus:border-[#0FA4A9] transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <p className="text-[11px] text-[#94A3B8]">
+              Password must be at least 8 characters long and match confirmation.
+            </p>
+            <button
+              type="submit"
+              disabled={isChangingPassword}
+              className="bg-[#1F2D2E] text-white px-6 py-3 rounded-[10px] text-xs font-bold hover:bg-black transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shrink-0 shadow-sm"
+            >
+              {isChangingPassword ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Password"
+              )}
+            </button>
+          </div>
+        </form>
       </div>
 
       <div className="flex items-center gap-4">

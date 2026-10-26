@@ -16,6 +16,11 @@ export type SubscriptionStatus = {
   isLoading: boolean;
   projection_limit: number;
   member_limit: number;
+  used_seats: number;
+  total_seats: number;
+  remaining_seats: number;
+  seats_ratio: string;
+  seats_left: number;
   diffDays: number;
   hasExpiry: boolean;
   expiryOver: boolean;
@@ -57,6 +62,11 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
     isLoading: true,
     projection_limit: 0,
     member_limit: 0,
+    used_seats: 0,
+    total_seats: 0,
+    remaining_seats: 0,
+    seats_ratio: "0/0",
+    seats_left: 0,
     diffDays: 0,
     hasExpiry: false,
     expiryOver: false,
@@ -104,6 +114,31 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
       : typeof latestPayment?.plan?.member_limit === "number"
       ? latestPayment.plan.member_limit
       : 0;
+
+  const usedSeats =
+    typeof limitData?.used_seats === "number"
+      ? limitData.used_seats
+      : 0;
+
+  const totalSeats =
+    typeof limitData?.total_seats === "number"
+      ? limitData.total_seats
+      : typeof latestPayment?.plan?.member_limit === "number" && latestPayment.plan.member_limit > 0
+      ? latestPayment.plan.member_limit
+      : memberLimit > 0
+      ? memberLimit
+      : 0;
+
+  const remainingSeats =
+    typeof limitData?.remaining_seats === "number"
+      ? limitData.remaining_seats
+      : typeof limitData?.seats_left === "number"
+      ? limitData.seats_left
+      : Math.max(0, totalSeats - usedSeats);
+
+  const seatsRatio =
+    limitData?.seats_ratio ||
+    (totalSeats > 0 ? `${usedSeats}/${totalSeats}` : `${usedSeats}/${memberLimit || 0}`);
 
   // Cancellation state detection
   const isCancelled = Boolean(
@@ -196,6 +231,11 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
       isLoading: false,
       projection_limit: projectionLimit,
       member_limit: memberLimit,
+      used_seats: usedSeats,
+      total_seats: totalSeats,
+      remaining_seats: remainingSeats,
+      seats_ratio: seatsRatio,
+      seats_left: remainingSeats,
       diffDays,
       hasExpiry: true,
       expiryOver,
@@ -225,6 +265,11 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
     isLoading: false,
     projection_limit: projectionLimit,
     member_limit: memberLimit,
+    used_seats: usedSeats,
+    total_seats: totalSeats,
+    remaining_seats: remainingSeats,
+    seats_ratio: seatsRatio,
+    seats_left: remainingSeats,
     diffDays: isPaid ? 30 : Math.max(0, Math.ceil(7 - diffInDays)),
     hasExpiry: isCancelled,
     expiryOver: false,

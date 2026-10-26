@@ -1429,6 +1429,40 @@ const OnboardingStepsPage = () => {
 
   const handleUnitChange = (newUnit: "imperial" | "metric") => {
     if (newUnit === unitSystem) return;
+
+    setFormData((prev) => {
+      let newHeight = prev.height;
+      let newWeight = prev.weight;
+
+      if (prev.height && !isNaN(Number(prev.height))) {
+        const val = Number(prev.height);
+        if (newUnit === "imperial") {
+          // cm to inches
+          newHeight = (Math.round((val / 2.54) * 10) / 10).toString();
+        } else {
+          // inches to cm
+          newHeight = (Math.round((val * 2.54) * 10) / 10).toString();
+        }
+      }
+
+      if (prev.weight && !isNaN(Number(prev.weight))) {
+        const val = Number(prev.weight);
+        if (newUnit === "imperial") {
+          // kg to lbs
+          newWeight = (Math.round((val * 2.20462) * 10) / 10).toString();
+        } else {
+          // lbs to kg
+          newWeight = (Math.round((val / 2.20462) * 10) / 10).toString();
+        }
+      }
+
+      return {
+        ...prev,
+        height: newHeight,
+        weight: newWeight,
+      };
+    });
+
     setUnitSystem(newUnit);
   };
   console.log(user, "user");

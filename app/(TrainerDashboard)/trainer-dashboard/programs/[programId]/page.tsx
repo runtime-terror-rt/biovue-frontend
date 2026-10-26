@@ -52,6 +52,9 @@ export default function ProgramDetailsPage() {
         focusCount: program.focus_areas?.length ?? 0,
         habitFocus: program.habit_focus ?? [],
         programFocus: program.program_focus ?? [],
+        workoutTypes: program.workout_types ?? [],
+        workoutRoutine: program.description ?? "",
+        notes: program.notes ?? "",
         wellnessMacros: {
           calories: program.calories ?? 0,
           protein: program.protein ?? 0,

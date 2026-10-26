@@ -16,9 +16,9 @@ export default function StatCards({ stats, isLoading }: StatCardsProps) {
   const statCardsData = [
     {
       icon: <Users className="w-6 h-6" />,
-      number: stats?.active_clients?.value || 0,
+      number: stats?.seats?.ratio || stats?.active_clients?.value || 0,
       label: stats?.active_clients?.label || "Active Clients",
-      description: "Currently coached",
+      description: stats?.seats?.label || "Currently coached",
       key: "active_clients",
     },
     {

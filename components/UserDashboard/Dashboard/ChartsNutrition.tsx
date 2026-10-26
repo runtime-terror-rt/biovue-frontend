@@ -43,6 +43,7 @@ interface ChartsNutritionProps {
   isLoading?: boolean;
   isStressLoading?: boolean;
   isHydrationLoading?: boolean;
+  unitSystem?: "metric" | "imperial";
 }
 
 // --- ChartCard Component ---
@@ -91,7 +92,10 @@ export default function ChartsNutrition({
   isLoading,
   isStressLoading,
   isHydrationLoading,
+  unitSystem = "imperial",
 }: ChartsNutritionProps) {
+  const weightUnit = unitSystem === "metric" ? "kg" : "lbs";
+
   // Memoize data transformations for base overview charts
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -118,8 +122,8 @@ export default function ChartsNutrition({
     if (validWeights.length < 2) return null;
     const diff =
       validWeights[validWeights.length - 1].weight - validWeights[0].weight;
-    return `${diff > 0 ? "+" : ""}${diff.toFixed(1)} lbs`;
-  }, [data]);
+    return `${diff > 0 ? "+" : ""}${diff.toFixed(1)} ${weightUnit}`;
+  }, [data, weightUnit]);
 
   // Transform Hydration Data
   const hydrationChartData = useMemo(() => {
@@ -209,7 +213,7 @@ export default function ChartsNutrition({
         <ChartCard
           title="Weight Progress"
           subtitle="Real-time biological mass tracking"
-          total={weightProgress || "-- lbs"}
+          total={weightProgress || `-- ${weightUnit}`}
           totalLabel="Period Progress"
           icon={<Scale size={16} />}
           iconBg="bg-blue-50 text-[#3A86FF]"

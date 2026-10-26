@@ -7,8 +7,17 @@ export interface StatItem {
   label: string;
 }
 
+export interface TrainerSeats {
+  used: number;
+  total: number;
+  remaining: number;
+  ratio: string;
+  label: string;
+}
+
 export interface TrainerStats {
   active_clients: StatItem;
+  seats?: TrainerSeats;
   needing_attention: StatItem;
   pending_messages: StatItem;
   todays_checkins: StatItem;
