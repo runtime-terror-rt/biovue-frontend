@@ -879,8 +879,8 @@ const ProjectionsPage = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {renderProjectionCard(data.projections_data.current_lifestyle, false)}
-          {renderProjectionCard(data.projections_data.future_goal, true)}
+          {renderProjectionCard(data.projections.current_lifestyle, false)}
+          {renderProjectionCard(data.projections.future_goal, true)}
         </div>
 
         {/* Results Actions */}

@@ -16,8 +16,7 @@ export interface CombinedProjectionResponse {
     user_id: number;
     input_image: string;
     timeframe: string;
-    resolution: string;
-    projections_data: {
+    projections: {
       current_lifestyle: IndividualProjection;
       future_goal: IndividualProjection;
     };
