@@ -23,6 +23,7 @@ import CoachActions from "./sections/CoachActions";
 import ProgressTrends from "./sections/ProgressTrends";
 import CoachNotes from "./sections/CoachNotes";
 import VisibilityControls from "./sections/ProgressSettings";
+import ProjectionGallery from "@/components/dashboard/ProjectionGallery";
 
 import { ClientDetails } from "../overview/data";
 
@@ -279,7 +280,11 @@ export default function ClientDetailsContent({
           <CoachActions clientDetails={clientDetails} />
           <ProgressTrends clientId={clientDetails.id as any} />
           <CoachNotes userId={clientDetails.id} />
-          {/* <VisibilityControls /> */}
+          {/* Client Projections Gallery */}
+          <div className="pt-2">
+            <h2 className="text-xl font-medium text-[#111827] mb-4">Client Projection Results</h2>
+            <ProjectionGallery targetUserId={clientDetails.id} />
+          </div>
         </div>
 
         {/* Sidebar */}

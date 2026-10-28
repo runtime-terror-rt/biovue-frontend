@@ -98,7 +98,21 @@ export const walkInClientApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Users"],
     }),
+    updateWalkInClient: builder.mutation<
+      WalkInClientResponse,
+      { id: number; data: Partial<WalkInClientPayload> }
+    >({
+      query: ({ id, data }) => ({
+        url: `/supplier/walk-in-client/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Users"],
+    }),
   }),
 });
 
-export const { useCreateWalkInClientMutation } = walkInClientApi;
+export const {
+  useCreateWalkInClientMutation,
+  useUpdateWalkInClientMutation,
+} = walkInClientApi;

@@ -257,13 +257,14 @@ export default function CoachingDashboard() {
                 </div>
                 <div>
                   <label className="text-base font-medium text-[#6B7280]">
-                    Hydration Target (L)
+                    Hydration Target (oz)
                   </label>
                   <div className="mt-2">
                     <input
                       type="number"
                       value={hydration}
-                      step="0.5"
+                      step="1"
+                      placeholder="64"
                       onChange={(e) => setHydration(Number(e.target.value))}
                       className="w-full rounded border border-[#D1D5DB] bg-white px-3 py-2 text-base font-semibold text-[#5F6F73]"
                     />

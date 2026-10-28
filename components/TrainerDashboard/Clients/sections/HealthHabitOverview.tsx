@@ -96,7 +96,8 @@ export default function HealthHabitOverview({
       icon: Scale,
     },
     {
-      title: "Nutrition Quality",
+      title: "Nutrition Adherence",
+      subtitle: "Target calorie completion",
       value:
         apiMetrics.nutrition_quality !== null
           ? `${apiMetrics.nutrition_quality}`
@@ -154,6 +155,11 @@ export default function HealthHabitOverview({
               <p className="text-base text-[#5F6F73] font-medium">
                 {card.title}
               </p>
+              {card.subtitle && (
+                <p className="text-[11px] text-[#9CA3AF] -mt-1 font-normal">
+                  {card.subtitle}
+                </p>
+              )}
               <div className="space-y-3">
                 <h3 className="text-2xl font-semibold text-[#111827]">
                   {card.value}

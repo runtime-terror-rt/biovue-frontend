@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   User,
@@ -22,12 +22,15 @@ import {
 import { toast } from "sonner";
 import {
   useCreateWalkInClientMutation,
+  useUpdateWalkInClientMutation,
   WalkInClientPayload,
 } from "@/redux/features/api/SupplierDashboard/WalkInClient";
+import { User as SupplierUser } from "@/redux/features/api/SupplierDashboard/AllUsers";
 
 interface WalkInClientModalProps {
   isOpen: boolean;
   onClose: () => void;
+  editingUser?: SupplierUser | null;
 }
 
 const COMMON_SUPPLEMENTS = [
@@ -75,10 +78,63 @@ const INITIAL_FORM_STATE: WalkInClientPayload = {
 export default function WalkInClientModal({
   isOpen,
   onClose,
+  editingUser,
 }: WalkInClientModalProps) {
+  const isEditMode = Boolean(editingUser);
   const [formData, setFormData] = useState<WalkInClientPayload>(INITIAL_FORM_STATE);
   const [customSupplement, setCustomSupplement] = useState("");
-  const [createWalkInClient, { isLoading }] = useCreateWalkInClientMutation();
+  const [createWalkInClient, { isLoading: isCreating }] = useCreateWalkInClientMutation();
+  const [updateWalkInClient, { isLoading: isUpdating }] = useUpdateWalkInClientMutation();
+  const isLoading = isCreating || isUpdating;
+
+  useEffect(() => {
+    if (editingUser) {
+      const p = editingUser.profile;
+      const g = Array.isArray(editingUser.target_goals)
+        ? editingUser.target_goals[0]
+        : editingUser.target_goals;
+
+      let supplements: string[] = ["Whey Protein", "Creatine"];
+      if (g?.supplement_recommendation) {
+        if (Array.isArray(g.supplement_recommendation)) {
+          supplements = g.supplement_recommendation;
+        } else if (typeof g.supplement_recommendation === "string") {
+          try {
+            const parsed = JSON.parse(g.supplement_recommendation);
+            if (Array.isArray(parsed)) supplements = parsed;
+            else supplements = [g.supplement_recommendation];
+          } catch {
+            supplements = g.supplement_recommendation
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+          }
+        }
+      }
+
+      setFormData({
+        name: editingUser.name || "",
+        email: editingUser.email || "",
+        phone: editingUser.phone || "",
+        unit: (p?.unit as "imperial" | "metric") || "imperial",
+        height: p?.height ? Number(p.height) : 5.9,
+        weight: p?.weight ? Number(p.weight) : 75,
+        age: p?.age ? Number(p.age) : 28,
+        sex: (p?.sex as "male" | "female" | "other") || "male",
+        body_goal: p?.notes || p?.body_goal || "Muscle Gain and Fat Loss",
+        target_weight: g?.target_weight ? Number(g.target_weight) : 70,
+        daily_step_goal: g?.daily_step_goal ? Number(g.daily_step_goal) : 10000,
+        is_athletic: Boolean(p?.is_athletic),
+        toned: Boolean(p?.toned),
+        lean: Boolean(p?.lean),
+        muscular: Boolean(p?.muscular),
+        curvy_fit: Boolean(p?.curvy_fit),
+        supplement_recommendation: supplements.length > 0 ? supplements : ["Whey Protein", "Creatine"],
+      });
+    } else {
+      setFormData(INITIAL_FORM_STATE);
+    }
+  }, [editingUser, isOpen]);
 
   if (!isOpen) return null;
 
@@ -194,19 +250,38 @@ export default function WalkInClientModal({
       supplement_recommendation: formData.supplement_recommendation,
     };
 
-    try {
-      const res = await createWalkInClient(payload).unwrap();
-      toast.success(res.message || "Walk-in client profile created successfully!");
-      setFormData(INITIAL_FORM_STATE);
-      onClose();
-    } catch (err: unknown) {
-      console.error("Failed to create walk-in client:", err);
-      const apiErr = err as { data?: { message?: string; error?: string } };
-      toast.error(
-        apiErr?.data?.message ||
-          apiErr?.data?.error ||
-          "Failed to create walk-in client. Please try again."
-      );
+    if (isEditMode && editingUser) {
+      try {
+        const res = await updateWalkInClient({
+          id: editingUser.id,
+          data: payload,
+        }).unwrap();
+        toast.success(res.message || "Client profile updated successfully!");
+        onClose();
+      } catch (err: unknown) {
+        console.error("Failed to update walk-in client:", err);
+        const apiErr = err as { data?: { message?: string; error?: string } };
+        toast.error(
+          apiErr?.data?.message ||
+            apiErr?.data?.error ||
+            "Failed to update client profile. Please try again."
+        );
+      }
+    } else {
+      try {
+        const res = await createWalkInClient(payload).unwrap();
+        toast.success(res.message || "Walk-in client profile created successfully!");
+        setFormData(INITIAL_FORM_STATE);
+        onClose();
+      } catch (err: unknown) {
+        console.error("Failed to create walk-in client:", err);
+        const apiErr = err as { data?: { message?: string; error?: string } };
+        toast.error(
+          apiErr?.data?.message ||
+            apiErr?.data?.error ||
+            "Failed to create walk-in client. Please try again."
+        );
+      }
     }
   };
 
@@ -231,14 +306,16 @@ export default function WalkInClientModal({
             <div>
               <div className="flex items-center gap-2">
                 <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                  Supplier Direct Intake
+                  {isEditMode ? "Client Profile Modification" : "Supplier Direct Intake"}
                 </span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">
-                Add Walk-in Client
+                {isEditMode ? `Edit Client: ${editingUser?.name || "Profile"}` : "Add Walk-in Client"}
               </h2>
               <p className="text-white/85 text-xs sm:text-sm font-medium mt-0.5">
-                Register a client in-store, configure body goals, and prescribe target supplements.
+                {isEditMode
+                  ? "Update client physique measurements, fitness goals, and supplement recommendations as they progress."
+                  : "Register a client in-store, configure body goals, and prescribe target supplements."}
               </p>
             </div>
           </div>
@@ -689,12 +766,12 @@ export default function WalkInClientModal({
               {isLoading ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  Creating Client Profile...
+                  {isEditMode ? "Saving Changes..." : "Creating Client Profile..."}
                 </>
               ) : (
                 <>
                   <Sparkles size={18} />
-                  Register Walk-in Client
+                  {isEditMode ? "Save Changes" : "Register Walk-in Client"}
                 </>
               )}
             </button>

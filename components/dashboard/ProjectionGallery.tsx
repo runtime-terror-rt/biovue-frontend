@@ -25,10 +25,12 @@ type ProjectionItem = ProjectionGalleryResponse["data"][0];
 
 const getFullUrl = (url?: string) => {
   if (!url) return "";
-  if (url.startsWith("http")) return url;
-  const base = "https://ai.biovuedigitalwellness.com";
-  const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
-  return `${base}${normalizedUrl}`;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const clean = url.startsWith("/") ? url.slice(1) : url;
+  if (clean.startsWith("storage/")) {
+    return `https://api.biovuedigitalwellness.com/${clean}`;
+  }
+  return `https://ai.biovuedigitalwellness.com/${clean}`;
 };
 
 const formatDateShort = (dateString: string) => {
@@ -48,12 +50,16 @@ const formatDateShort = (dateString: string) => {
   }
 };
 
-export default function ProjectionGallery() {
+export default function ProjectionGallery({
+  targetUserId,
+}: {
+  targetUserId?: string | number;
+} = {}) {
   const user = useAppSelector(selectCurrentUser);
-  const userId = user?.id || user?.user_id || "";
+  const effectiveUserId = targetUserId || user?.id || user?.user_id || "";
 
-  const { data, isLoading } = useGetProjectionGalleryQuery(userId, {
-    skip: !userId,
+  const { data, isLoading } = useGetProjectionGalleryQuery(effectiveUserId, {
+    skip: !effectiveUserId,
   });
 
   const [selectedProjection, setSelectedProjection] =

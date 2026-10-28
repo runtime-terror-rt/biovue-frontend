@@ -10,11 +10,13 @@ import {
   Calendar,
   Target,
   Bell,
+  Edit,
 } from "lucide-react";
 import { User } from "@/redux/features/api/SupplierDashboard/AllUsers";
 import SupplementMatchModal from "./SupplementMatchModal";
 import TargetGoalsModal from "./TargetGoalsModal";
 import NotifyClientModal from "./NotifyClientModal";
+import WalkInClientModal from "./WalkInClientModal";
 
 const getSafeImageSrc = (src: string | null | undefined) => {
   if (!src) return null;
@@ -69,6 +71,8 @@ export default function ClientTable({ users }: ClientTableProps) {
   const [matchingUserId, setMatchingUserId] = useState<number | null>(null);
   const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
   const [notifyUser, setNotifyUser] = useState<User | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<User | null>(null);
 
   const [findMatch, { isLoading: isMatching }] = useFindMatchMutation();
 
@@ -113,6 +117,11 @@ export default function ClientTable({ users }: ClientTableProps) {
   const handleNotifyClient = (user: User) => {
     setNotifyUser(user);
     setIsNotifyModalOpen(true);
+  };
+
+  const handleEditClient = (user: User) => {
+    setEditingClient(user);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -240,14 +249,23 @@ export default function ClientTable({ users }: ClientTableProps) {
                     </div>
                   </TableCell>
                   <TableCell className="px-8 py-6 text-center">
-                    <div className="flex items-center justify-center gap-2.5">
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        onClick={() => handleEditClient(user)}
+                        className="bg-white hover:bg-[#0FA4A9] text-[#0FA4A9] hover:text-white border-2 border-[#0FA4A9]/20 hover:border-[#0FA4A9] rounded-2xl px-3.5 py-2 h-auto text-xs font-bold flex items-center gap-1.5 transition-all group active:scale-95 cursor-pointer shadow-sm hover:shadow-md"
+                        title="Edit client profile and goals"
+                      >
+                        <Edit size={14} className="group-hover:scale-110 transition-transform" />
+                        Edit
+                      </Button>
+
                       <Button
                         disabled={matchingUserId === user.id}
                         onClick={() => handleFindMatch(user)}
-                        className="bg-white hover:bg-[#0FA4A9] text-[#0FA4A9] hover:text-white border-2 border-[#0FA4A9]/20 hover:border-[#0FA4A9] rounded-2xl px-5 py-2 h-auto text-xs font-bold flex items-center gap-1.5 transition-all group active:scale-95 cursor-pointer shadow-sm hover:shadow-md disabled:opacity-50"
+                        className="bg-white hover:bg-[#0FA4A9] text-[#0FA4A9] hover:text-white border-2 border-[#0FA4A9]/20 hover:border-[#0FA4A9] rounded-2xl px-4 py-2 h-auto text-xs font-bold flex items-center gap-1.5 transition-all group active:scale-95 cursor-pointer shadow-sm hover:shadow-md disabled:opacity-50"
                       >
                         <Sparkles
-                          size={15}
+                          size={14}
                           className={matchingUserId === user.id ? "animate-spin" : "group-hover:animate-pulse"}
                         />
                         {matchingUserId === user.id ? "Analysing..." : "Find Match"}
@@ -255,10 +273,10 @@ export default function ClientTable({ users }: ClientTableProps) {
 
                       <Button
                         onClick={() => handleNotifyClient(user)}
-                        className="bg-[#0FA4A9]/10 hover:bg-[#0FA4A9] text-[#0FA4A9] hover:text-white border border-[#0FA4A9]/20 hover:border-[#0FA4A9] rounded-2xl px-4 py-2 h-auto text-xs font-bold flex items-center gap-1.5 transition-all group active:scale-95 cursor-pointer shadow-sm hover:shadow-md"
+                        className="bg-[#0FA4A9]/10 hover:bg-[#0FA4A9] text-[#0FA4A9] hover:text-white border border-[#0FA4A9]/20 hover:border-[#0FA4A9] rounded-2xl px-3.5 py-2 h-auto text-xs font-bold flex items-center gap-1.5 transition-all group active:scale-95 cursor-pointer shadow-sm hover:shadow-md"
                         title="Send notification email to client"
                       >
-                        <Bell size={15} className="group-hover:rotate-12 transition-transform" />
+                        <Bell size={14} className="group-hover:rotate-12 transition-transform" />
                         Notify
                       </Button>
                     </div>
@@ -302,6 +320,15 @@ export default function ClientTable({ users }: ClientTableProps) {
           setNotifyUser(null);
         }}
         user={notifyUser}
+      />
+
+      <WalkInClientModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingClient(null);
+        }}
+        editingUser={editingClient}
       />
     </div>
   );

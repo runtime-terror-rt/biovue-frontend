@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Loader2, User as UserIcon } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner";
 import {
   Message,
   useGetMessagesByUserIdQuery,
@@ -47,17 +48,18 @@ export default function ChatArea({
   }, [messagesData]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isSending) return;
     try {
       await sendMessage({
         receiver_id: Number(clientId),
         email: clientEmail || "",
-        message: inputValue,
+        message: inputValue.trim(),
       }).unwrap();
       setInputValue("");
       refetch(); // refresh messages
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to send message:", err);
+      toast.error(err?.data?.message || "Failed to send message. Please try again.");
     }
   };
 
@@ -135,14 +137,19 @@ export default function ChatArea({
           <input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
             placeholder="Type your message..."
-            className="w-full bg-[#F8FBFA] border border-[#D9E6FF] rounded-2xl pl-6 pr-16 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0FA4A9]/20 focus:border-[#0FA4A9] transition-all placeholder:text-[#94A3B8]"
+            className="w-full bg-[#F8FBFA] text-[#041228] border border-[#D9E6FF] rounded-2xl pl-6 pr-20 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0FA4A9]/20 focus:border-[#0FA4A9] transition-all placeholder:text-[#94A3B8]"
           />
           <button
             onClick={handleSendMessage}
             disabled={!inputValue.trim() || isSending}
-            className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#0FA4A9] hover:bg-[#0D9488] text-white p-2.5 rounded-xl transition-all disabled:opacity-40 shadow-sm"
+            className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#0FA4A9] hover:bg-[#0D9488] text-white p-2.5 rounded-xl transition-all disabled:opacity-40 shadow-sm cursor-pointer"
           >
             {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
           </button>

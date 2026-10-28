@@ -4,33 +4,50 @@ import { Suspense, useState, useMemo } from "react";
 import ChatArea from "./ChatArea";
 import ClientsListSidebar from "./ClientListSidebar";
 import { useGetConversationsQuery } from "@/redux/features/api/userDashboard/messagesApi";
+import { useGetAllUsersForSupplierQuery } from "@/redux/features/api/SupplierDashboard/AllUsers";
 
 export default function MessagesView() {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: conversationsData } = useGetConversationsQuery();
+  const { data: usersData } = useGetAllUsersForSupplierQuery();
 
   const selectedClient = useMemo(() => {
-    if (!conversationsData || !selectedClientId) return null;
+    if (!selectedClientId) return null;
     
-    // Find the conversation thread for this ID
-    const thread = conversationsData[selectedClientId];
-    if (!thread || thread.length === 0) return null;
+    // 1. Find from existing conversation thread
+    if (conversationsData && conversationsData[selectedClientId] && conversationsData[selectedClientId].length > 0) {
+      const thread = conversationsData[selectedClientId];
+      const lastMessage = thread[thread.length - 1];
+      const contactUser = 
+        lastMessage.sender_id.toString() === selectedClientId 
+          ? lastMessage.sender 
+          : lastMessage.receiver;
 
-    const lastMessage = thread[thread.length - 1];
-    // The client is the other person in the conversation
-    const contactUser = 
-      lastMessage.sender_id.toString() === selectedClientId 
-        ? lastMessage.sender 
-        : lastMessage.receiver;
+      return {
+        id: contactUser.id.toString(),
+        name: contactUser.name,
+        avatar: contactUser.image_url || contactUser.profile_image || contactUser.profile?.image || null,
+        email: contactUser.email || undefined,
+      };
+    }
 
-    return {
-      id: contactUser.id.toString(),
-      name: contactUser.name,
-      avatar: contactUser.image_url || contactUser.profile_image || contactUser.profile?.image || null
-    };
-  }, [conversationsData, selectedClientId]);
+    // 2. Fallback to all supplier clients list (enables sending initial message)
+    if (usersData && usersData.length > 0) {
+      const foundUser = usersData.find((u) => u.id.toString() === selectedClientId);
+      if (foundUser) {
+        return {
+          id: foundUser.id.toString(),
+          name: foundUser.name,
+          avatar: foundUser.profile_image || null,
+          email: foundUser.email || undefined,
+        };
+      }
+    }
+
+    return null;
+  }, [conversationsData, usersData, selectedClientId]);
 
   return (
     <div className="flex h-[calc(100vh-140px)] gap-6 antialiased">
@@ -55,6 +72,7 @@ export default function MessagesView() {
             clientId={selectedClient.id}
             clientName={selectedClient.name}
             clientAvatar={selectedClient.avatar || undefined}
+            clientEmail={selectedClient.email}
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-[40px] border border-[#D9E6FF] shadow-xs text-[#94A3B8]">

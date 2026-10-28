@@ -29,9 +29,10 @@ export interface ProjectionGalleryResponse {
 export const galleryApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getProjectionGallery: builder.query<ProjectionGalleryResponse, void | string | number>({
-      query: () => ({
+      query: (userId) => ({
         url: "/my-projections",
         method: "GET",
+        params: userId ? { user_id: userId } : undefined,
       }),
       providesTags: ["Projection"] as any,
     }),

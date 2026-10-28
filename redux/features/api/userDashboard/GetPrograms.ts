@@ -8,6 +8,10 @@ export interface Program {
   target_intensity: string;
   created_by: string;
   assigned_date: string;
+  description?: string;
+  workout_routine?: string;
+  notes?: string;
+  workout_types?: string[];
 }
 
 export interface GetProgramsResponse {

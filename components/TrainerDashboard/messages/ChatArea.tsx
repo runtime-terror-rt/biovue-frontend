@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, User as UserIcon } from "lucide-react";
+import { Send, User as UserIcon, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import Image from "next/image";
 import {
@@ -53,16 +54,17 @@ export default function ChatArea({
   }, [messagesData]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isSending) return;
     try {
       await sendMessage({
         receiver_id: Number(clientId),
-        message: inputValue,
+        message: inputValue.trim(),
       }).unwrap();
       setInputValue("");
       refetch(); // refresh messages
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to send message:", err);
+      toast.error(err?.data?.message || "Failed to send message. Please try again.");
     }
   };
 
@@ -135,16 +137,31 @@ export default function ChatArea({
           <input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
             placeholder="Type your message..."
-            className="w-full bg-white rounded-xl pl-5 pr-14 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#0D9488] transition-all placeholder:text-[#9CA3AF]"
+            className="w-full bg-white text-[#111827] border border-[#E5E7EB] rounded-xl pl-5 pr-36 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#0D9488]/30 focus:border-[#0D9488] transition-all placeholder:text-[#9CA3AF]"
           />
           <button
             onClick={handleSendMessage}
             disabled={!inputValue.trim() || isSending}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#0D9488] hover:text-[#00c3b3] cursor-pointer hover:bg-[#147d7414] p-2 rounded-lg transition-all disabled:opacity-40"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#0D9488] hover:text-[#00c3b3] cursor-pointer hover:bg-[#147d7414] px-3 py-2 rounded-lg transition-all disabled:opacity-40"
           >
-           <div className="flex items-center gap-2"><span className="font-medium text-lg md:text-xl">Send</span> <Send className="w-5 h-5 rotate-[-10deg]" /></div>
+            {isSending ? (
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm">Sending...</span>
+                <Loader2 className="w-4 h-4 animate-spin" />
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-sm">Send</span>
+                <Send className="w-4 h-4 rotate-[-10deg]" />
+              </div>
+            )}
           </button>
         </div>
       </div>

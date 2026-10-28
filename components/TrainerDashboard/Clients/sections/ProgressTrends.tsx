@@ -137,10 +137,14 @@ const calculateNutritionChartItem = (
     Protein: Math.round(rawProtein),
     Carbs: Math.round(rawCarbs),
     Fats: Math.round(rawFats),
+    ProteinCals: Math.round(proteinCals),
+    CarbsCals: Math.round(carbsCals),
+    FatsCals: Math.round(fatsCals),
     ProteinPct: proteinPct,
     CarbsPct: carbsPct,
     FatsPct: fatsPct,
     OveragePct: overagePct,
+    foods: item.foods || [],
   };
 };
 
@@ -154,6 +158,7 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
   const [nutritionEndDate, setNutritionEndDate] = useState<string>("");
   const [sleepStartDate, setSleepStartDate] = useState<string>("");
   const [sleepEndDate, setSleepEndDate] = useState<string>("");
+  const [macroGraphMode, setMacroGraphMode] = useState<"calories" | "percentage">("calories");
 
   const { data: weightRes, isLoading: weightLoading } = useGetUserOverviewChartQuery({
     userId: clientId,
@@ -184,11 +189,23 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
     days: getDateRangeDays(sleepStartDate, sleepEndDate),
   });
 
+  const targetWeightNumber = Number(weightRes?.health_overview?.weight?.target || 0);
+  const weightUnit = (weightRes?.health_overview?.weight as any)?.unit || "lbs";
+  const stepTargetNumber = Number(activityRes?.health_overview?.steps?.target || 10000);
+
   const weightCharts = weightRes?.charts || [];
-  const weightData = weightCharts.map((d) => ({ day: d.label, weight: d.weight }));
+  const weightData = weightCharts.map((d: any) => ({
+    day: d.formatted_date || d.label,
+    date: d.date,
+    weight: d.weight && Number(d.weight) > 0 ? Number(d.weight) : null,
+  }));
 
   const activityCharts = activityRes?.charts || [];
-  const activityData = activityCharts.map((d) => ({ day: d.label, steps: d.steps }));
+  const activityData = activityCharts.map((d: any) => ({
+    day: d.formatted_date || d.label,
+    date: d.date,
+    steps: Number(d.steps) || 0,
+  }));
 
   const userCalorieTarget = Number(
     nutritionRes?.current_day_calorie_box?.target_calories || 2000
@@ -204,13 +221,14 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
   const processedNutritionData = nutritionCharts.map((item: any) =>
     calculateNutritionChartItem(
       {
-        label: item.label,
+        label: item.formatted_date || item.label,
         date: item.date || item.label,
         protein: item.nutrition?.protein,
         carbs: item.nutrition?.carbs,
         fats: item.nutrition?.fats,
         calories: item.nutrition?.calories,
         percentage: item.nutrition?.calorie_percentage ?? item.nutrition?.adherence_pct,
+        foods: item.nutrition?.foods ?? [],
       },
       userCalorieTarget,
       macroTargets
@@ -218,7 +236,11 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
   );
 
   const sleepCharts = sleepRes?.charts || [];
-  const sleepData = sleepCharts.map((d) => ({ day: d.label, hours: d.sleep_hours }));
+  const sleepData = sleepCharts.map((d: any) => ({
+    day: d.formatted_date || d.label,
+    date: d.date,
+    hours: Number(d.sleep_hours) || 0,
+  }));
 
   return (
     <div className="space-y-6">
@@ -286,16 +308,56 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
                     </defs>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#F3F4F6" />
                     <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#9CA3AF" }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#9CA3AF" }} />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="weight" stroke="#25CD25" strokeWidth={1.5} fillOpacity={1} fill="url(#weightGradient)" connectNulls />
-                    <Line type="monotone" dataKey={() => weightRes?.health_overview?.weight?.target || null} stroke="#9CA3AF" strokeDasharray="3 3" dot={false} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#9CA3AF" }} domain={['auto', 'auto']} />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white p-3 rounded-xl shadow-xl border border-gray-100 text-xs flex flex-col gap-1 min-w-[150px] z-50">
+                            <span className="font-bold text-[#1F2D2E]">
+                              {data.day} {data.date && data.date !== data.day ? `(${data.date})` : ""}
+                            </span>
+                            <div className="flex justify-between items-center text-gray-600">
+                              <span>Weight:</span>
+                              <span className="font-bold text-[#25CD25]">
+                                {data.weight !== null ? `${data.weight} ${weightUnit}` : "Not logged"}
+                              </span>
+                            </div>
+                            {targetWeightNumber > 0 && (
+                              <div className="flex justify-between items-center text-[10px] text-gray-400">
+                                <span>Target:</span>
+                                <span>{targetWeightNumber} {weightUnit}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }}
+                    />
+                    {targetWeightNumber > 0 && (
+                      <ReferenceLine
+                        y={targetWeightNumber}
+                        stroke="#9CA3AF"
+                        strokeDasharray="3 3"
+                        label={{ value: `Goal: ${targetWeightNumber} ${weightUnit}`, position: 'insideTopRight', fill: '#9CA3AF', fontSize: 10 }}
+                      />
+                    )}
+                    <Area
+                      type="monotone"
+                      dataKey="weight"
+                      stroke="#25CD25"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#weightGradient)"
+                      connectNulls
+                      activeDot={{ r: 5, fill: "#25CD25", stroke: "#fff", strokeWidth: 2 }}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
               <div className="flex justify-center items-center gap-2 ">
                 <div className="w-2.5 h-2.5 bg-[#C8F2C8] rounded-sm"></div>
-                <span className="text-[10px] font-bold text-[#111827]">Weight(lbs)</span>
+                <span className="text-[10px] font-bold text-[#111827]">Weight ({weightUnit})</span>
               </div>
             </div>
           </CardContent>
@@ -352,17 +414,62 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={activityData}>
+                    <defs>
+                      <linearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0D9488" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#0D9488" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#F3F4F6" />
                     <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#9CA3AF" }} dy={10} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#9CA3AF" }} />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="steps" stroke="none" fillOpacity={1} fill="#C8F2C8" />
-                    <Line type="monotone" dataKey={() => activityRes?.health_overview?.steps?.target || null} stroke="#C8F2C8" strokeDasharray="3 3" dot={false} />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white p-3 rounded-xl shadow-xl border border-gray-100 text-xs flex flex-col gap-1 min-w-[150px] z-50">
+                            <span className="font-bold text-[#1F2D2E]">
+                              {data.day} {data.date && data.date !== data.day ? `(${data.date})` : ""}
+                            </span>
+                            <div className="flex justify-between items-center text-gray-600">
+                              <span>Daily Steps:</span>
+                              <span className="font-bold text-[#0D9488]">
+                                {Number(data.steps || 0).toLocaleString()}
+                              </span>
+                            </div>
+                            {stepTargetNumber > 0 && (
+                              <div className="flex justify-between items-center text-[10px] text-gray-400">
+                                <span>Target:</span>
+                                <span>{stepTargetNumber.toLocaleString()} steps</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }}
+                    />
+                    {stepTargetNumber > 0 && (
+                      <ReferenceLine
+                        y={stepTargetNumber}
+                        stroke="#0D9488"
+                        strokeDasharray="3 3"
+                        label={{ value: `Goal: ${stepTargetNumber.toLocaleString()}`, position: 'insideTopRight', fill: '#0D9488', fontSize: 10 }}
+                      />
+                    )}
+                    <Area
+                      type="monotone"
+                      dataKey="steps"
+                      stroke="#0D9488"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#activityGradient)"
+                      activeDot={{ r: 5, fill: "#0D9488", stroke: "#fff", strokeWidth: 2 }}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
               <div className="flex justify-center items-center gap-2 mt-2">
-                <div className="w-2.5 h-2.5 bg-[#C8F2C8] rounded-sm"></div>
+                <div className="w-2.5 h-2.5 bg-[#0D9488] rounded-sm"></div>
                 <span className="text-[10px] font-bold text-[#111827]">Steps</span>
               </div>
             </div>
@@ -383,31 +490,61 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
                       Nutrition Overview
                     </h3>
                     <p className="text-[10px] text-[#9CA3AF]">
-                      Based on logged meals and nutrition quality
+                      Macro calories and daily adherence tracking
                     </p>
                   </div>
                 </div>
 
-                {/* Timeframe Buttons */}
-                <div className="flex items-center gap-1 p-0.5 bg-gray-50 border border-gray-200 rounded-lg shrink-0">
-                  {["Weekly", "Monthly", "Last 3 months"].map((t) => (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Calorie vs Percentage toggle */}
+                  <div className="flex items-center gap-1 p-0.5 bg-gray-100 border border-gray-200 rounded-lg">
                     <button
-                      key={t}
-                      onClick={() => {
-                        setNutritionTimeframe(t);
-                        setNutritionStartDate("");
-                        setNutritionEndDate("");
-                      }}
+                      type="button"
+                      onClick={() => setMacroGraphMode("calories")}
                       className={cn(
-                        "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap",
-                        t === nutritionTimeframe && !nutritionStartDate && !nutritionEndDate
-                          ? "bg-[#D9E6FF] text-[#1F2D2E] shadow-2xs font-bold"
-                          : "text-[#5F6F73] hover:bg-white"
+                        "px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer whitespace-nowrap",
+                        macroGraphMode === "calories"
+                          ? "bg-white text-[#0FA4A9] shadow-xs"
+                          : "text-[#5F6F73] hover:text-[#111827]"
                       )}
                     >
-                      {t}
+                      Calories (kcal)
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => setMacroGraphMode("percentage")}
+                      className={cn(
+                        "px-2.5 py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer whitespace-nowrap",
+                        macroGraphMode === "percentage"
+                          ? "bg-white text-[#0FA4A9] shadow-xs"
+                          : "text-[#5F6F73] hover:text-[#111827]"
+                      )}
+                    >
+                      Target %
+                    </button>
+                  </div>
+
+                  {/* Timeframe Buttons */}
+                  <div className="flex items-center gap-1 p-0.5 bg-gray-50 border border-gray-200 rounded-lg shrink-0">
+                    {["Weekly", "Monthly", "Last 3 months"].map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => {
+                          setNutritionTimeframe(t);
+                          setNutritionStartDate("");
+                          setNutritionEndDate("");
+                        }}
+                        className={cn(
+                          "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap",
+                          t === nutritionTimeframe && !nutritionStartDate && !nutritionEndDate
+                            ? "bg-[#D9E6FF] text-[#1F2D2E] shadow-2xs font-bold"
+                            : "text-[#5F6F73] hover:bg-white"
+                        )}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -416,17 +553,28 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
                 <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#EBF7EE] text-[#1E7E34] border border-[#C3E6CB]">
                   <span className="w-2 h-2 rounded-full bg-[#3AAB67] shrink-0" />
                   <span>Protein</span>
-                  <span className="font-bold text-[#155724] ml-0.5">{macroTargets.protein}g</span>
+                  <span className="font-bold text-[#155724] ml-0.5">
+                    {macroTargets.protein}g ({macroTargets.protein * 4} kcal)
+                  </span>
                 </div>
                 <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]">
                   <span className="w-2 h-2 rounded-full bg-[#60A5FA] shrink-0" />
                   <span>Carbs</span>
-                  <span className="font-bold text-[#1E40AF] ml-0.5">{macroTargets.carbs}g</span>
+                  <span className="font-bold text-[#1E40AF] ml-0.5">
+                    {macroTargets.carbs}g ({macroTargets.carbs * 4} kcal)
+                  </span>
                 </div>
                 <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA]">
                   <span className="w-2 h-2 rounded-full bg-[#FB923C] shrink-0" />
                   <span>Fat</span>
-                  <span className="font-bold text-[#9A3412] ml-0.5">{macroTargets.fat}g</span>
+                  <span className="font-bold text-[#9A3412] ml-0.5">
+                    {macroTargets.fat}g ({macroTargets.fat * 9} kcal)
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#F0FDFA] text-[#0D9488] border border-teal-200">
+                  <Target size={12} />
+                  <span>Target</span>
+                  <span className="font-bold text-[#0D9488] ml-0.5">{userCalorieTarget} kcal</span>
                 </div>
               </div>
             </div>
@@ -456,20 +604,22 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
                       axisLine={false}
                       tickLine={false}
                       tick={{ fontSize: 10, fill: "#94A3B8", fontWeight: 500 }}
-                      tickFormatter={(val) => `${val}%`}
+                      tickFormatter={(val) => macroGraphMode === "calories" ? `${val}` : `${val}%`}
                       domain={[
                         0,
                         (dataMax: number) =>
-                          Math.max(120, Math.ceil((dataMax + 15) / 20) * 20),
+                          macroGraphMode === "calories"
+                            ? Math.max(userCalorieTarget + 200, Math.ceil((dataMax + 200) / 250) * 250)
+                            : Math.max(120, Math.ceil((dataMax + 15) / 20) * 20),
                       ]}
                     />
                     <ReferenceLine
-                      y={100}
+                      y={macroGraphMode === "calories" ? userCalorieTarget : 100}
                       stroke="#10B981"
                       strokeDasharray="4 4"
                       strokeWidth={1.5}
                       label={{
-                        value: "100% Target",
+                        value: macroGraphMode === "calories" ? `${userCalorieTarget} kcal Target` : "100% Target",
                         position: "insideTopRight",
                         fill: "#10B981",
                         fontSize: 10,
@@ -481,9 +631,11 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
                       content={({ active, payload }) => {
                         if (!active || !payload || !payload.length) return null;
                         const data = payload[0].payload;
-                        const isOver = (data.val || 0) > 100;
+                        const isOver = (data.calories || 0) > data.target;
+                        const calDiff = Math.abs((data.calories || 0) - data.target);
+
                         return (
-                          <div className="bg-white p-3.5 rounded-xl shadow-xl border border-gray-100 text-xs flex flex-col gap-2 min-w-[200px] z-50">
+                          <div className="bg-white p-3.5 rounded-xl shadow-xl border border-gray-100 text-xs flex flex-col gap-2 min-w-[220px] max-w-[280px] z-50">
                             <div className="flex items-center justify-between border-b border-gray-100 pb-2 gap-2">
                               <span className="font-bold text-[#1F2D2E]">
                                 {data.name} {data.date && data.date !== data.name ? `(${data.date})` : ""}
@@ -496,19 +648,21 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
                                     : "bg-teal-50 text-[#0FA4A9] border border-teal-200",
                                 )}
                               >
-                                {data.val}%
+                                {data.val}% target
                               </span>
                             </div>
                             <div className="flex justify-between items-center text-gray-600">
-                              <span>Calories:</span>
+                              <span>Total Calories:</span>
                               <span className="font-bold text-[#1F2D2E]">
-                                {data.calories ? `${data.calories}` : `${data.val}%`}
-                                {data.target ? ` / ${data.target} kcal` : " kcal"}
+                                {data.calories} / {data.target} kcal
                               </span>
                             </div>
-                            {isOver && (
-                              <div className="text-red-500 font-semibold text-[11px] bg-red-50/50 p-1 rounded">
-                                +{Math.round(data.val - 100)}% over daily calorie target
+                            {data.calories > 0 && (
+                              <div className={cn(
+                                "font-semibold text-[11px] p-1 rounded",
+                                isOver ? "text-red-600 bg-red-50" : "text-[#0FA4A9] bg-teal-50/60"
+                              )}>
+                                {isOver ? `+${calDiff} kcal over target` : `${calDiff} kcal under target`}
                               </div>
                             )}
                             <div className="pt-2 border-t border-gray-100 space-y-1.5">
@@ -517,68 +671,110 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
                                   <span className="w-2 h-2 rounded-full bg-[#3AAB67]" />
                                   Protein:
                                 </span>
-                                <span className="font-bold text-gray-800">{data.Protein}g ({data.ProteinPct}%)</span>
+                                <span className="font-bold text-gray-800">
+                                  {data.Protein}g ({data.ProteinCals} kcal)
+                                </span>
                               </div>
                               <div className="flex justify-between items-center text-[11px]">
                                 <span className="flex items-center gap-1.5 text-gray-600">
                                   <span className="w-2 h-2 rounded-full bg-[#60A5FA]" />
                                   Carbs:
                                 </span>
-                                <span className="font-bold text-gray-800">{data.Carbs}g ({data.CarbsPct}%)</span>
+                                <span className="font-bold text-gray-800">
+                                  {data.Carbs}g ({data.CarbsCals} kcal)
+                                </span>
                               </div>
                               <div className="flex justify-between items-center text-[11px]">
                                 <span className="flex items-center gap-1.5 text-gray-600">
                                   <span className="w-2 h-2 rounded-full bg-[#FB923C]" />
                                   Fat:
                                 </span>
-                                <span className="font-bold text-gray-800">{data.Fats}g ({data.FatsPct}%)</span>
+                                <span className="font-bold text-gray-800">
+                                  {data.Fats}g ({data.FatsCals} kcal)
+                                </span>
                               </div>
-                              {data.OveragePct > 0 && (
-                                <div className="flex justify-between items-center text-[11px]">
-                                  <span className="flex items-center gap-1.5 text-red-600">
-                                    <span className="w-2 h-2 rounded-full bg-[#EF4444]" />
-                                    Over Target:
-                                  </span>
-                                  <span className="font-bold text-red-600">+{data.OveragePct}%</span>
-                                </div>
-                              )}
                             </div>
+                            {data.foods && Array.isArray(data.foods) && data.foods.length > 0 && (
+                              <div className="pt-2 border-t border-gray-100">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
+                                  Logged Items ({data.foods.length}):
+                                </span>
+                                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                                  {data.foods.map((food: any, idx: number) => (
+                                    <span key={idx} className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-[10px]">
+                                      {typeof food === "string" ? food : food.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       }}
                     />
-                    <Bar
-                      dataKey="ProteinPct"
-                      name="Protein"
-                      stackId="a"
-                      fill="#3AAB67"
-                      barSize={18}
-                      radius={[0, 0, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="CarbsPct"
-                      name="Carbs"
-                      stackId="a"
-                      fill="#60A5FA"
-                      barSize={18}
-                      radius={[0, 0, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="FatsPct"
-                      name="Fat"
-                      stackId="a"
-                      fill="#FB923C"
-                      barSize={18}
-                      radius={[2, 2, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="OveragePct"
-                      name="Over Target"
-                      stackId="a"
-                      fill="#EF4444"
-                      barSize={18}
-                      radius={[4, 4, 0, 0]}
-                    />
+                    {macroGraphMode === "calories" ? (
+                      <>
+                        <Bar
+                          dataKey="ProteinCals"
+                          name="Protein"
+                          stackId="a"
+                          fill="#3AAB67"
+                          barSize={18}
+                          radius={[0, 0, 0, 0]}
+                        />
+                        <Bar
+                          dataKey="CarbsCals"
+                          name="Carbs"
+                          stackId="a"
+                          fill="#60A5FA"
+                          barSize={18}
+                          radius={[0, 0, 0, 0]}
+                        />
+                        <Bar
+                          dataKey="FatsCals"
+                          name="Fat"
+                          stackId="a"
+                          fill="#FB923C"
+                          barSize={18}
+                          radius={[3, 3, 0, 0]}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <Bar
+                          dataKey="ProteinPct"
+                          name="Protein"
+                          stackId="a"
+                          fill="#3AAB67"
+                          barSize={18}
+                          radius={[0, 0, 0, 0]}
+                        />
+                        <Bar
+                          dataKey="CarbsPct"
+                          name="Carbs"
+                          stackId="a"
+                          fill="#60A5FA"
+                          barSize={18}
+                          radius={[0, 0, 0, 0]}
+                        />
+                        <Bar
+                          dataKey="FatsPct"
+                          name="Fat"
+                          stackId="a"
+                          fill="#FB923C"
+                          barSize={18}
+                          radius={[2, 2, 0, 0]}
+                        />
+                        <Bar
+                          dataKey="OveragePct"
+                          name="Over Target"
+                          stackId="a"
+                          fill="#EF4444"
+                          barSize={18}
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </>
+                    )}
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -587,19 +783,27 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
             <div className="flex justify-center flex-wrap gap-4 mt-3">
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#3AAB67]"></div>
-                <span className="text-[10px] font-bold text-gray-600">Protein</span>
+                <span className="text-[10px] font-bold text-gray-600">
+                  Protein {macroGraphMode === "calories" ? "(4 kcal/g)" : ""}
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#60A5FA]"></div>
-                <span className="text-[10px] font-bold text-gray-600">Carbs</span>
+                <span className="text-[10px] font-bold text-gray-600">
+                  Carbs {macroGraphMode === "calories" ? "(4 kcal/g)" : ""}
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#FB923C]"></div>
-                <span className="text-[10px] font-bold text-gray-600">Fats</span>
+                <span className="text-[10px] font-bold text-gray-600">
+                  Fats {macroGraphMode === "calories" ? "(9 kcal/g)" : ""}
+                </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444]"></div>
-                <span className="text-[10px] font-bold text-gray-600">Over Target</span>
+                <div className="w-3 h-0.5 border-t-2 border-dashed border-[#10B981]"></div>
+                <span className="text-[10px] font-bold text-gray-600">
+                  Target ({userCalorieTarget} kcal)
+                </span>
               </div>
             </div>
 
@@ -705,6 +909,71 @@ export default function ProgressTrends({ clientId }: ProgressTrendsProps) {
                       />
                     </div>
                   </div>
+                </div>
+              );
+            })()}
+
+            {/* Logged Meals & Items Macro Breakdown */}
+            {(() => {
+              const daysWithFoods = (processedNutritionData || []).filter(
+                (d: any) => (d.foods && d.foods.length > 0) || d.calories > 0
+              );
+
+              return (
+                <div className="mt-4 border-t border-gray-100 pt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-[#111827]">
+                      Logged Meals & Macro Breakdown
+                    </span>
+                    <span className="text-[10px] text-[#9CA3AF]">
+                      Recent logged items
+                    </span>
+                  </div>
+
+                  {daysWithFoods.length === 0 ? (
+                    <div className="bg-[#F8FBFA] rounded-xl p-3 text-center border border-dashed border-gray-200">
+                      <p className="text-xs text-[#9CA3AF] italic">
+                        No specific meal items logged for this period yet.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {daysWithFoods.slice(-5).reverse().map((dayItem: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="bg-[#F8FBFA] border border-gray-100 rounded-xl p-2.5 flex flex-col gap-1.5"
+                        >
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-[#1F2D2E]">
+                              {dayItem.name} {dayItem.date && dayItem.date !== dayItem.name ? `(${dayItem.date})` : ""}
+                            </span>
+                            <span className="font-bold text-[#0D9488]">
+                              {dayItem.calories} kcal
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-[11px] text-[#5F6F73]">
+                            <span>P: <strong className="text-gray-800">{dayItem.Protein}g</strong> ({dayItem.ProteinCals} kcal)</span>
+                            <span>C: <strong className="text-gray-800">{dayItem.Carbs}g</strong> ({dayItem.CarbsCals} kcal)</span>
+                            <span>F: <strong className="text-gray-800">{dayItem.Fats}g</strong> ({dayItem.FatsCals} kcal)</span>
+                          </div>
+
+                          {dayItem.foods && dayItem.foods.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-0.5">
+                              {dayItem.foods.map((food: any, fIdx: number) => (
+                                <span
+                                  key={fIdx}
+                                  className="px-2 py-0.5 bg-white text-gray-700 border border-gray-200 rounded text-[10px] font-medium"
+                                >
+                                  {typeof food === "string" ? food : food.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })()}

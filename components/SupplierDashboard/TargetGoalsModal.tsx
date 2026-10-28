@@ -17,7 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { User } from "@/redux/features/api/SupplierDashboard/AllUsers";
+import { User, TargetGoal } from "@/redux/features/api/SupplierDashboard/AllUsers";
 import {
   useGetSupplierNotesQuery,
   useDeleteSupplierNoteMutation,
@@ -42,7 +42,7 @@ type GoalForDisplay = {
 };
 
 function goalFromEmbedded(
-  g: NonNullable<User["target_goals"]>[number],
+  g: TargetGoal,
 ): GoalForDisplay {
   return {
     id: g.id,
@@ -308,7 +308,9 @@ function TargetGoalsModalContent({
                             </span>
                           </div>
                           <p className="text-xl font-bold text-[#10B981]">
-                            {goal.water_target} ml
+                            {Number(goal.water_target) > 30
+                              ? `${goal.water_target} oz`
+                              : `${goal.water_target} glasses (${Number(goal.water_target) * 8} oz)`}
                           </p>
                         </div>
                       )}
