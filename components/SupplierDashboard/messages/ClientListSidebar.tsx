@@ -4,7 +4,37 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search } from "lucide-react";
 import Avatar from "@/components/common/Avatar";
 import { useGetAllUsersForSupplierQuery } from "@/redux/features/api/SupplierDashboard/AllUsers";
+import { useGetConversationsQuery } from "@/redux/features/api/userDashboard/messagesApi";
 import { useMemo } from "react";
+
+function formatSidebarTime(dateString?: string | null) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "";
+
+  const now = new Date();
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  if (isToday) {
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  if (isYesterday) {
+    return "Yesterday";
+  }
+
+  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+}
 
 interface ClientsListSidebarProps {
   selectedClientId: string | null;
@@ -21,18 +51,24 @@ export default function ClientsListSidebar({
 }: ClientsListSidebarProps) {
   const { data: usersData, isLoading: isUsersLoading } =
     useGetAllUsersForSupplierQuery();
+  const { data: conversationsData } = useGetConversationsQuery();
 
   const contacts = useMemo(() => {
     if (!usersData) return [];
 
-    return usersData.map((user) => ({
-      id: user.id.toString(),
-      name: user.name,
-      avatar: user.profile_image || null,
-      lastMessage: "Connected",
-      timestamp: "",
-    }));
-  }, [usersData]);
+    return usersData.map((user) => {
+      const thread = conversationsData?.[user.id.toString()];
+      const lastMsg = thread && thread.length > 0 ? thread[thread.length - 1] : null;
+
+      return {
+        id: user.id.toString(),
+        name: user.name,
+        avatar: user.profile_image || null,
+        lastMessage: lastMsg?.message || "Start conversation",
+        timestamp: lastMsg ? formatSidebarTime(lastMsg.created_at || lastMsg.updated_at) : "",
+      };
+    });
+  }, [usersData, conversationsData]);
 
   return (
     <div className="flex flex-col h-full bg-white rounded-3xl border border-[#E4EFFF] overflow-hidden">
@@ -96,6 +132,11 @@ export default function ClientsListSidebar({
                         >
                           {client.name}
                         </h3>
+                        {client.timestamp && (
+                          <span className="text-[10px] text-[#9CA3AF] whitespace-nowrap ml-2">
+                            {client.timestamp}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-[#94A3B8] truncate leading-tight">
                         {client.lastMessage}

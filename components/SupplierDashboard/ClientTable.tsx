@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import {
   Search,
@@ -11,6 +12,8 @@ import {
   Target,
   Bell,
   Edit,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { User } from "@/redux/features/api/SupplierDashboard/AllUsers";
 import SupplementMatchModal from "./SupplementMatchModal";
@@ -81,6 +84,35 @@ export default function ClientTable({ users }: ClientTableProps) {
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+  const from = filteredUsers.length === 0 ? 0 : startIndex + 1;
+  const to = Math.min(startIndex + itemsPerPage, filteredUsers.length);
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("...");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("...");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   const handleFindMatch = async (user: User) => {
     setMatchingUserId(user.id);
@@ -177,8 +209,8 @@ export default function ClientTable({ users }: ClientTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-[#F8FBFA]">
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
+            {paginatedUsers.length > 0 ? (
+              paginatedUsers.map((user) => (
                 <TableRow
                   key={user.id}
                   className="hover:bg-[#F8FBFA]/30 transition-all border-b border-[#F8FBFA]"
@@ -298,6 +330,59 @@ export default function ClientTable({ users }: ClientTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination Controls */}
+      {filteredUsers.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 px-6 py-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
+          <p className="text-xs text-[#5F6F73] font-medium">
+            Showing <span className="font-bold text-[#041228]">{from}–{to}</span> of{" "}
+            <span className="font-bold text-[#041228]">{filteredUsers.length}</span> clients
+          </p>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="p-1.5 sm:px-3 sm:py-1.5 flex items-center gap-1 rounded-xl border border-gray-200 text-xs font-semibold text-[#5F6F73] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              aria-label="Previous page"
+            >
+              <ChevronLeft size={15} />
+              <span className="hidden sm:inline">Prev</span>
+            </button>
+
+            {getPageNumbers().map((p, i) =>
+              p === "..." ? (
+                <span key={'dots-' + i} className="px-2 text-xs text-[#94A3B8] select-none">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p as number)}
+                  className={cn(
+                    "w-8 h-8 rounded-xl text-xs font-bold transition-all",
+                    currentPage === p
+                      ? "bg-[#0FA4A9] text-white shadow-xs"
+                      : "text-[#5F6F73] hover:bg-gray-100 border border-transparent"
+                  )}
+                >
+                  {p}
+                </button>
+              )
+            )}
+
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="p-1.5 sm:px-3 sm:py-1.5 flex items-center gap-1 rounded-xl border border-gray-200 text-xs font-semibold text-[#5F6F73] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              aria-label="Next page"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="h-10" />
 

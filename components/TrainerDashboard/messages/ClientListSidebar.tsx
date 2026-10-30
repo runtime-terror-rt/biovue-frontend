@@ -5,8 +5,38 @@ import { Search, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { useGetConnectedClientsQuery } from "@/redux/features/api/TrainerDashboard/Clients/YourClients";
 import { useGetProfileQuery } from "@/redux/features/api/profileApi";
+import { useGetConversationsQuery } from "@/redux/features/api/userDashboard/messagesApi";
 import { useMemo } from "react";
 import { getFullImageUrl } from "@/lib/utils";
+
+function formatSidebarTime(dateString?: string | null) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "";
+
+  const now = new Date();
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  if (isToday) {
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  if (isYesterday) {
+    return "Yesterday";
+  }
+
+  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+}
 
 interface ClientsListSidebarProps {
   selectedClientId: string | null;
@@ -63,18 +93,24 @@ export default function ClientsListSidebar({
 }: ClientsListSidebarProps) {
   const { data: connectedClientsData, isLoading: isClientsLoading } =
     useGetConnectedClientsQuery();
+  const { data: conversationsData } = useGetConversationsQuery();
 
   const contacts = useMemo(() => {
     if (!connectedClientsData?.data) return [];
 
-    return connectedClientsData.data.map((client) => ({
-      id: client.id.toString(),
-      name: client.name,
-      rawImageUrl: client.image_url || null,
-      lastMessage: "Connected",
-      timestamp: "",
-    }));
-  }, [connectedClientsData]);
+    return connectedClientsData.data.map((client) => {
+      const thread = conversationsData?.[client.id.toString()];
+      const lastMsg = thread && thread.length > 0 ? thread[thread.length - 1] : null;
+
+      return {
+        id: client.id.toString(),
+        name: client.name,
+        rawImageUrl: client.image_url || null,
+        lastMessage: lastMsg?.message || "Start conversation",
+        timestamp: lastMsg ? formatSidebarTime(lastMsg.created_at || lastMsg.updated_at) : "",
+      };
+    });
+  }, [connectedClientsData, conversationsData]);
 
   return (
     <div className="flex flex-col h-full">

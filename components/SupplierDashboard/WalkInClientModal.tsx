@@ -205,11 +205,6 @@ export default function WalkInClientModal({
       return;
     }
 
-    if (!formData.phone.trim()) {
-      toast.error("Please enter a contact phone number.");
-      return;
-    }
-
     if (!formData.height || formData.height <= 0) {
       toast.error("Please enter a valid height.");
       return;
@@ -369,12 +364,11 @@ export default function WalkInClientModal({
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-[#041228] flex items-center gap-1.5">
                   <Phone size={13} className="text-[#0FA4A9]" />
-                  Phone Number <span className="text-red-500">*</span>
+                  Phone Number <span className="text-[#94A3B8] font-normal text-[11px]">(Optional)</span>
                 </label>
                 <input
                   type="tel"
-                  required
-                  placeholder="e.g. +8801700000000"
+                  placeholder="e.g. +1 555-0199 (Optional)"
                   value={formData.phone}
                   onChange={(e) => handleInputChange("phone", e.target.value)}
                   className="bg-[#F8FBFA] border border-[#D9E6FF] rounded-2xl py-3 px-4 text-sm text-[#041228] focus:outline-none focus:ring-2 focus:ring-[#0FA4A9]/20 focus:border-[#0FA4A9] transition-all"

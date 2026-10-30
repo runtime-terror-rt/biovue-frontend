@@ -29,6 +29,15 @@ export interface TargetGoal {
   } | null;
   supplement_notes?: string | null;
 
+  trainer?: {
+    id: number;
+    name: string;
+    email: string;
+    avatar?: string;
+    image?: string;
+    image_url?: string;
+  } | null;
+
   is_active: boolean | number;
 
   start_date: string;
@@ -77,9 +86,9 @@ export interface TargetGoalResponse {
 export const targetGoalApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // ✅ GET goals by user_id
-    getTargetGoal: builder.query<TargetGoal[], number>({
+    getTargetGoal: builder.query<TargetGoal[], number | void | undefined>({
       query: (userId) => ({
-        url: `/get-goal/${userId}`,
+        url: userId ? `/get-goal/${userId}` : `/get-goal`,
         method: "GET",
       }),
 

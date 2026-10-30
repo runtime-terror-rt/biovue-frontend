@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { X, Upload, FileSpreadsheet } from "lucide-react";
+import { X, Upload, FileSpreadsheet, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useBulkUploadProductsMutation } from "@/redux/features/api/SupplierDashboard/Product/BulkProduct";
 
@@ -9,16 +9,23 @@ interface BulkUploadModalProps {
   onClose: () => void;
 }
 
+const ALLOWED_EXTENSIONS = [".xlsx", ".xls", ".csv"];
+
 export function BulkUploadModal({ onClose }: BulkUploadModalProps) {
   const [bulkUploadProducts, { isLoading }] = useBulkUploadProductsMutation();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isValidFile = (filename: string) => {
+    const lower = filename.toLowerCase();
+    return ALLOWED_EXTENSIONS.some((ext) => lower.endsWith(ext));
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.name.endsWith(".xlsx")) {
-        toast.error("Please select a valid XLSX file.");
+      if (!isValidFile(file.name)) {
+        toast.error("Please select a valid CSV or XLSX file.");
         return;
       }
       setSelectedFile(file);
@@ -29,8 +36,8 @@ export function BulkUploadModal({ onClose }: BulkUploadModalProps) {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      if (!file.name.endsWith(".xlsx")) {
-        toast.error("Please select a valid XLSX file.");
+      if (!isValidFile(file.name)) {
+        toast.error("Please select a valid CSV or XLSX file.");
         return;
       }
       setSelectedFile(file);
@@ -43,7 +50,7 @@ export function BulkUploadModal({ onClose }: BulkUploadModalProps) {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      toast.error("Please select an XLSX file first.");
+      toast.error("Please select a CSV or XLSX file first.");
       return;
     }
 
@@ -77,7 +84,7 @@ export function BulkUploadModal({ onClose }: BulkUploadModalProps) {
             Bulk Upload Products
           </h2>
           <p className="text-sm text-[#94A3B8]">
-            Upload an XLSX file to add multiple products at once
+            Upload a CSV or XLSX file to add multiple products at once
           </p>
         </div>
 
@@ -91,7 +98,7 @@ export function BulkUploadModal({ onClose }: BulkUploadModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".xlsx"
+            accept=".csv, .xlsx, .xls, text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
             onChange={handleFileChange}
             className="hidden"
           />
@@ -128,15 +135,29 @@ export function BulkUploadModal({ onClose }: BulkUploadModalProps) {
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium text-[#041228]">
-                  Drop your XLSX file here, or{" "}
+                  Drop your CSV or XLSX file here, or{" "}
                   <span className="text-[#14A4A9]">browse</span>
                 </p>
                 <p className="text-xs text-[#94A3B8] mt-1">
-                  Supports .xlsx files only
+                  Supports .csv and .xlsx files (Max 5MB)
                 </p>
               </div>
             </div>
           )}
+        </div>
+
+        {/* Download Sample Link */}
+        <div className="flex items-center justify-between text-xs text-[#5F6F73] px-1">
+          <span>Need the format?</span>
+          <a
+            href="https://api.biovuedigitalwellness.com/api/v1/products/template"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#0FA4A9] hover:underline font-semibold flex items-center gap-1"
+          >
+            <Download size={13} />
+            Download CSV Template
+          </a>
         </div>
 
         {/* Action Buttons */}

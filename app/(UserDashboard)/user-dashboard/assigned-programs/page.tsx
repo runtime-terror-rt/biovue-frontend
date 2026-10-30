@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useGetProgramsQuery, Program } from "@/redux/features/api/userDashboard/GetPrograms";
 import { Loader2, FileText, Calendar, Target, Zap, User, Dumbbell, ChevronDown, ChevronUp, Sparkles, BookOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,8 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function AssignedProgramsPage() {
+  const searchParams = useSearchParams();
   const { data: response, isLoading, error } = useGetProgramsQuery();
   const [expandedRoutineId, setExpandedRoutineId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const pId = searchParams.get("program_id");
+    if (pId) {
+      setExpandedRoutineId(Number(pId));
+    }
+  }, [searchParams]);
 
   if (isLoading) {
     return (

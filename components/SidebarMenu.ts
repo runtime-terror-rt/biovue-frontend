@@ -19,6 +19,7 @@ import {
   Image,
   CreditCard,
   HelpCircle,
+  Target,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -56,6 +57,7 @@ export const SIDEBAR_MENU: SidebarMenu = {
       icon: FileText,
       href: "/user-dashboard/assigned-programs",
     },
+    { label: "Coach Goals", icon: Target, href: "/user-dashboard/goals" },
     { label: "Insights", icon: Brain, href: "/user-dashboard/insights" },
     { label: "Habits", icon: Repeat, href: "/user-dashboard/habits" },
     { label: "Schedule & Reminders", icon: Calendar, href: "/user-dashboard/schedule" },

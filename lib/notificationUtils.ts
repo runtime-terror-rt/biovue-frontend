@@ -112,13 +112,28 @@ export function getNotificationUrl(notif: any, currentPathname?: string): string
       return `/user-dashboard${path}`;
     }
 
-  //Programs
-    if (path === "/programs" || path.startsWith("/programs/")) {
-      if (isTrainer) return `/trainer-dashboard${path}`;
-      if (isNutritionist) return `/nutritionist-dashboard${path}`;
-      if (isSupplier) return `/supplier-dashboard${path}`;
-      return `/user-dashboard${path}`;
-    }
+  // Shorthand: /goals
+  if (path === "/goals" || path.startsWith("/goals")) {
+    if (isTrainer) return `/trainer-dashboard/clients`;
+    if (isNutritionist) return `/nutritionist-dashboard`;
+    if (isSupplier) return `/supplier-dashboard`;
+    return `/user-dashboard/goals`;
+  }
+
+  // User programs / assigned programs
+  if (path === "/user-programs" || path.startsWith("/user-programs")) {
+    const sub = path.replace(/^\/user-programs/, "");
+    return `/user-dashboard/assigned-programs${sub}`;
+  }
+
+  // Programs
+  if (path === "/programs" || path.startsWith("/programs/")) {
+    if (isTrainer) return `/trainer-dashboard${path}`;
+    if (isNutritionist) return `/nutritionist-dashboard${path}`;
+    if (isSupplier) return `/supplier-dashboard${path}`;
+    const sub = path.replace(/^\/programs/, "");
+    return `/user-dashboard/assigned-programs${sub}`;
+  }
   // Shorthand: /settings
   if (path === "/settings" || path.startsWith("/settings/")) {
     if (isTrainer) return `/trainer-dashboard${path}`;

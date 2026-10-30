@@ -36,6 +36,7 @@ export default function UserDashboardLayout({
     if (path.includes("/user-dashboard/projections")) return "Projections";
     if (path.includes("/user-dashboard/projection-galary")) return "Projection Gallery";
     if (path.includes("/user-dashboard/assigned-programs")) return "Assigned Programs";
+    if (path.includes("/user-dashboard/goals")) return "Coach Goals & Targets";
     if (path.includes("/user-dashboard/insights")) return "Insights";
     if (path.includes("/user-dashboard/habits")) return "Habits";
     if (path.includes("/user-dashboard/support")) return "Support";

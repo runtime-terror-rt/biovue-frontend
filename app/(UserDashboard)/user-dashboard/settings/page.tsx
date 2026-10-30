@@ -2073,11 +2073,25 @@ const SubscriptionView = ({
             const isActive = effectiveIsTrial
               ? isFreeTrialPlan(plan)
               : (isIdMatch || (isNameMatch && !effectiveIsTrial));
+            const isCurrentPremium =
+              activePlanName?.trim().toLowerCase() === "premium" ||
+              Number(activePlanId) === 3;
+            const isTargetPlus =
+              plan.name?.trim().toLowerCase().includes("plus") ||
+              Number(plan.id) === 2;
+
             return (
               <div
                 key={plan.id}
                 onClick={async () => {
                   if (isActive) return;
+
+                  if (isCurrentPremium && isTargetPlus) {
+                    toast.info(
+                      "You already have an active Premium plan, which includes all Plus features.",
+                    );
+                    return;
+                  }
 
                   // Enterprise or custom / zero-priced professional -> open contact mailto
                   if (
@@ -2220,6 +2234,11 @@ const SubscriptionView = ({
                           </span>
                         )}
                       </div>
+                    )}
+                    {!isActive && isCurrentPremium && isTargetPlus && (
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1 bg-gray-100 px-2.5 py-1 rounded-full border border-gray-200 mt-2">
+                        Included in Premium
+                      </span>
                     )}
                     {!isActive && isTrial && !isFreeTrialPlan(plan) && (
                       <span className="text-[10px] font-bold text-[#0FA4A9] uppercase tracking-widest flex items-center gap-1 bg-[#E6F6F6] px-2.5 py-1 rounded-full border border-[#0FA4A9]/30 mt-2">

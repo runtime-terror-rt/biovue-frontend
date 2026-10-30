@@ -255,5 +255,28 @@ export function hasPaidPlan(user?: any, paymentSummary?: any, profileData?: any)
   return false;
 }
 
+export function getUserCurrentPlanTier(user?: any): "free" | "plus" | "premium" {
+  if (!user) return "free";
+  const planId = Number(
+    user?.plan_id ??
+    user?.profile?.plan_id ??
+    user?.plan?.id ??
+    0
+  );
+  const planName = String(
+    user?.plan_name ??
+    user?.plan?.name ??
+    ""
+  ).toLowerCase();
+
+  if (planId === 3 || planName.includes("premium")) {
+    return "premium";
+  }
+  if (planId === 2 || planName.includes("plus")) {
+    return "plus";
+  }
+  return "free";
+}
+
 
 

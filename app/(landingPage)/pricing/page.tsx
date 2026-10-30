@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { X } from "lucide-react";
 import Swal from "sweetalert2";
 import FreeTrialPlanModal from "@/components/pricing/FreeTrialPlanModal";
-import { isFreeTrialPlan, hasPaidPlan, getUserPlanType } from "@/lib/planType";
+import { isFreeTrialPlan, hasPaidPlan, getUserPlanType, getUserCurrentPlanTier } from "@/lib/planType";
 
 const PricingPage = () => {
   const router = useRouter();
@@ -93,6 +93,7 @@ const PricingPage = () => {
     userPlanAudience || selectedAudience;
 
   const userHasPaid = mounted && hasPaidPlan(effectiveUser || user);
+  const currentUserTier = mounted ? getUserCurrentPlanTier(effectiveUser || user) : "free";
 
   const { data: plans = [], isLoading } = useGetPlansQuery(billingCycle);
 
@@ -171,6 +172,25 @@ const PricingPage = () => {
       }
       setTrialPlan(plan);
       return;
+    }
+
+    const planNameLower = String(plan.name || "").toLowerCase();
+    if (currentUserTier === "premium") {
+      if (planNameLower.includes("plus")) {
+        toast.info(
+          "You already have the Premium plan, which includes all Plus features.",
+        );
+        return;
+      }
+      if (planNameLower.includes("premium")) {
+        toast.info("You are already on the Premium plan.");
+        return;
+      }
+    } else if (currentUserTier === "plus") {
+      if (planNameLower.includes("plus")) {
+        toast.info("You are already on the Plus plan.");
+        return;
+      }
     }
 
     if (!effectiveToken) {
@@ -394,6 +414,8 @@ const PricingPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 container mx-auto">
                 {filteredIndividualPlans.map((plan, idx) => {
                   const isTrial = plan.name?.toLowerCase().includes("free trial");
+                  const isPlus = plan.name?.toLowerCase().includes("plus");
+                  const isPremium = plan.name?.toLowerCase().includes("premium");
 
                   let cta = `Upgrade To ${plan.name || ""}`;
                   let ctaColor = "bg-[#0FA4A9]";
@@ -409,6 +431,25 @@ const PricingPage = () => {
                       "You already have an active paid plan (Plus/Premium) and cannot take the free trial.";
                   } else if (isTrial) {
                     cta = `Start ${plan.duration || 7}-Day Trial`;
+                  } else if (currentUserTier === "premium" && isPremium) {
+                    cta = "Current Plan";
+                    ctaColor =
+                      "bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-none cursor-default hover:bg-emerald-50";
+                    disabled = true;
+                    disabledMessage = "You are currently subscribed to the Premium plan.";
+                  } else if (currentUserTier === "premium" && isPlus) {
+                    cta = "Included in Premium";
+                    ctaColor =
+                      "bg-gray-100 text-gray-500 border border-gray-200 shadow-none cursor-not-allowed hover:bg-gray-100";
+                    disabled = true;
+                    disabledMessage =
+                      "You already have the Premium plan, which includes all Plus features.";
+                  } else if (currentUserTier === "plus" && isPlus) {
+                    cta = "Current Plan";
+                    ctaColor =
+                      "bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-none cursor-default hover:bg-emerald-50";
+                    disabled = true;
+                    disabledMessage = "You are currently subscribed to the Plus plan.";
                   }
 
                   return (

@@ -17,22 +17,36 @@ export default function ReportPage() {
   console.log(data, "reports");
 
   const downloadReport = () => {
-    // Filter data based on date range
-    const filteredData = mockData.filter(
-      (item) => item.date >= fromDate && item.date <= toDate,
-    );
+    const plansToExport = (data?.plan_table && data.plan_table.length > 0)
+      ? data.plan_table
+      : [];
 
-    // Convert to CSV
-    const headers = Object.keys(filteredData[0] || {}).join(",");
-    const rows = filteredData.map((row) => Object.values(row).join(","));
-    const csv = [headers, ...rows].join("\n");
+    let csvContent = "";
+    if (plansToExport.length > 0) {
+      const headers = ["Plan Name", "Plan Type", "Active Subscribers", "Monthly Revenue", "Churn Percentage"];
+      const rows = plansToExport.map((p) => [
+        `"${p.name || ""}"`,
+        `"${p.plan_type || ""}"`,
+        p.active_subscribers || 0,
+        `"$${p.monthly_revenue || 0}"`,
+        `"${p.churn_percentage || "0%"}"`,
+      ].join(","));
+      csvContent = [headers.join(","), ...rows].join("\n");
+    } else {
+      // Fallback to basic stats export
+      const statsHeaders = ["Metric", "Value"];
+      const statsRows = Object.entries(data?.stats || {}).map(
+        ([k, v]) => `"${k}","${v}"`,
+      );
+      csvContent = [statsHeaders.join(","), ...statsRows].join("\n");
+    }
 
     // Download CSV
-    const blob = new Blob([csv], { type: "text/csv" });
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `report_${fromDate}_to_${toDate}.csv`;
+    link.download = `biovue_report_${fromDate}_to_${toDate}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };

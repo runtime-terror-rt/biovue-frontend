@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, ChevronDown, Plus, Eye, Pencil, Trash2 } from "lucide-react";
+import { Search, ChevronDown, Plus, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -9,7 +9,7 @@ import {
   useDeleteSupplierProductMutation,
   useGetSupplierProductsQuery,
 } from "@/redux/features/api/SupplierDashboard/Product/SupplierProduct";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { EditProductModal } from "@/components/SupplierDashboard/EditProductModal";
 import { BulkUploadModal } from "@/components/SupplierDashboard/BulkUploadModal";
@@ -75,6 +75,35 @@ export default function MyProductsPage() {
       (product) => product.status.toLowerCase() === statusFilter.toLowerCase()
     );
   }, [data, statusFilter]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(products.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProducts = products.slice(startIndex, startIndex + itemsPerPage);
+  const from = products.length === 0 ? 0 : startIndex + 1;
+  const to = Math.min(startIndex + itemsPerPage, products.length);
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("...");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("...");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   const handleDelete = async (product: Product) => {
     const confirmed = confirm(
@@ -184,7 +213,7 @@ export default function MyProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F8FBFA]">
-              {products.map((product, id) => (
+              {paginatedProducts.map((product, id) => (
                 <tr key={id} className="hover:bg-[#F8FBFA]/20 transition-all">
                   <td className="px-10 py-6">
                     <div className="w-16 h-16 rounded-xl bg-[#E4F0FF] overflow-hidden">
@@ -257,7 +286,61 @@ export default function MyProductsPage() {
             </tbody>
           </table>
         </div>
-        <div className="h-20" />
+
+        {/* Pagination Controls */}
+        {products.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 px-6 py-4 bg-white rounded-2xl border border-gray-100 shadow-xs">
+            <p className="text-xs text-[#5F6F73] font-medium">
+              Showing <span className="font-bold text-[#041228]">{from}–{to}</span> of{" "}
+              <span className="font-bold text-[#041228]">{products.length}</span> products
+            </p>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 sm:px-3 sm:py-1.5 flex items-center gap-1 rounded-xl border border-gray-200 text-xs font-semibold text-[#5F6F73] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={15} />
+                <span className="hidden sm:inline">Prev</span>
+              </button>
+
+              {getPageNumbers().map((p, i) =>
+                p === "..." ? (
+                  <span key={'dots-' + i} className="px-2 text-xs text-[#94A3B8] select-none">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p as number)}
+                    className={cn(
+                      "w-8 h-8 rounded-xl text-xs font-bold transition-all",
+                      currentPage === p
+                        ? "bg-[#0FA4A9] text-white shadow-xs"
+                        : "text-[#5F6F73] hover:bg-gray-100 border border-transparent"
+                    )}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 sm:px-3 sm:py-1.5 flex items-center gap-1 rounded-xl border border-gray-200 text-xs font-semibold text-[#5F6F73] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                aria-label="Next page"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight size={15} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="h-10" />
       </div>
       {/* View Modal */}
       {isViewModalOpen && selectedProduct && (

@@ -26,10 +26,12 @@ type ProjectionItem = ProjectionGalleryResponse["data"][0];
  
 const getFullUrl = (url?: string) => {
   if (!url) return "";
-  if (url.startsWith("http")) return url;
-  const base = "https://ai.biovuedigitalwellness.com";
-  const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
-  return `${base}${normalizedUrl}`;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const clean = url.startsWith("/") ? url.slice(1) : url;
+  if (clean.startsWith("storage/")) {
+    return `https://api.biovuedigitalwellness.com/${clean}`;
+  }
+  return `https://ai.biovuedigitalwellness.com/${clean}`;
 };
 
 const formatDateShort = (dateString: string) => {
@@ -148,13 +150,12 @@ export default function ProjectionGallery() {
                       </td>
                       <td className="px-6 py-4">
                         {thumbnailUrl ? (
-                          <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-200">
-                            <Image
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
+                            <img
                               src={getFullUrl(thumbnailUrl)}
                               alt="Thumbnail"
-                              fill
-                              unoptimized
-                              className="object-cover"
+                              className="w-full h-full object-cover object-top"
+                              loading="lazy"
                             />
                           </div>
                         ) : (
@@ -315,17 +316,15 @@ export default function ProjectionGallery() {
                               </h4>
                             </div>
 
-                            <div className="w-full h-auto bg-gray-50 rounded-xl border border-gray-100 overflow-hidden shadow-inner flex items-center justify-center">
-                              <Image
+                            <div className="w-full rounded-xl border border-gray-100 overflow-hidden bg-[#F8FAFF] flex items-center justify-center p-2 shadow-inner">
+                              <img
                                 src={getFullUrl(
                                   current.image ||
                                   (current as any).projection_url
                                 )}
                                 alt="Current Lifestyle Projection"
-                                width={500}
-                                height={400}
-                                unoptimized
-                                className="w-full object-contain max-h-[400px]"
+                                className="w-full h-auto max-h-[360px] object-contain rounded-lg"
+                                loading="lazy"
                               />
                             </div>
 
@@ -381,16 +380,14 @@ export default function ProjectionGallery() {
                               </h4>
                             </div>
 
-                            <div className="w-full h-auto bg-gray-50 rounded-xl border border-gray-100 overflow-hidden shadow-inner flex items-center justify-center">
-                              <Image
+                            <div className="w-full rounded-xl border border-gray-100 overflow-hidden bg-[#F8FAFF] flex items-center justify-center p-2 shadow-inner">
+                              <img
                                 src={getFullUrl(
                                   future.image || (future as any).projection_url
                                 )}
                                 alt="Future Goal Projection"
-                                width={500}
-                                height={400}
-                                unoptimized
-                                className="w-full object-contain max-h-[400px]"
+                                className="w-full h-auto max-h-[360px] object-contain rounded-lg"
+                                loading="lazy"
                               />
                             </div>
 

@@ -9,24 +9,6 @@ import {
   Tooltip,
 } from "recharts";
 
-const userGrowthData = [
-  { month: "Jan", value: 250 },
-  { month: "Feb", value: 150 },
-  { month: "mar", value: 1000 },
-  { month: "apr", value: 350 },
-  { month: "May", value: 500 },
-  { month: "Jun", value: 420 },
-];
-
-const revenueTrendData = [
-  { month: "Jan", value: 8500 },
-  { month: "Feb", value: 6000 },
-  { month: "mar", value: 34000 },
-  { month: "apr", value: 13000 },
-  { month: "May", value: 15000 },
-  { month: "Jun", value: 13500 },
-];
-
 function SingleChart({
   title,
   data,

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import Avatar from "@/components/common/Avatar";
 import {
   useGetConversationsQuery,
+  useGetConnectedProfessionsQuery,
   useGetMessagesByUserIdQuery,
   useSendMessageMutation,
   Message,
@@ -47,6 +48,36 @@ const formatMessageTime = (dateString: string) => {
   return `${dateStr} - ${timeString}`;
 };
 
+const formatSidebarTime = (dateString?: string | null) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "";
+
+  const now = new Date();
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  if (isToday) {
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  if (isYesterday) return "Yesterday";
+
+  return date.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+  });
+};
+
 const MessagesPage = () => {
   const [activeContactId, setActiveContactId] = useState<number | null>(null);
   const [messageText, setMessageText] = useState("");
@@ -54,6 +85,8 @@ const MessagesPage = () => {
 
   const { data: conversationsData, isLoading: isConversationsLoading } =
     useGetConversationsQuery();
+  const { data: connectedProfessions = [], isLoading: isConnectionsLoading } =
+    useGetConnectedProfessionsQuery();
   const { data: messagesData, isLoading: isMessagesLoading } =
     useGetMessagesByUserIdQuery(activeContactId as number, {
       skip: !activeContactId,
@@ -64,43 +97,69 @@ const MessagesPage = () => {
   const authUser = useSelector((state: any) => state.auth.user); // Assuming user is in auth state
   // Or if auth state isn't easily accessible, derive it from the sender/receiver id logic
 
-  // 1. Process Conversations Map into an array of Contacts
+  // 1. Process Conversations Map into an array of Contacts & merge connected professionals
   const contacts = useMemo(() => {
-    if (!conversationsData) return [];
+    const contactList: any[] = [];
+    const seenIds = new Set<number>();
 
-    // The API returns a map where the key is the other user's ID
-    const contactList = Object.entries(conversationsData).map(
-      ([otherUserId, messages]) => {
-        // Find the last message to get contact details and preview
-        const lastMessage = messages[messages.length - 1];
+    if (conversationsData) {
+      // The API returns a map where the key is the other user's ID
+      Object.entries(conversationsData).forEach(
+        ([otherUserId, messages]) => {
+          if (!messages || messages.length === 0) return;
+          // Find the last message to get contact details and preview
+          const lastMessage = messages[messages.length - 1];
 
-        // Determine which user is the "other" contact
-        const isSender = lastMessage.sender_id.toString() === otherUserId;
-        const contactUser = isSender
-          ? lastMessage.sender
-          : lastMessage.receiver;
-        const myId = isSender ? lastMessage.receiver_id : lastMessage.sender_id;
+          // Determine which user is the "other" contact
+          const isSender = lastMessage.sender_id.toString() === otherUserId;
+          const contactUser = isSender
+            ? lastMessage.sender
+            : lastMessage.receiver;
+          const myId = isSender ? lastMessage.receiver_id : lastMessage.sender_id;
 
-        return {
-          id: contactUser.id,
-          name: contactUser.name,
-          handle: contactUser.email,
-          avatar:
-            contactUser.image_url ||
-            `https://ui-avatars.com/api/?name=${contactUser.name}`,
-          lastMessage: lastMessage.message,
-          time: new Date(lastMessage.updated_at).toLocaleDateString([], {
-            month: "short",
-            day: "numeric",
-          }),
-          isActive: false, // Could add real logic if needed
-          myId, // Keep track of the logged-in user's ID
-        };
-      },
-    );
+          if (contactUser && !seenIds.has(contactUser.id)) {
+            seenIds.add(contactUser.id);
+            contactList.push({
+              id: contactUser.id,
+              name: contactUser.name,
+              handle: contactUser.email,
+              avatar:
+                contactUser.image_url ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(contactUser.name)}`,
+              lastMessage: lastMessage.message,
+              time: formatSidebarTime(lastMessage.created_at || lastMessage.updated_at),
+              isActive: false,
+              myId,
+            });
+          }
+        },
+      );
+    }
 
-    return contactList.sort((a, b) => b.id - a.id); // Simple sort if needed, maybe by date in real app
-  }, [conversationsData]);
+    // Merge connected professionals who may not have exchanged messages yet
+    if (Array.isArray(connectedProfessions)) {
+      connectedProfessions.forEach((prof) => {
+        if (prof && !seenIds.has(prof.id)) {
+          seenIds.add(prof.id);
+          contactList.push({
+            id: prof.id,
+            name: prof.name,
+            handle: prof.email,
+            avatar:
+              prof.image_url ||
+              prof.profile_image ||
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(prof.name)}`,
+            lastMessage: "Connected Coach • Start conversation",
+            time: "New",
+            isActive: false,
+            myId: authUser?.id,
+          });
+        }
+      });
+    }
+
+    return contactList.sort((a, b) => b.id - a.id);
+  }, [conversationsData, connectedProfessions, authUser?.id]);
 
   // Auto-select first contact only on desktop/wider screens
   useEffect(() => {

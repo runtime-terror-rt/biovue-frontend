@@ -29,6 +29,23 @@ export interface SendMessagePayload {
   message: string;
 }
 
+export interface ConnectedProfessionUser {
+  id: number;
+  name: string;
+  email: string;
+  image_url?: string | null;
+  profile_image?: string | null;
+  user_type?: string;
+  profession_type?: string;
+}
+
+export interface ConnectedProfessionsResponse {
+  success: boolean;
+  message: string;
+  count: number;
+  data: ConnectedProfessionUser[];
+}
+
 export const messagesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getConversations: builder.query<Record<string, Message[]>, void>({
@@ -36,6 +53,16 @@ export const messagesApi = baseApi.injectEndpoints({
         url: "/conversations",
         method: "GET",
       }),
+      providesTags: ["Messages"],
+    }),
+    getConnectedProfessions: builder.query<ConnectedProfessionUser[], void>({
+      query: () => ({
+        url: "/connected-professions",
+        method: "GET",
+      }),
+      transformResponse: (response: ConnectedProfessionsResponse) => {
+        return response?.data || [];
+      },
       providesTags: ["Messages"],
     }),
     getMessagesByUserId: builder.query<Message[], number>({
@@ -59,6 +86,7 @@ export const messagesApi = baseApi.injectEndpoints({
 
 export const {
   useGetConversationsQuery,
+  useGetConnectedProfessionsQuery,
   useGetMessagesByUserIdQuery,
   useSendMessageMutation,
 } = messagesApi;

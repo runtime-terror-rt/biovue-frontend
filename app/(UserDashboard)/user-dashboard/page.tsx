@@ -131,14 +131,17 @@ const UserDashboard = () => {
             </Link>
           </div>
           <div className="w-full sm:w-auto flex flex-col gap-3 shrink-0 min-w-0 sm:min-w-[180px] lg:min-w-[210px]">
+            <Link href="/user-dashboard/goals" className="block group">
             <div className="bg-white border border-[#3A86FF] rounded-xl p-3.5 sm:p-4 flex flex-col transition-all cursor-pointer hover:bg-blue-50">
-              <span className="text-[10px] font-bold text-[#5F6F73] uppercase tracking-wider mb-1">
-                Current Goal
+              <span className="text-[10px] font-bold text-[#5F6F73] uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span>Current Goal</span>
+                <ArrowRight size={12} className="text-[#3A86FF] group-hover:translate-x-0.5 transition-transform" />
               </span>
               <span className="text-[#3A86FF] font-bold text-sm sm:text-base lg:text-lg whitespace-nowrap">
-                Build Athletic Lean Mass
+                View Coach Targets
               </span>
             </div>
+            </Link>
           </div>
         </div>
 
@@ -215,6 +218,10 @@ const UserDashboard = () => {
               Live Metrics
             </span>
           </div>
+          <Link href="/user-dashboard/goals" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0FA4A9] hover:underline">
+            <span>View Coach Targets</span>
+            <ArrowRight size={14} />
+          </Link>
         </div>
 
         {(() => {
