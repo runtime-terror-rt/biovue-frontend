@@ -52,7 +52,7 @@ export default function AdminOverviewPage() {
       {/* Page title */}
       <DashboardHeading
         heading="Overview"
-        subheading="Your coaching activity at a glance"
+        subheading="Platform performance, revenue, and user activity at a glance"
       />
 
       {/* Stat cards */}
@@ -100,12 +100,12 @@ export default function AdminOverviewPage() {
         />
       </div>
 
-      {/* Tables */}
-      {/* <div className="flex flex-col md:flex-row gap-6">
-        <div className="w-full ">
+      {/* Plan Summary Table */}
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="w-full">
           <PlanSummaryTable data={planSummary} />
         </div>
-      </div> */}
+      </div>
     </div>
   );
 }

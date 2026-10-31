@@ -8,6 +8,7 @@ import {
   useGetTargetGoalQuery,
   TargetGoal,
 } from "@/redux/features/api/TrainerDashboard/Clients/TargetGoal/PostTargetGoal";
+import { useGetAdjustProgramQuery } from "@/redux/features/api/TrainerDashboard/Clients/AdjustProgram/GetAdjustProgram";
 import {
   Target,
   Scale,
@@ -33,23 +34,57 @@ export default function UserGoalsPage() {
   const currentUser = useSelector(selectCurrentUser);
   const userId = currentUser?.id || currentUser?.user_id;
 
-  const { data: goals, isLoading, error } = useGetTargetGoalQuery(userId, {
-    skip: !userId,
+  const numericUserId = Number(userId) || 0;
+
+  const { data: goals, isLoading: goalsLoading } = useGetTargetGoalQuery(numericUserId, {
+    skip: !numericUserId,
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#0FA4A9]" />
-      </div>
-    );
-  }
+  const { data: adjustData, isLoading: adjustLoading } = useGetAdjustProgramQuery(numericUserId, {
+    skip: !numericUserId,
+  });
+
+  const isLoading = (goalsLoading && !goals) && (adjustLoading && !adjustData);
+
+  // Fallback from AdjustProgram if TargetGoal record hasn't been synced yet
+  const fallbackFromAdjust: TargetGoal | undefined = adjustData?.data
+    ? {
+        id: adjustData.data.id,
+        user_id: adjustData.data.user_id,
+        profession_id: (adjustData.data as any).profession_id || 0,
+        target_weight: String(adjustData.data.target_weight || ""),
+        weekly_workout_goal: Number(adjustData.data.weekly_workouts) || 3,
+        daily_step_goal: 10000,
+        sleep_target: adjustData.data.sleep_target_range || "8",
+        water_target: adjustData.data.hydration_target
+          ? Math.round(Number(adjustData.data.hydration_target) * 4)
+          : 8,
+        supplement_recommendation: [],
+        supplement_notes: adjustData.data.note,
+        calories: (adjustData.data as any).calories,
+        protein: (adjustData.data as any).protein,
+        carbs: (adjustData.data as any).carbs,
+        fat: (adjustData.data as any).fat,
+        macros: {
+          calories: (adjustData.data as any).calories,
+          protein: (adjustData.data as any).protein,
+          carbs: (adjustData.data as any).carbs,
+          fat: (adjustData.data as any).fat,
+        },
+        trainer: null,
+        is_active: true,
+        start_date: adjustData.data.created_at,
+        end_date: adjustData.data.updated_at,
+        created_at: adjustData.data.created_at,
+        updated_at: adjustData.data.updated_at,
+      }
+    : undefined;
 
   // Active goal or most recent
   const activeGoal: TargetGoal | undefined =
     Array.isArray(goals) && goals.length > 0
       ? goals.find((g) => g.is_active) || goals[0]
-      : undefined;
+      : fallbackFromAdjust;
 
   // Macro calculations
   const calories = Number(activeGoal?.calories || activeGoal?.macros?.calories || 0);
