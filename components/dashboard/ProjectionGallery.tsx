@@ -159,13 +159,15 @@ export default function ProjectionGallery({
                     </td>
                     <td className="px-6 py-4">
                       {thumbnailUrl ? (
-                        <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
-                          <img
-                            src={getFullUrl(thumbnailUrl)}
-                            alt="Thumbnail"
-                            className="w-full h-full object-cover object-top"
-                            loading="lazy"
-                          />
+                            <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                            <Image
+                              src={getFullUrl(thumbnailUrl)}
+                              alt="Thumbnail"
+                              width={48}
+                              height={48}
+                              className="w-full h-full object-cover object-top"
+                              loading="lazy"
+                            />
                         </div>
                       ) : (
                         <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
@@ -215,16 +217,15 @@ export default function ProjectionGallery({
             >
               ‹ Prev
             </button>
-            
+
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
-                  currentPage === page
+                className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${currentPage === page
                     ? "bg-[#3A86FF] text-white border border-[#3A86FF]"
                     : "text-[#5F6F73] border border-gray-200 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 {page}
               </button>
@@ -318,13 +319,16 @@ export default function ProjectionGallery({
                           </h4>
                         </div>
 
-                        <div className="w-full rounded-xl border border-gray-100 overflow-hidden bg-[#F8FAFF] flex items-center justify-center p-2 shadow-inner">
-                          <img
-                            src={getFullUrl(current.image || (current as any).projection_url)}
-                            alt="Current Lifestyle Projection"
-                            className="w-full h-auto max-h-[360px] object-contain rounded-lg"
-                            loading="lazy"
-                          />
+                            <div className="w-full rounded-xl border border-gray-100 overflow-hidden bg-[#F8FAFF] flex items-center justify-center p-2 shadow-inner relative" style={{ minHeight: 200 }}>
+                            <Image
+                              src={getFullUrl(current.image || (current as any).projection_url)}
+                              alt="Current Lifestyle Projection"
+                              width={500}
+                              height={360}
+                              className="w-full h-auto max-h-[360px] object-contain rounded-lg"
+                              loading="eager"
+                              priority
+                            />
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -376,13 +380,16 @@ export default function ProjectionGallery({
                           </h4>
                         </div>
 
-                        <div className="w-full rounded-xl border border-gray-100 overflow-hidden bg-[#F8FAFF] flex items-center justify-center p-2 shadow-inner">
-                          <img
-                            src={getFullUrl(future.image || (future as any).projection_url)}
-                            alt="Future Goal Projection"
-                            className="w-full h-auto max-h-[360px] object-contain rounded-lg"
-                            loading="lazy"
-                          />
+                            <div className="w-full rounded-xl border border-gray-100 overflow-hidden bg-[#F8FAFF] flex items-center justify-center p-2 shadow-inner relative" style={{ minHeight: 200 }}>
+                            <Image
+                              src={getFullUrl(future.image || (future as any).projection_url)}
+                              alt="Future Goal Projection"
+                              width={500}
+                              height={360}
+                              className="w-full h-auto max-h-[360px] object-contain rounded-lg"
+                              loading="eager"
+                              priority
+                            />
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">

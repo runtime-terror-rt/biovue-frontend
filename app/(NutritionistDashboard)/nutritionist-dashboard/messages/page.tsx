@@ -66,7 +66,12 @@ const NutritionistMessagesPage = () => {
 
     const contactList = Object.entries(conversationsData).map(
       ([otherUserId, messages]) => {
-        const lastMessage = messages[messages.length - 1];
+        const sorted = [...messages].sort(
+          (a, b) =>
+            new Date(a.created_at || a.updated_at).getTime() -
+            new Date(b.created_at || b.updated_at).getTime()
+        );
+        const lastMessage = sorted[sorted.length - 1];
 
         const isSender = lastMessage.sender_id.toString() === otherUserId;
         const contactUser = isSender
@@ -82,7 +87,7 @@ const NutritionistMessagesPage = () => {
             contactUser.image_url ||
             `https://ui-avatars.com/api/?name=${contactUser.name}`,
           lastMessage: lastMessage.message,
-          time: new Date(lastMessage.updated_at).toLocaleDateString([], {
+          time: new Date(lastMessage.created_at || lastMessage.updated_at).toLocaleDateString([], {
             month: "short",
             day: "numeric",
           }),
@@ -92,7 +97,7 @@ const NutritionistMessagesPage = () => {
       },
     );
 
-    return contactList.sort((a, b) => b.id - a.id);
+    return contactList.sort((a, b) => ((b as any).lastTimestamp || 0) - ((a as any).lastTimestamp || 0));
   }, [conversationsData]);
 
   useEffect(() => {

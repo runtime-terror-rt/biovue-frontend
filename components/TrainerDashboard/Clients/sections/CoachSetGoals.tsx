@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, CheckCircle2, Loader2, Save, Plus, Trash2, Utensils, Pill } from "lucide-react";
+import { Calendar, CheckCircle2, Loader2, Save, Plus, Trash2, Utensils, Pill, Dumbbell, FileText } from "lucide-react";
 import { ClientDetails } from "../../overview/data";
 import { useEffect, useState } from "react";
 import {
@@ -7,6 +7,20 @@ import {
   useGetTargetGoalQuery,
 } from "@/redux/features/api/TrainerDashboard/Clients/TargetGoal/PostTargetGoal";
 import { toast } from "sonner";
+
+
+const workoutTypeOptions = [
+  "Cardio",
+  "Weight Lifting",
+  "Sprints",
+  "Yoga",
+  "Walking",
+  "Cycling",
+  "HIIT",
+  "Swimming",
+  "Pilates",
+  "Strength Training",
+];
 
 const supplementOptions = [
   { id: "protein", label: "Protein" },
@@ -54,6 +68,10 @@ export default function CoachSetGoals({
   const [customSupplementInput, setCustomSupplementInput] = useState<string>("");
   const [supplementNotes, setSupplementNotes] = useState<string>("");
 
+  // Client specific workout program & routine
+  const [workoutRoutine, setWorkoutRoutine] = useState<string>("");
+  const [selectedWorkoutTypes, setSelectedWorkoutTypes] = useState<string[]>([]);
+
   const [createTargetGoal, { isLoading }] =
     useCreateOrUpdateTargetGoalMutation();
   const { data: goalData, isLoading: goalLoading } = useGetTargetGoalQuery(
@@ -100,6 +118,12 @@ export default function CoachSetGoals({
 
       if (latestGoal.supplement_notes) {
         setSupplementNotes(latestGoal.supplement_notes);
+      }
+      if ((latestGoal as any).workout_routine) {
+        setWorkoutRoutine((latestGoal as any).workout_routine);
+      }
+      if (Array.isArray((latestGoal as any).workout_types)) {
+        setSelectedWorkoutTypes((latestGoal as any).workout_types);
       }
     }
   }, [goalData]);
@@ -166,12 +190,12 @@ export default function CoachSetGoals({
         ...(goalId && { id: goalId }),
 
         user_id: clientDetails.id,
-        target_weight: Number(targetWeight),
-        weekly_workout_goal: Number(weeklyWorkoutGoal),
-        daily_step_goal: Number(dailyStepGoal),
-        sleep_target: Number(sleepTarget),
+        target_weight: targetWeight ? Number(targetWeight) : null,
+        weekly_workout_goal: weeklyWorkoutGoal ? Number(weeklyWorkoutGoal) : null,
+        daily_step_goal: dailyStepGoal ? Number(dailyStepGoal) : null,
+        sleep_target: sleepTarget ? Number(sleepTarget) : null,
 
-        water_target: waterTarget || null,
+        water_target: waterTarget ? Number(waterTarget) : null,
         supplement_recommendation: selectedSupplements,
 
         // Personalized client macros
@@ -181,6 +205,9 @@ export default function CoachSetGoals({
         fat: fat ? Number(fat) : null,
 
         supplement_notes: supplementNotes || null,
+        workout_routine: workoutRoutine || null,
+        programs: workoutRoutine || null,
+        workout_types: selectedWorkoutTypes.length > 0 ? selectedWorkoutTypes : null,
 
         start_date: startDate,
         end_date: endDate,
@@ -202,7 +229,14 @@ export default function CoachSetGoals({
   }
 
   const isInvalid =
-    !targetWeight || !weeklyWorkoutGoal || !dailyStepGoal || !sleepTarget;
+    !targetWeight &&
+    !weeklyWorkoutGoal &&
+    !dailyStepGoal &&
+    !sleepTarget &&
+    !waterTarget &&
+    !calories &&
+    !workoutRoutine &&
+    selectedWorkoutTypes.length === 0;
   const clientUnit =
     (clientDetails as any)?.unit_system ||
     (clientDetails as any)?.unit ||
@@ -454,6 +488,73 @@ export default function CoachSetGoals({
                 placeholder="Write specific timing, dosage instructions, or recommendations for this client (e.g. Take 5g Creatine post-workout with simple carbs; take Magnesium 30 mins before sleep)..."
                 rows={3}
                 className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#0D9488] outline-none resize-none"
+              />
+            </div>
+          </div>
+
+
+          {/* Workout Program & Prescribed Routine Section */}
+          <div className="mt-8 pt-8 border-t border-[#E5E7EB]">
+            <div className="flex items-center gap-2 mb-2">
+              <Dumbbell size={18} className="text-[#0D9488]" />
+              <h3 className="text-lg font-medium text-[#111827]">
+                Workout Program & Prescribed Routine
+              </h3>
+            </div>
+            <p className="text-sm text-[#666666] mb-5">
+              Prescribe specific workout types and detailed workout routines for this client
+            </p>
+
+            {/* Workout Types (Select Multiple Buttons) */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2.5">
+                <label className="text-sm font-semibold text-[#374151]">
+                  Workout Types (Select Multiple)
+                </label>
+                <span className="text-xs text-[#5F6F73]">Select all that apply</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {workoutTypeOptions.map((wType) => {
+                  const isSelected = selectedWorkoutTypes.includes(wType);
+                  return (
+                    <button
+                      key={wType}
+                      type="button"
+                      onClick={() => {
+                        setSelectedWorkoutTypes((prev) =>
+                          prev.includes(wType)
+                            ? prev.filter((t) => t !== wType)
+                            : [...prev, wType]
+                        );
+                      }}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer ${
+                        isSelected
+                          ? "bg-[#0D9488] text-white border-[#0D9488] shadow-xs"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {isSelected ? `✓ ${wType}` : `+ ${wType}`}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Workout Program Routine Textarea */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-[#374151] flex items-center gap-2">
+                <FileText size={16} className="text-[#0D9488]" />
+                <span>Prescribed Workout Routine / Plan:</span>
+              </label>
+              <p className="text-xs text-[#5F6F73]">
+                Write detailed exercise routines, sets, reps, daily schedule, or progression plans for this client.
+              </p>
+              <textarea
+                value={workoutRoutine}
+                onChange={(e) => setWorkoutRoutine(e.target.value)}
+                placeholder="e.g. Day 1: Upper Body (Bench Press 4x8, Pull-ups 3x10, Shoulder Press 3x12)&#10;Day 2: Cardio & Core (30 mins HIIT + Plank intervals)&#10;Day 3: Lower Body (Squats 4x8, Romanian Deadlifts 3x10)..."
+                rows={5}
+                className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#0D9488] outline-none font-mono"
               />
             </div>
           </div>

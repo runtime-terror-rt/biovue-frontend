@@ -9,6 +9,7 @@ import {
   TargetGoal,
 } from "@/redux/features/api/TrainerDashboard/Clients/TargetGoal/PostTargetGoal";
 import { useGetAdjustProgramQuery } from "@/redux/features/api/TrainerDashboard/Clients/AdjustProgram/GetAdjustProgram";
+import { useGetProgramsQuery } from "@/redux/features/api/userDashboard/GetPrograms";
 import {
   Target,
   Scale,
@@ -34,15 +35,17 @@ export default function UserGoalsPage() {
   const currentUser = useSelector(selectCurrentUser);
   const userId = currentUser?.id || currentUser?.user_id;
 
-  const numericUserId = Number(userId) || 0;
+  const numericUserId = Number(userId) || undefined;
 
-  const { data: goals, isLoading: goalsLoading } = useGetTargetGoalQuery(numericUserId, {
+  const { data: goals, isLoading: goalsLoading } = useGetTargetGoalQuery(numericUserId);
+
+  const { data: adjustData, isLoading: adjustLoading } = useGetAdjustProgramQuery(numericUserId as any, {
     skip: !numericUserId,
   });
 
-  const { data: adjustData, isLoading: adjustLoading } = useGetAdjustProgramQuery(numericUserId, {
-    skip: !numericUserId,
-  });
+  const { data: userProgramsData } = useGetProgramsQuery();
+  const userPrograms = userProgramsData?.data || [];
+  const activeProgram = userPrograms[0];
 
   const isLoading = (goalsLoading && !goals) && (adjustLoading && !adjustData);
 
@@ -97,10 +100,13 @@ export default function UserGoalsPage() {
   const carbsPct = macroSum > 0 ? Math.round((carbs / macroSum) * 100) : 0;
   const fatPct = macroSum > 0 ? Math.max(0, 100 - proteinPct - carbsPct) : 0;
 
-  const coachName = activeGoal?.trainer?.name || "Your Assigned Coach";
+  const coachName =
+    activeGoal?.trainer?.name ||
+    activeProgram?.created_by ||
+    "Your Assigned Coach";
 
   return (
-    <div className="flex flex-col gap-6 py-6 px-4 sm:px-6 md:px-8 xl:px-12 max-w-7xl mx-auto w-full pb-16">
+    <div className="flex flex-col gap-6 pt-16 sm:pt-20 pb-16 px-4 sm:px-6 md:px-8 xl:px-12 max-w-7xl mx-auto w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -232,12 +238,22 @@ export default function UserGoalsPage() {
                   </div>
                   <div>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-3xl font-extrabold text-[#1F2D2E] tracking-tight">
-                        {activeGoal.target_weight || "—"}
-                      </span>
-                      <span className="text-xs font-semibold text-[#5F6F73]">lbs</span>
+                      {activeGoal.target_weight ? (
+                        <>
+                          <span className="text-3xl font-extrabold text-[#1F2D2E] tracking-tight">
+                            {activeGoal.target_weight}
+                          </span>
+                          <span className="text-xs font-semibold text-[#5F6F73]">lbs</span>
+                        </>
+                      ) : (
+                        <span className="text-xl font-bold text-gray-400">
+                          Pending
+                        </span>
+                      )}
                     </div>
-                    <p className="text-[11px] text-[#5F6F73] mt-1">Goal weight prescribed by coach</p>
+                    <p className="text-[11px] text-[#5F6F73] mt-1">
+                      {activeGoal.target_weight ? "Goal weight prescribed by coach" : "Awaiting coach target setting"}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -501,6 +517,72 @@ export default function UserGoalsPage() {
               </div>
             </Card>
           </div>
+
+          {/* Prescribed Workout Routine & Training Plan */}
+          {(activeProgram || (activeGoal as any)?.workout_routine) && (
+            <Card className="border border-gray-100 rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+              <CardHeader className="pb-3 border-b border-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                      <Dumbbell size={18} />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base font-bold text-[#1F2D2E]">
+                        Coach Prescribed Workout Routine & Training Plan
+                      </CardTitle>
+                      <p className="text-xs text-[#5F6F73]">
+                        {activeProgram?.program_name
+                          ? `Program: ${activeProgram.program_name} (${activeProgram.duration || "8 weeks"})`
+                          : "Custom routine prescribed directly by your trainer"}
+                      </p>
+                    </div>
+                  </div>
+                  <Link href="/user-dashboard/assigned-programs">
+                    <Button
+                      variant="outline"
+                      className="text-xs font-semibold gap-1.5 text-[#3A86FF] hover:bg-blue-50 border-blue-200"
+                    >
+                      <Dumbbell size={14} />
+                      View All Programs
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="p-5 space-y-4">
+                {/* Workout Types */}
+                {Array.isArray(activeProgram?.workout_types) && activeProgram.workout_types.length > 0 && (
+                  <div>
+                    <span className="block text-[11px] font-bold text-[#5F6F73] uppercase tracking-wider mb-2">
+                      Target Workout Types:
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {activeProgram.workout_types.map((type, idx) => (
+                        <Badge
+                          key={idx}
+                          className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs px-2.5 py-1 font-semibold"
+                        >
+                          ✓ {type}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Workout Routine Text */}
+                {(activeProgram?.workout_routine || (activeGoal as any)?.workout_routine) && (
+                  <div>
+                    <span className="block text-[11px] font-bold text-[#5F6F73] uppercase tracking-wider mb-2">
+                      Prescribed Routine Schedule:
+                    </span>
+                    <div className="bg-[#F8FAFC] border border-gray-100 p-4 rounded-xl text-xs sm:text-sm text-gray-800 whitespace-pre-wrap font-mono leading-relaxed">
+                      {activeProgram?.workout_routine || (activeGoal as any)?.workout_routine}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>

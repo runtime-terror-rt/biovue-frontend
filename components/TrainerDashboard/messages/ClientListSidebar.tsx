@@ -98,9 +98,13 @@ export default function ClientsListSidebar({
   const contacts = useMemo(() => {
     if (!connectedClientsData?.data) return [];
 
-    return connectedClientsData.data.map((client) => {
+    const mapped = connectedClientsData.data.map((client) => {
       const thread = conversationsData?.[client.id.toString()];
-      const lastMsg = thread && thread.length > 0 ? thread[thread.length - 1] : null;
+      const sorted = thread && thread.length > 0 
+        ? [...thread].sort((a, b) => new Date(a.created_at || a.updated_at).getTime() - new Date(b.created_at || b.updated_at).getTime())
+        : null;
+      const lastMsg = sorted && sorted.length > 0 ? sorted[sorted.length - 1] : null;
+      const lastTimestamp = lastMsg ? new Date(lastMsg.created_at || lastMsg.updated_at).getTime() : 0;
 
       return {
         id: client.id.toString(),
@@ -108,8 +112,11 @@ export default function ClientsListSidebar({
         rawImageUrl: client.image_url || null,
         lastMessage: lastMsg?.message || "Start conversation",
         timestamp: lastMsg ? formatSidebarTime(lastMsg.created_at || lastMsg.updated_at) : "",
+        lastTimestamp: isNaN(lastTimestamp) ? 0 : lastTimestamp,
       };
     });
+
+    return mapped.sort((a, b) => b.lastTimestamp - a.lastTimestamp);
   }, [connectedClientsData, conversationsData]);
 
   return (

@@ -107,8 +107,13 @@ const MessagesPage = () => {
       Object.entries(conversationsData).forEach(
         ([otherUserId, messages]) => {
           if (!messages || messages.length === 0) return;
-          // Find the last message to get contact details and preview
-          const lastMessage = messages[messages.length - 1];
+          // Sort messages chronologically so latestMessage is strictly the newest one
+          const sorted = [...messages].sort(
+            (a, b) =>
+              new Date(a.created_at || a.updated_at).getTime() -
+              new Date(b.created_at || b.updated_at).getTime()
+          );
+          const lastMessage = sorted[sorted.length - 1];
 
           // Determine which user is the "other" contact
           const isSender = lastMessage.sender_id.toString() === otherUserId;
@@ -116,6 +121,10 @@ const MessagesPage = () => {
             ? lastMessage.sender
             : lastMessage.receiver;
           const myId = isSender ? lastMessage.receiver_id : lastMessage.sender_id;
+
+          const lastTimestamp = new Date(
+            lastMessage.created_at || lastMessage.updated_at
+          ).getTime();
 
           if (contactUser && !seenIds.has(contactUser.id)) {
             seenIds.add(contactUser.id);
@@ -128,6 +137,7 @@ const MessagesPage = () => {
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(contactUser.name)}`,
               lastMessage: lastMessage.message,
               time: formatSidebarTime(lastMessage.created_at || lastMessage.updated_at),
+              lastTimestamp: isNaN(lastTimestamp) ? 0 : lastTimestamp,
               isActive: false,
               myId,
             });
@@ -151,6 +161,7 @@ const MessagesPage = () => {
               `https://ui-avatars.com/api/?name=${encodeURIComponent(prof.name)}`,
             lastMessage: "Connected Coach • Start conversation",
             time: "New",
+            lastTimestamp: 0,
             isActive: false,
             myId: authUser?.id,
           });
@@ -158,7 +169,8 @@ const MessagesPage = () => {
       });
     }
 
-    return contactList.sort((a, b) => b.id - a.id);
+    // Sort contacts by latest message timestamp descending so most recent conversation is always at the top
+    return contactList.sort((a, b) => (b.lastTimestamp || 0) - (a.lastTimestamp || 0));
   }, [conversationsData, connectedProfessions, authUser?.id]);
 
   // Auto-select first contact only on desktop/wider screens
@@ -203,16 +215,16 @@ const MessagesPage = () => {
 
   return (
     <SubscriptionGuard>
-      <div className="flex flex-col h-[calc(100dvh-57px)] sm:h-[calc(100dvh-65px)] md:h-[calc(100dvh-73px)] overflow-hidden">
+      <div className="flex flex-col h-[calc(100dvh-60px)] sm:h-[calc(100dvh-68px)] md:h-[calc(100dvh-76px)] overflow-hidden">
         {/* Page Header */}
         <div
           className={cn(
-            "px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 border-b border-gray-100 bg-white shrink-0",
+            "px-4 sm:px-6 md:px-8 pt-4 pb-3 sm:pt-5 sm:pb-4 border-b border-gray-100 bg-white shrink-0 z-10",
             activeContactId ? "hidden md:block" : "block"
           )}
         >
-          <h1 className="text-xl sm:text-2xl font-bold text-[#1F2D2E]">Messages</h1>
-          <p className="text-[#5F6F73] text-xs sm:text-sm">Communicate with your Trainer</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1F2D2E] leading-tight">Messages</h1>
+          <p className="text-[#5F6F73] text-xs sm:text-sm mt-0.5">Communicate with your Trainer</p>
         </div>
 
         {/* Main Content Area */}

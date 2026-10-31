@@ -12,6 +12,13 @@ export interface Program {
   workout_routine?: string;
   notes?: string;
   workout_types?: string[];
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  supplement_recommendation?: string[];
+  weekly_targets?: any;
+  trainer_email?: string;
 }
 
 export interface GetProgramsResponse {

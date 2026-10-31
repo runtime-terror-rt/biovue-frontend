@@ -3,7 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   images: {
-    unoptimized: true,
+    // Image optimization enabled — Next.js will auto-resize, convert to WebP/AVIF, and cache
+    minimumCacheTTL: 2592000, // Cache optimized images for 30 days
     remotePatterns: [
       {
         protocol: "https",
