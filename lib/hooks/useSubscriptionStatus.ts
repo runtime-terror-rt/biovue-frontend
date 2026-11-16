@@ -85,6 +85,39 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
   }
 
   const profileData = profileResponse?.data || profileResponse;
+
+  // Clients under a trainer inherit unlocked access from the trainer and have no personal expiration
+  const isInvitedClient = Boolean(
+    user?.is_invited ||
+    user?.has_trainer_access ||
+    profileData?.is_invited ||
+    profileData?.has_trainer_access
+  );
+
+  if (isInvitedClient) {
+    return {
+      restricted: false,
+      isSafe: true,
+      isWarning: false,
+      reason: "",
+      isLoading: false,
+      projection_limit: 999,
+      member_limit: 0,
+      used_seats: 0,
+      total_seats: 0,
+      remaining_seats: 0,
+      seats_ratio: "0/0",
+      seats_left: 999,
+      diffDays: 999,
+      hasExpiry: false,
+      expiryOver: false,
+      projectionZero: false,
+      isCancelled: false,
+      cancelRequested: false,
+      accessUntil: null,
+      expiryTimestamp: null,
+    };
+  }
   const rawPlanId =
     profileData?.plan_id ??
     profileData?.profile?.plan_id ??

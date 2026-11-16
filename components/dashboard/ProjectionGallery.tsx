@@ -11,6 +11,10 @@ import {
   CheckCircle2,
   Loader2,
   Clock,
+  Columns,
+  ArrowLeftRight,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import { useAppSelector } from "@/redux/store/hooks";
 import { selectCurrentUser } from "@/redux/features/slice/authSlice";
@@ -68,6 +72,13 @@ export default function ProjectionGallery({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Side-by-side comparison state
+  const [compareLeftId, setCompareLeftId] = useState<number | string>("");
+  const [compareRightId, setCompareRightId] = useState<number | string>("");
+  const [isComparing, setIsComparing] = useState<boolean>(false);
+  const [leftViewMode, setLeftViewMode] = useState<"future" | "current">("future");
+  const [rightViewMode, setRightViewMode] = useState<"future" | "current">("future");
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -113,6 +124,16 @@ export default function ProjectionGallery({
     startIndex + itemsPerPage,
   );
 
+  React.useEffect(() => {
+    if (projections.length >= 2) {
+      if (!compareLeftId) setCompareLeftId(projections[1]?.id ?? "");
+      if (!compareRightId) setCompareRightId(projections[0]?.id ?? "");
+    }
+  }, [projections, compareLeftId, compareRightId]);
+
+  const leftProj = projections.find((p) => String(p.id) === String(compareLeftId)) || null;
+  const rightProj = projections.find((p) => String(p.id) === String(compareRightId)) || null;
+
   return (
     <div className="mt-16 space-y-6 animate-in fade-in duration-700">
       <div className="flex flex-col space-y-2">
@@ -123,6 +144,238 @@ export default function ProjectionGallery({
           View your previously generated health projections and insights.
         </p>
       </div>
+
+      {/* Side-by-Side Comparison Feature */}
+      {projections.length >= 2 && (
+        <div className="bg-white rounded-2xl border border-teal-100 shadow-sm p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-600">
+                <ArrowLeftRight size={18} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#041228]">
+                  Compare Projections Side-by-Side
+                </h3>
+                <p className="text-xs text-[#5F6F73]">
+                  Select any two projections from your gallery to view them side-by-side with full visual and metric comparisons.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsComparing((prev) => !prev)}
+              className="px-4 py-2 bg-[#0FA4A9] text-white rounded-lg text-xs font-bold hover:bg-[#0d8d91] transition-all cursor-pointer flex items-center gap-1.5 shadow-xs shrink-0"
+            >
+              <Columns size={15} />
+              {isComparing ? "Hide Side-by-Side View" : "Compare Projections Side-by-Side"}
+            </button>
+          </div>
+
+          {/* Projection Dropdown Selectors */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 block">
+                Left Projection (Slot 1):
+              </label>
+              <select
+                value={compareLeftId}
+                onChange={(e) => {
+                  setCompareLeftId(e.target.value);
+                  setIsComparing(true);
+                }}
+                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-900 focus:ring-2 focus:ring-teal-500 outline-none"
+              >
+                <option value="">Select Projection...</option>
+                {projections.map((p, idx) => (
+                  <option key={p.id} value={p.id}>
+                    #{projections.length - idx} • {p.timeframe} ({formatDateShort(p.created_at)})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 block">
+                Right Projection (Slot 2):
+              </label>
+              <select
+                value={compareRightId}
+                onChange={(e) => {
+                  setCompareRightId(e.target.value);
+                  setIsComparing(true);
+                }}
+                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-900 focus:ring-2 focus:ring-teal-500 outline-none"
+              >
+                <option value="">Select Projection...</option>
+                {projections.map((p, idx) => (
+                  <option key={p.id} value={p.id}>
+                    #{projections.length - idx} • {p.timeframe} ({formatDateShort(p.created_at)})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Active Side-by-Side Comparison View */}
+          {isComparing && leftProj && rightProj && (
+            <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Card */}
+                {(() => {
+                  const pData = (leftProj as any).projections || (leftProj as any).projections_data;
+                  const future = pData?.future_goal;
+                  const current = pData?.current_lifestyle;
+                  const activeItem = leftViewMode === "future" ? future : current;
+                  const imgUrl = activeItem?.image || (activeItem as any)?.projection_url || leftProj.input_image;
+
+                  return (
+                    <div className="bg-gray-50/70 rounded-xl border border-gray-200 p-4 space-y-4 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
+                            {formatDateShort(leftProj.created_at)} • {leftProj.timeframe}
+                          </span>
+                          <div className="inline-flex rounded-md p-0.5 bg-gray-200/60 text-[11px] font-semibold">
+                            <button
+                              type="button"
+                              onClick={() => setLeftViewMode("future")}
+                              className={`px-2 py-0.5 rounded ${leftViewMode === "future" ? "bg-white text-teal-800 shadow-xs" : "text-gray-600"}`}
+                            >
+                              Future Goal
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setLeftViewMode("current")}
+                              className={`px-2 py-0.5 rounded ${leftViewMode === "current" ? "bg-white text-teal-800 shadow-xs" : "text-gray-600"}`}
+                            >
+                              Current Lifestyle
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="w-full aspect-[4/3] rounded-lg border border-gray-200 overflow-hidden bg-white relative flex items-center justify-center">
+                          {imgUrl ? (
+                            <Image
+                              src={getFullUrl(imgUrl)}
+                              alt="Left Projection"
+                              fill
+                              className="object-contain"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <span className="text-xs text-gray-400">No Image</span>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                          <div className="bg-white p-2 rounded-lg border border-gray-200">
+                            <span className="text-[10px] text-gray-500 uppercase block">Est. BMI</span>
+                            <span className="font-bold text-gray-900">{activeItem?.est_bmi || "N/A"}</span>
+                          </div>
+                          <div className="bg-white p-2 rounded-lg border border-gray-200">
+                            <span className="text-[10px] text-gray-500 uppercase block">Est. Weight</span>
+                            <span className="font-bold text-gray-900">{activeItem?.est_weight || "N/A"}</span>
+                          </div>
+                        </div>
+
+                        {Array.isArray(activeItem?.expected_changes) && activeItem.expected_changes.length > 0 && (
+                          <div className="bg-white p-3 rounded-lg border border-gray-200 text-xs text-gray-700">
+                            <span className="font-bold text-gray-800 block mb-1.5">Expected Changes:</span>
+                            <ul className="space-y-1">
+                              {activeItem.expected_changes.slice(0, 3).map((ch: string, i: number) => (
+                                <li key={i} className="flex items-start gap-1.5 text-[11px]">
+                                  <CheckCircle2 size={12} className="text-teal-600 mt-0.5 shrink-0" />
+                                  <span>{ch}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Right Card */}
+                {(() => {
+                  const pData = (rightProj as any).projections || (rightProj as any).projections_data;
+                  const future = pData?.future_goal;
+                  const current = pData?.current_lifestyle;
+                  const activeItem = rightViewMode === "future" ? future : current;
+                  const imgUrl = activeItem?.image || (activeItem as any)?.projection_url || rightProj.input_image;
+
+                  return (
+                    <div className="bg-gray-50/70 rounded-xl border border-gray-200 p-4 space-y-4 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
+                            {formatDateShort(rightProj.created_at)} • {rightProj.timeframe}
+                          </span>
+                          <div className="inline-flex rounded-md p-0.5 bg-gray-200/60 text-[11px] font-semibold">
+                            <button
+                              type="button"
+                              onClick={() => setRightViewMode("future")}
+                              className={`px-2 py-0.5 rounded ${rightViewMode === "future" ? "bg-white text-teal-800 shadow-xs" : "text-gray-600"}`}
+                            >
+                              Future Goal
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRightViewMode("current")}
+                              className={`px-2 py-0.5 rounded ${rightViewMode === "current" ? "bg-white text-teal-800 shadow-xs" : "text-gray-600"}`}
+                            >
+                              Current Lifestyle
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="w-full aspect-[4/3] rounded-lg border border-gray-200 overflow-hidden bg-white relative flex items-center justify-center">
+                          {imgUrl ? (
+                            <Image
+                              src={getFullUrl(imgUrl)}
+                              alt="Right Projection"
+                              fill
+                              className="object-contain"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <span className="text-xs text-gray-400">No Image</span>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                          <div className="bg-white p-2 rounded-lg border border-gray-200">
+                            <span className="text-[10px] text-gray-500 uppercase block">Est. BMI</span>
+                            <span className="font-bold text-gray-900">{activeItem?.est_bmi || "N/A"}</span>
+                          </div>
+                          <div className="bg-white p-2 rounded-lg border border-gray-200">
+                            <span className="text-[10px] text-gray-500 uppercase block">Est. Weight</span>
+                            <span className="font-bold text-gray-900">{activeItem?.est_weight || "N/A"}</span>
+                          </div>
+                        </div>
+
+                        {Array.isArray(activeItem?.expected_changes) && activeItem.expected_changes.length > 0 && (
+                          <div className="bg-white p-3 rounded-lg border border-gray-200 text-xs text-gray-700">
+                            <span className="font-bold text-gray-800 block mb-1.5">Expected Changes:</span>
+                            <ul className="space-y-1">
+                              {activeItem.expected_changes.slice(0, 3).map((ch: string, i: number) => (
+                                <li key={i} className="flex items-start gap-1.5 text-[11px]">
+                                  <CheckCircle2 size={12} className="text-teal-600 mt-0.5 shrink-0" />
+                                  <span>{ch}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -178,12 +431,29 @@ export default function ProjectionGallery({
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => setSelectedProjection(proj)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E6F6F6] text-[#0FA4A9] border border-[#BDE8E8] rounded-md text-xs font-semibold hover:bg-[#d0f0f0] transition-colors cursor-pointer"
-                      >
-                        <Eye size={14} /> View
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setSelectedProjection(proj)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E6F6F6] text-[#0FA4A9] border border-[#BDE8E8] rounded-md text-xs font-semibold hover:bg-[#d0f0f0] transition-colors cursor-pointer"
+                        >
+                          <Eye size={14} /> View
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCompareRightId(proj.id);
+                            if (!compareLeftId || String(compareLeftId) === String(proj.id)) {
+                              const other = projections.find((p) => String(p.id) !== String(proj.id));
+                              if (other) setCompareLeftId(other.id);
+                            }
+                            setIsComparing(true);
+                            window.scrollTo({ top: 300, behavior: "smooth" });
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-md text-xs font-semibold hover:bg-purple-100 transition-colors cursor-pointer"
+                          title="Select this projection to compare side-by-side"
+                        >
+                          <Columns size={13} /> Compare
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

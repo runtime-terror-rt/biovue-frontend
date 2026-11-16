@@ -953,7 +953,8 @@ const ProjectionsPage = () => {
           </div>
         )}
 
-        {/* <ProjectionGallery /> */}
+        {/* Historical Gallery & Side-by-Side Comparison */}
+        <ProjectionGallery />
       </div>
     </SubscriptionGuard>
   );

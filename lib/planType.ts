@@ -109,6 +109,18 @@ export function isFreeTrialPlan(plan?: any): boolean {
 export function hasPaidPlan(user?: any, paymentSummary?: any, profileData?: any): boolean {
   if (!user && !paymentSummary && !profileData) return false;
 
+  // -1. Clients under a trainer (invited or with trainer access) inherit full Premium access
+  if (
+    user?.is_invited ||
+    user?.has_trainer_access ||
+    isInvitedAndAccepted(user) ||
+    profileData?.is_invited ||
+    profileData?.has_trainer_access ||
+    isInvitedAndAccepted(profileData)
+  ) {
+    return true;
+  }
+
   // 0. Check profile data plan_id or user.plan_id directly (2: Plus, 3: Premium)
   const planId = Number(
     profileData?.plan_id ??
@@ -257,6 +269,18 @@ export function hasPaidPlan(user?: any, paymentSummary?: any, profileData?: any)
 
 export function getUserCurrentPlanTier(user?: any): "free" | "plus" | "premium" {
   if (!user) return "free";
+
+  if (
+    user?.is_invited ||
+    user?.has_trainer_access ||
+    isInvitedAndAccepted(user) ||
+    user?.profile?.is_invited ||
+    user?.profile?.has_trainer_access ||
+    isInvitedAndAccepted(user?.profile)
+  ) {
+    return "premium";
+  }
+
   const planId = Number(
     user?.plan_id ??
     user?.profile?.plan_id ??

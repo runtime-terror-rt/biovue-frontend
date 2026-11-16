@@ -203,10 +203,16 @@ export default function HabitDetailPage() {
     };
   } else if (habitId === 'nutrition' && nutritionReport) {
     const nData = nutritionReport.data || nutritionReport;
+    const coachCals = nData.target_macros?.calories ??
+      (nData.statistics?.target_calories ? parseInt(String(nData.statistics.target_calories).replace(/[^\d]/g, ""), 10) : undefined);
+    const hasCoachTarget = Boolean((coachCals && coachCals > 0) || nData.target_macros?.is_coach_assigned || nData.statistics?.is_coach_assigned);
+
     reportStats = {
       avg: nData.statistics?.average,
       ratio: nData.statistics?.best_streak ? `${nData.statistics.best_streak}` : undefined,
-      target: undefined,
+      target: coachCals ? `${coachCals} kcal` : undefined,
+      isCoachAssigned: hasCoachTarget,
+      coachName: nData.target_macros?.coach_name || nData.statistics?.coach_name,
       consistency: nData.statistics?.consistency
     };
   }
@@ -231,13 +237,21 @@ export default function HabitDetailPage() {
       why: insight.why_this_matters,
       biovueInsights: insight.biovue_insights
     } : {}),
-    ...(habitId === 'nutrition' && aiNutritionData?.target_nutrition ? {
-      target: `${aiNutritionData.target_nutrition.calories.value} ${aiNutritionData.target_nutrition.calories.unit}`,
-      aiTarget: aiNutritionData.target_nutrition,
-      isAiSuggestion: true
-    } : {
-      isAiSuggestion: false
-    })
+    ...(habitId === 'nutrition' ? (
+      reportStats?.target ? {
+        target: reportStats.target,
+        aiTarget: undefined,
+        isAiSuggestion: false,
+        isCoachAssigned: reportStats.isCoachAssigned,
+        coachName: reportStats.coachName,
+      } : (aiNutritionData?.target_nutrition ? {
+        target: `${aiNutritionData.target_nutrition.calories.value} ${aiNutritionData.target_nutrition.calories.unit}`,
+        aiTarget: aiNutritionData.target_nutrition,
+        isAiSuggestion: true,
+      } : {
+        isAiSuggestion: false,
+      })
+    ) : {})
   };
 
   // Final cleanup for units from API based on habit type

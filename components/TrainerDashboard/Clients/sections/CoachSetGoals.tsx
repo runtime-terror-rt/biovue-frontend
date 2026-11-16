@@ -64,6 +64,60 @@ export default function CoachSetGoals({
   const [carbs, setCarbs] = useState<string>("");
   const [fat, setFat] = useState<string>("");
 
+  // Macro percentage allocation (auto-population)
+  const [proteinPct, setProteinPct] = useState<number>(30);
+  const [carbsPct, setCarbsPct] = useState<number>(40);
+  const [fatPct, setFatPct] = useState<number>(30);
+  const [savedGoalSnapshot, setSavedGoalSnapshot] = useState<any>(null);
+
+  // Auto-calculate grams from calories and percentages
+  const updateMacrosFromCaloriesAndPct = (cals: number, pPct: number, cPct: number, fPct: number) => {
+    if (!cals || cals <= 0) return;
+    const pGrams = Math.round((cals * (pPct / 100)) / 4);
+    const cGrams = Math.round((cals * (cPct / 100)) / 4);
+    const fGrams = Math.round((cals * (fPct / 100)) / 9);
+    setProtein(pGrams.toString());
+    setCarbs(cGrams.toString());
+    setFat(fGrams.toString());
+  };
+
+  const handleCaloriesChange = (val: string) => {
+    setCalories(val);
+    const num = Number(val);
+    if (!isNaN(num) && num > 0) {
+      updateMacrosFromCaloriesAndPct(num, proteinPct, carbsPct, fatPct);
+    }
+  };
+
+  const handlePercentageChange = (type: "protein" | "carbs" | "fat", newPct: number) => {
+    let p = proteinPct;
+    let c = carbsPct;
+    let f = fatPct;
+
+    if (type === "protein") p = newPct;
+    if (type === "carbs") c = newPct;
+    if (type === "fat") f = newPct;
+
+    setProteinPct(p);
+    setCarbsPct(c);
+    setFatPct(f);
+
+    const cals = Number(calories);
+    if (!isNaN(cals) && cals > 0) {
+      updateMacrosFromCaloriesAndPct(cals, p, c, f);
+    }
+  };
+
+  const applyPreset = (p: number, c: number, f: number) => {
+    setProteinPct(p);
+    setCarbsPct(c);
+    setFatPct(f);
+    const cals = Number(calories);
+    if (!isNaN(cals) && cals > 0) {
+      updateMacrosFromCaloriesAndPct(cals, p, c, f);
+    }
+  };
+
   // Custom supplement suggestions & notes
   const [customSupplementInput, setCustomSupplementInput] = useState<string>("");
   const [supplementNotes, setSupplementNotes] = useState<string>("");
@@ -95,6 +149,7 @@ export default function CoachSetGoals({
       const latestGoal = goalData.find((g: any) => g.is_active) || goalData[0];
 
       setGoalId(latestGoal.id); 
+      setSavedGoalSnapshot(latestGoal);
 
       setTargetWeight(latestGoal.target_weight?.toString() ?? "");
       setWeeklyWorkoutGoal(latestGoal.weekly_workout_goal?.toString() ?? "");
@@ -104,16 +159,31 @@ export default function CoachSetGoals({
       setWaterTarget(latestGoal.water_target?.toString() ?? "");
 
       // Macros
-      if (latestGoal.calories) setCalories(latestGoal.calories.toString());
-      if (latestGoal.protein) setProtein(latestGoal.protein.toString());
-      if (latestGoal.carbs) setCarbs(latestGoal.carbs.toString());
-      if (latestGoal.fat) setFat(latestGoal.fat.toString());
+      const cVal = latestGoal.calories || latestGoal.macros?.calories;
+      const pVal = latestGoal.protein || latestGoal.macros?.protein;
+      const crbVal = latestGoal.carbs || latestGoal.macros?.carbs;
+      const fVal = latestGoal.fat || latestGoal.macros?.fat;
 
-      if (latestGoal.macros) {
-        if (latestGoal.macros.calories) setCalories(latestGoal.macros.calories.toString());
-        if (latestGoal.macros.protein) setProtein(latestGoal.macros.protein.toString());
-        if (latestGoal.macros.carbs) setCarbs(latestGoal.macros.carbs.toString());
-        if (latestGoal.macros.fat) setFat(latestGoal.macros.fat.toString());
+      if (cVal) setCalories(cVal.toString());
+      if (pVal) setProtein(pVal.toString());
+      if (crbVal) setCarbs(crbVal.toString());
+      if (fVal) setFat(fVal.toString());
+
+      const cNum = Number(cVal || 0);
+      const pNum = Number(pVal || 0);
+      const crbNum = Number(crbVal || 0);
+      const fNum = Number(fVal || 0);
+
+      if (cNum > 0 && (pNum > 0 || crbNum > 0 || fNum > 0)) {
+        const pCal = pNum * 4;
+        const cCal = crbNum * 4;
+        const fCal = fNum * 9;
+        const total = pCal + cCal + fCal || cNum;
+        const pPct = Math.round((pCal / total) * 100);
+        const cPct = Math.round((cCal / total) * 100);
+        setProteinPct(pPct);
+        setCarbsPct(cPct);
+        setFatPct(Math.max(0, 100 - pPct - cPct));
       }
 
       if (latestGoal.supplement_notes) {
@@ -333,8 +403,130 @@ export default function CoachSetGoals({
               </h3>
             </div>
             <p className="text-sm text-[#666666] mb-5">
-              Set custom macronutrient and calorie targets specifically for this client (overrides generic program defaults)
+              Set custom macronutrient and calorie targets specifically for this client (overrides generic program defaults and AI suggestions)
             </p>
+
+            {/* Quick Reference for Previously Saved Targets */}
+            {savedGoalSnapshot && (savedGoalSnapshot.calories || savedGoalSnapshot.macros?.calories) && (
+              <div className="mb-5 p-3.5 bg-teal-50/80 border border-teal-200 rounded-xl flex flex-wrap items-center justify-between text-xs text-teal-900 gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse" />
+                  <span className="font-bold text-teal-900">
+                    Currently Assigned Targets for {clientDetails.name}:
+                  </span>
+                </div>
+                <div className="font-semibold flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-1 bg-white border border-teal-200 rounded-md text-teal-800 shadow-xs">
+                    <strong>{savedGoalSnapshot.calories || savedGoalSnapshot.macros?.calories}</strong> kcal
+                  </span>
+                  <span className="px-2.5 py-1 bg-white border border-teal-200 rounded-md text-teal-800 shadow-xs">
+                    <strong>{savedGoalSnapshot.protein || savedGoalSnapshot.macros?.protein || 0}g</strong> Protein
+                  </span>
+                  <span className="px-2.5 py-1 bg-white border border-teal-200 rounded-md text-teal-800 shadow-xs">
+                    <strong>{savedGoalSnapshot.carbs || savedGoalSnapshot.macros?.carbs || 0}g</strong> Carbs
+                  </span>
+                  <span className="px-2.5 py-1 bg-white border border-teal-200 rounded-md text-teal-800 shadow-xs">
+                    <strong>{savedGoalSnapshot.fat || savedGoalSnapshot.macros?.fat || 0}g</strong> Fats
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Macro Presets & Percentage Adjusters */}
+            <div className="mb-5 p-4 bg-gray-50/80 border border-gray-200 rounded-xl space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  Macro Ratio Presets (Auto-Calculates Grams):
+                </span>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                  proteinPct + carbsPct + fatPct === 100
+                    ? "bg-green-100 text-green-700"
+                    : "bg-amber-100 text-amber-700"
+                }`}>
+                  Total: {proteinPct + carbsPct + fatPct}% {proteinPct + carbsPct + fatPct === 100 ? "✓" : "(adjust to 100%)"}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => applyPreset(30, 40, 30)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-gray-200 hover:border-teal-500 hover:text-teal-700 transition-all cursor-pointer shadow-xs"
+                >
+                  Balanced (30P / 40C / 30F)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(40, 35, 25)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-gray-200 hover:border-teal-500 hover:text-teal-700 transition-all cursor-pointer shadow-xs"
+                >
+                  High Protein (40P / 35C / 25F)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(30, 15, 55)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-gray-200 hover:border-teal-500 hover:text-teal-700 transition-all cursor-pointer shadow-xs"
+                >
+                  Low Carb / Keto (30P / 15C / 55F)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(25, 55, 20)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-gray-200 hover:border-teal-500 hover:text-teal-700 transition-all cursor-pointer shadow-xs"
+                >
+                  Endurance (25P / 55C / 20F)
+                </button>
+              </div>
+
+              {/* Percentage sliders */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div className="bg-white p-2.5 rounded-lg border border-gray-200">
+                  <div className="flex justify-between text-xs font-medium text-gray-700 mb-1">
+                    <span>Protein %</span>
+                    <span className="font-bold text-teal-700">{proteinPct}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="10"
+                    max="60"
+                    step="5"
+                    value={proteinPct}
+                    onChange={(e) => handlePercentageChange("protein", Number(e.target.value))}
+                    className="w-full accent-teal-600 cursor-pointer"
+                  />
+                </div>
+                <div className="bg-white p-2.5 rounded-lg border border-gray-200">
+                  <div className="flex justify-between text-xs font-medium text-gray-700 mb-1">
+                    <span>Carbs %</span>
+                    <span className="font-bold text-teal-700">{carbsPct}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="5"
+                    max="70"
+                    step="5"
+                    value={carbsPct}
+                    onChange={(e) => handlePercentageChange("carbs", Number(e.target.value))}
+                    className="w-full accent-teal-600 cursor-pointer"
+                  />
+                </div>
+                <div className="bg-white p-2.5 rounded-lg border border-gray-200">
+                  <div className="flex justify-between text-xs font-medium text-gray-700 mb-1">
+                    <span>Fats %</span>
+                    <span className="font-bold text-teal-700">{fatPct}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="10"
+                    max="70"
+                    step="5"
+                    value={fatPct}
+                    onChange={(e) => handlePercentageChange("fat", Number(e.target.value))}
+                    className="w-full accent-teal-600 cursor-pointer"
+                  />
+                </div>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <div>
@@ -344,9 +536,9 @@ export default function CoachSetGoals({
                 <input
                   type="number"
                   value={calories}
-                  onChange={(e) => setCalories(e.target.value)}
+                  onChange={(e) => handleCaloriesChange(e.target.value)}
                   placeholder="e.g. 2200"
-                  className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg focus:ring-2 focus:ring-[#0D9488] outline-none"
+                  className="w-full px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg focus:ring-2 focus:ring-[#0D9488] outline-none font-semibold text-gray-900"
                 />
               </div>
               <div>
@@ -482,6 +674,12 @@ export default function CoachSetGoals({
               <label className="text-sm font-bold text-gray-800 block">
                 Specific Supplement Instructions & Guidance:
               </label>
+              {savedGoalSnapshot?.supplement_notes && (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700">
+                  <span className="font-bold text-gray-900 block mb-1">📋 Currently Active Supplement Instructions:</span>
+                  <p className="whitespace-pre-wrap">{savedGoalSnapshot.supplement_notes}</p>
+                </div>
+              )}
               <textarea
                 value={supplementNotes}
                 onChange={(e) => setSupplementNotes(e.target.value)}
@@ -542,18 +740,29 @@ export default function CoachSetGoals({
 
             {/* Workout Program Routine Textarea */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-[#374151] flex items-center gap-2">
-                <FileText size={16} className="text-[#0D9488]" />
-                <span>Prescribed Workout Routine / Plan:</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-[#374151] flex items-center gap-2">
+                  <FileText size={16} className="text-[#0D9488]" />
+                  <span>Prescribed Workout Routine / Plan:</span>
+                </label>
+                <span className="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                  Unlimited Length
+                </span>
+              </div>
               <p className="text-xs text-[#5F6F73]">
                 Write detailed exercise routines, sets, reps, daily schedule, or progression plans for this client.
               </p>
+              {savedGoalSnapshot?.workout_routine && (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700">
+                  <span className="font-bold text-gray-900 block mb-1">📋 Currently Active Workout Routine:</span>
+                  <p className="whitespace-pre-wrap font-mono max-h-32 overflow-y-auto text-gray-800">{savedGoalSnapshot.workout_routine}</p>
+                </div>
+              )}
               <textarea
                 value={workoutRoutine}
                 onChange={(e) => setWorkoutRoutine(e.target.value)}
                 placeholder="e.g. Day 1: Upper Body (Bench Press 4x8, Pull-ups 3x10, Shoulder Press 3x12)&#10;Day 2: Cardio & Core (30 mins HIIT + Plank intervals)&#10;Day 3: Lower Body (Squats 4x8, Romanian Deadlifts 3x10)..."
-                rows={5}
+                rows={6}
                 className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#0D9488] outline-none font-mono"
               />
             </div>

@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectCurrentUser, updateUser } from "@/redux/features/slice/authSlice";
 import { useGetProfileQuery } from "@/redux/features/api/profileApi";
 import { useGetPlansQuery, Plan } from "@/redux/features/api/adminDashboard/plan";
+import { isInvitedAndAccepted } from "@/lib/inviteHelpers";
 
 export interface DynamicUserPlanResult {
   userId: number | string | undefined;
@@ -111,11 +112,21 @@ export function useDynamicUserPlan(): DynamicUserPlanResult {
 
   const nameLower = resolvedName.toLowerCase();
 
-  const hasPlan = planId !== null && planId !== undefined && planId !== 0;
+  const isClientUnderTrainer = Boolean(
+    profileData?.is_invited ||
+    profileData?.has_trainer_access ||
+    currentUser?.is_invited ||
+    currentUser?.has_trainer_access ||
+    isInvitedAndAccepted(currentUser) ||
+    isInvitedAndAccepted(profileData)
+  );
 
-  const isPremium = hasPlan && (nameLower.includes("premium") || planId === 3);
-  const isPlus = hasPlan && !isPremium && (nameLower.includes("plus") || planId === 2);
+  const hasPlan = isClientUnderTrainer || (planId !== null && planId !== undefined && planId !== 0);
+
+  const isPremium = isClientUnderTrainer || (hasPlan && (nameLower.includes("premium") || planId === 3));
+  const isPlus = !isClientUnderTrainer && (hasPlan && !isPremium && (nameLower.includes("plus") || planId === 2));
   const isFree =
+    !isClientUnderTrainer &&
     hasPlan &&
     !isPremium &&
     !isPlus &&
@@ -123,7 +134,7 @@ export function useDynamicUserPlan(): DynamicUserPlanResult {
       nameLower.includes("free") ||
       Number(currentPlan?.price || 0) === 0);
 
-  const isPaid = isPlus || isPremium;
+  const isPaid = isClientUnderTrainer || isPlus || isPremium;
 
   const planName = isPremium
     ? "Premium"

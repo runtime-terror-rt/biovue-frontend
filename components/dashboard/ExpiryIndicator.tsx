@@ -24,9 +24,16 @@ export default function ExpiryIndicator({
 }: ExpiryIndicatorProps) {
   const status = useSubscriptionStatus();
   const { isTrial } = useTrialCountdown();
-  const { isPaid, isPlus, isPremium } = useDynamicUserPlan();
+  const { isPaid, isPlus, isPremium, profileData } = useDynamicUserPlan();
   const isPaidUser = isPaid || isPlus || isPremium || !isTrial;
   const [showTooltip, setShowTooltip] = useState(false);
+
+  // Clients under trainer subscription do not have personal plan expiration
+  const isClientUnderTrainer = Boolean(
+    profileData?.is_invited ||
+    profileData?.has_trainer_access
+  );
+  if (isClientUnderTrainer && !forceShow) return null;
 
   const isLoading = status.isLoading;
   const isCancelled = status.isCancelled;

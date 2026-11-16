@@ -84,7 +84,14 @@ export function useTrialCountdown() {
   }, [isPaid, user, dispatch]);
 
   if (isPaid) {
+    const isInvitedClient = Boolean(
+      user?.is_invited ||
+      user?.has_trainer_access ||
+      profileData?.is_invited ||
+      profileData?.has_trainer_access
+    );
     const activePaidPlanName =
+      (isInvitedClient ? "Premium" : null) ||
       (planId === 3 ? "Premium" : planId === 2 ? "Plus" : null) ||
       latestPayment?.plan?.name ||
       summaryData?.user?.plan_name ||

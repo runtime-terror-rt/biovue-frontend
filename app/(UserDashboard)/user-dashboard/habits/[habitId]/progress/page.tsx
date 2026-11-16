@@ -289,31 +289,57 @@ export default function HabitProgressPage() {
     skip: habitId !== 'nutrition' || !userId,
   });
 
+  const rawReport = nutritionReport?.data || nutritionReport;
+  const coachCaloriesNum =
+    rawReport?.target_macros?.calories ??
+    (rawReport?.statistics?.target_calories
+      ? parseInt(String(rawReport.statistics.target_calories).replace(/[^\d]/g, ""), 10)
+      : null);
+
+  const coachProteinNum =
+    rawReport?.target_macros?.protein ??
+    (rawReport?.statistics?.target_protein
+      ? parseInt(String(rawReport.statistics.target_protein).replace(/[^\d]/g, ""), 10)
+      : null);
+
+  const coachCarbsNum =
+    rawReport?.target_macros?.carbs ??
+    (rawReport?.statistics?.target_carbs
+      ? parseInt(String(rawReport.statistics.target_carbs).replace(/[^\d]/g, ""), 10)
+      : null);
+
+  const coachFatNum =
+    rawReport?.target_macros?.fat ??
+    (rawReport?.statistics?.target_fat
+      ? parseInt(String(rawReport.statistics.target_fat).replace(/[^\d]/g, ""), 10)
+      : null);
+
+  const hasCoachCalories = Boolean(coachCaloriesNum && !isNaN(coachCaloriesNum) && coachCaloriesNum > 0);
+
   const userCalorieTarget = Number(
-    aiNutritionData?.target_nutrition?.calories?.value ||
-    nutritionReport?.statistics?.target_calories ||
-    nutritionReport?.data?.statistics?.target_calories ||
-    2000
+    hasCoachCalories
+      ? coachCaloriesNum
+      : (aiNutritionData?.target_nutrition?.calories?.value || 2000)
   );
 
   const macroTargets = {
     protein: Number(
-      aiNutritionData?.target_nutrition?.macros?.protein?.value ||
-      nutritionReport?.statistics?.target_protein ||
-      nutritionReport?.data?.statistics?.target_protein ||
-      Math.round((userCalorieTarget * 0.3) / 4)
+      (coachProteinNum && !isNaN(coachProteinNum) && coachProteinNum > 0)
+        ? coachProteinNum
+        : (aiNutritionData?.target_nutrition?.macros?.protein?.value ||
+           Math.round((userCalorieTarget * 0.3) / 4))
     ),
     carbs: Number(
-      aiNutritionData?.target_nutrition?.macros?.carbs?.value ||
-      nutritionReport?.statistics?.target_carbs ||
-      nutritionReport?.data?.statistics?.target_carbs ||
-      Math.round((userCalorieTarget * 0.5) / 4)
+      (coachCarbsNum && !isNaN(coachCarbsNum) && coachCarbsNum > 0)
+        ? coachCarbsNum
+        : (aiNutritionData?.target_nutrition?.macros?.carbs?.value ||
+           Math.round((userCalorieTarget * 0.5) / 4))
     ),
     fat: Number(
-      aiNutritionData?.target_nutrition?.macros?.fat?.value ||
-      nutritionReport?.statistics?.target_fat ||
-      nutritionReport?.data?.statistics?.target_fat ||
-      Math.round((userCalorieTarget * 0.2) / 9)
+      (coachFatNum && !isNaN(coachFatNum) && coachFatNum > 0)
+        ? coachFatNum
+        : (aiNutritionData?.target_nutrition?.macros?.fat?.value ||
+           Math.round((userCalorieTarget * 0.2) / 9))
     ),
   };
 

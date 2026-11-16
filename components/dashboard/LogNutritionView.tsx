@@ -6,6 +6,7 @@ import {
   useGetNutritionShowQuery,
   useCalculateNutritionMutation,
   useDeleteFoodMutation,
+  useGetNutritionReportQuery,
 } from "@/redux/features/api/userDashboard/nutrition";
 import {
   useGenerateMealMutation,
@@ -94,6 +95,35 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
     skip: !userId,
   });
 
+  const { data: nutritionReport } = useGetNutritionReportQuery(7);
+
+  const rawReport = nutritionReport?.data || nutritionReport;
+  const coachCaloriesNum =
+    rawReport?.target_macros?.calories ??
+    (rawReport?.statistics?.target_calories
+      ? parseInt(String(rawReport.statistics.target_calories).replace(/[^\d]/g, ""), 10)
+      : null);
+
+  const coachProteinNum =
+    rawReport?.target_macros?.protein ??
+    (rawReport?.statistics?.target_protein
+      ? parseInt(String(rawReport.statistics.target_protein).replace(/[^\d]/g, ""), 10)
+      : null);
+
+  const coachCarbsNum =
+    rawReport?.target_macros?.carbs ??
+    (rawReport?.statistics?.target_carbs
+      ? parseInt(String(rawReport.statistics.target_carbs).replace(/[^\d]/g, ""), 10)
+      : null);
+
+  const coachFatNum =
+    rawReport?.target_macros?.fat ??
+    (rawReport?.statistics?.target_fat
+      ? parseInt(String(rawReport.statistics.target_fat).replace(/[^\d]/g, ""), 10)
+      : null);
+
+  const hasCoachTargets = Boolean(coachCaloriesNum && !isNaN(coachCaloriesNum) && coachCaloriesNum > 0);
+
   const [activeTab, setActiveTab] = useState<"log" | "generate" | "history">(
     "log",
   );
@@ -107,31 +137,17 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
 
   const [calorieTarget, setCalorieTarget] = useState(2000);
   const [customUnitInput, setCustomUnitInput] = useState("");
-  // const [meals, setMeals] = useState<MealEntry[]>([
-  //   {
-  //     id: "static-1",
-  //     type: "breakfast",
-  //     time: "08:00 AM",
-  //     foods: [
-  //       {
-  //         id: "f-1",
-  //         name: "Eggs",
-  //         quantity: 2,
-  //         unit: "piece",
-  //         caloriesPerUnit: 78,
-  //         calories: 156,
-  //         protein: 12.6,
-  //         carbs: 0.8,
-  //         fat: 10.6,
-  //       },
-  //     ],
-  //   },
-  // ]);
 
   const [meals, setMeals] = useState<MealEntry[]>([]);
-  // Sync targets with AI suggestions
+  // Sync targets with Coach assignment (priority) or AI suggestions fallback
   useEffect(() => {
-    if (aiNutritionData?.target_nutrition) {
+    if (hasCoachTargets && coachCaloriesNum) {
+      setTargetCalories(coachCaloriesNum);
+      setCalorieTarget(coachCaloriesNum);
+      if (coachProteinNum) setTargetProtein(coachProteinNum);
+      if (coachCarbsNum) setTargetCarbs(coachCarbsNum);
+      if (coachFatNum) setTargetFat(coachFatNum);
+    } else if (aiNutritionData?.target_nutrition) {
       const target = aiNutritionData.target_nutrition;
       if (target.calories?.value) {
         setTargetCalories(target.calories.value);
@@ -147,7 +163,7 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
         setTargetFat(target.macros.fat.value);
       }
     }
-  }, [aiNutritionData]);
+  }, [hasCoachTargets, coachCaloriesNum, coachProteinNum, coachCarbsNum, coachFatNum, aiNutritionData]);
 
   // useEffect(() => {
   //   if (existingNutrition?.nutrition) {
@@ -188,12 +204,14 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
   useEffect(() => {
     const nutri = existingNutrition?.nutrition || existingNutrition?.data?.nutrition;
 
-    // Daily calorie target from AI target or existing nutrition target
+    // Daily calorie target: coach target takes precedence, then AI, then existing, then 2000
     const targetVal = Number(
-      aiNutritionData?.target_nutrition?.calories?.value ||
-      nutri?.daily_target ||
-      nutri?.target_calories ||
-      2000
+      (hasCoachTargets && coachCaloriesNum)
+        ? coachCaloriesNum
+        : (aiNutritionData?.target_nutrition?.calories?.value ||
+           nutri?.daily_target ||
+           nutri?.target_calories ||
+           2000)
     );
     setCalorieTarget(targetVal);
     setTargetCalories(targetVal);
@@ -335,8 +353,15 @@ export default function FoodLogView({ onSave, onBack }: FoodLogViewProps) {
     return (total / calorieTarget) * 100;
   };
 
-  // Macro targets based on AI suggested target or calorie target
+  // Macro targets based on Coach assigned target (priority), AI suggested target, or calorie target
   const getMacroTargets = () => {
+    if (hasCoachTargets) {
+      return {
+        protein: Number(coachProteinNum || (calorieTarget * 0.3) / 4),
+        carbs: Number(coachCarbsNum || (calorieTarget * 0.5) / 4),
+        fat: Number(coachFatNum || (calorieTarget * 0.2) / 9),
+      };
+    }
     const aiMacros = aiNutritionData?.target_nutrition?.macros;
     const p = Number(aiMacros?.protein?.value || targetProtein || 0);
     const c = Number(aiMacros?.carbs?.value || targetCarbs || 0);
