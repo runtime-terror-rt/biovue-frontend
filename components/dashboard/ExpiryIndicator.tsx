@@ -33,7 +33,6 @@ export default function ExpiryIndicator({
     profileData?.is_invited ||
     profileData?.has_trainer_access
   );
-  if (isClientUnderTrainer && !forceShow) return null;
 
   const isLoading = status.isLoading;
   const isCancelled = status.isCancelled;
@@ -142,6 +141,9 @@ export default function ExpiryIndicator({
 
   // If loading and no props passed, return null
   if (isLoading && propDiffDays === undefined) return null;
+
+  // Clients under trainer subscription do not have personal plan expiration
+  if (isClientUnderTrainer && !forceShow) return null;
 
   // Show if cancellation was requested OR if explicit alert or forceShow
   const shouldShow =

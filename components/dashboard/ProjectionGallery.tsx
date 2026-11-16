@@ -79,6 +79,23 @@ export default function ProjectionGallery({
   const [leftViewMode, setLeftViewMode] = useState<"future" | "current">("future");
   const [rightViewMode, setRightViewMode] = useState<"future" | "current">("future");
 
+  const rawProjections = (data?.data as ProjectionItem[]) || [];
+
+  // Sort projections chronologically (newest first) so the most recently generated one is at the top
+  const projections = React.useMemo(() => {
+    return [...rawProjections].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+  }, [rawProjections]);
+
+  React.useEffect(() => {
+    if (projections.length >= 2) {
+      if (!compareLeftId) setCompareLeftId(projections[1]?.id ?? "");
+      if (!compareRightId) setCompareRightId(projections[0]?.id ?? "");
+    }
+  }, [projections, compareLeftId, compareRightId]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -86,8 +103,6 @@ export default function ProjectionGallery({
       </div>
     );
   }
-
-  const rawProjections = data?.data || [];
 
   // if (rawProjections.length === 0) {
   //   return null; // Don't show the gallery section if there are no projections yet
@@ -111,11 +126,6 @@ export default function ProjectionGallery({
       </div>
     );
   }
-  // Sort projections chronologically (newest first) so the most recently generated one is at the top
-  const projections = [...rawProjections].sort(
-    (a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  );
 
   const totalPages = Math.ceil(projections.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -123,13 +133,6 @@ export default function ProjectionGallery({
     startIndex,
     startIndex + itemsPerPage,
   );
-
-  React.useEffect(() => {
-    if (projections.length >= 2) {
-      if (!compareLeftId) setCompareLeftId(projections[1]?.id ?? "");
-      if (!compareRightId) setCompareRightId(projections[0]?.id ?? "");
-    }
-  }, [projections, compareLeftId, compareRightId]);
 
   const leftProj = projections.find((p) => String(p.id) === String(compareLeftId)) || null;
   const rightProj = projections.find((p) => String(p.id) === String(compareRightId)) || null;
