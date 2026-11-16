@@ -29,7 +29,9 @@ export default function ExpiryIndicator({
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Clients under trainer subscription do not have personal plan expiration
-  const isClientUnderTrainer = Boolean(
+  const userRole = String(profileData?.role || profileData?.user_type || "").toLowerCase();
+  const isIndividual = !userRole || userRole === "individual" || userRole === "user" || userRole === "member";
+  const isClientUnderTrainer = isIndividual && Boolean(
     profileData?.is_invited ||
     profileData?.has_trainer_access
   );

@@ -109,14 +109,17 @@ export function isFreeTrialPlan(plan?: any): boolean {
 export function hasPaidPlan(user?: any, paymentSummary?: any, profileData?: any): boolean {
   if (!user && !paymentSummary && !profileData) return false;
 
+  const isIndividual = getUserPlanType(user) === "individual";
+
   // -1. Clients under a trainer (invited or with trainer access) inherit full Premium access
   if (
-    user?.is_invited ||
-    user?.has_trainer_access ||
-    isInvitedAndAccepted(user) ||
-    profileData?.is_invited ||
-    profileData?.has_trainer_access ||
-    isInvitedAndAccepted(profileData)
+    isIndividual &&
+    (user?.is_invited ||
+      user?.has_trainer_access ||
+      isInvitedAndAccepted(user) ||
+      profileData?.is_invited ||
+      profileData?.has_trainer_access ||
+      isInvitedAndAccepted(profileData))
   ) {
     return true;
   }

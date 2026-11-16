@@ -112,7 +112,16 @@ export function useDynamicUserPlan(): DynamicUserPlanResult {
 
   const nameLower = resolvedName.toLowerCase();
 
-  const isClientUnderTrainer = Boolean(
+  const userRole = String(
+    currentUser?.role ||
+    currentUser?.user_type ||
+    profileData?.role ||
+    profileData?.user_type ||
+    ""
+  ).toLowerCase();
+  const isIndividual = !userRole || userRole === "individual" || userRole === "user" || userRole === "member";
+
+  const isClientUnderTrainer = isIndividual && Boolean(
     profileData?.is_invited ||
     profileData?.has_trainer_access ||
     currentUser?.is_invited ||

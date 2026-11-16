@@ -86,38 +86,29 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
 
   const profileData = profileResponse?.data || profileResponse;
 
-  // Clients under a trainer inherit unlocked access from the trainer and have no personal expiration
-  const isInvitedClient = Boolean(
-    user?.is_invited ||
-    user?.has_trainer_access ||
-    profileData?.is_invited ||
-    profileData?.has_trainer_access
-  );
+  const userRole = String(
+    user?.role ||
+    user?.user_type ||
+    profileData?.role ||
+    profileData?.user_type ||
+    ""
+  ).toLowerCase();
+  const isIndividualUser =
+    !userRole ||
+    userRole === "individual" ||
+    userRole === "user" ||
+    userRole === "member";
 
-  if (isInvitedClient) {
-    return {
-      restricted: false,
-      isSafe: true,
-      isWarning: false,
-      reason: "",
-      isLoading: false,
-      projection_limit: 999,
-      member_limit: 0,
-      used_seats: 0,
-      total_seats: 0,
-      remaining_seats: 0,
-      seats_ratio: "0/0",
-      seats_left: 999,
-      diffDays: 999,
-      hasExpiry: false,
-      expiryOver: false,
-      projectionZero: false,
-      isCancelled: false,
-      cancelRequested: false,
-      accessUntil: null,
-      expiryTimestamp: null,
-    };
-  }
+  // Clients under a trainer inherit unlocked access from the trainer and have no personal expiration
+  const isInvitedClient =
+    isIndividualUser &&
+    Boolean(
+      user?.is_invited ||
+      user?.has_trainer_access ||
+      profileData?.is_invited ||
+      profileData?.has_trainer_access
+    );
+
   const rawPlanId =
     profileData?.plan_id ??
     profileData?.profile?.plan_id ??
@@ -130,6 +121,7 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
 
   const latestPayment = paymentSummary?.latest_payment;
   const isPaid =
+    isInvitedClient ||
     planId === 2 ||
     planId === 3 ||
     hasPaidPlan(user, paymentSummary, profileData);
@@ -235,6 +227,11 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
     effectiveExpiryTime = Date.now() + user.plan_duration * 24 * 60 * 60 * 1000;
   }
 
+  // Invited clients under a trainer do not have personal plan expiration
+  if (isInvitedClient) {
+    effectiveExpiryTime = null;
+  }
+
   const now = Date.now();
 
   if (effectiveExpiryTime !== null) {
@@ -287,12 +284,12 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
   const isTrialEnded = !isPaid && !planId && diffInDays > 7;
 
   return {
-    restricted: isTrialEnded,
-    isSafe: isPaid || !isTrialEnded,
+    restricted: !isInvitedClient && isTrialEnded,
+    isSafe: isInvitedClient || isPaid || !isTrialEnded,
     isWarning: isCancelled,
     reason: isCancelled
       ? "cancellation_pending"
-      : isTrialEnded
+      : !isInvitedClient && isTrialEnded
       ? "trial_ended"
       : "",
     isLoading: false,
@@ -303,8 +300,8 @@ export const useSubscriptionStatus = (): SubscriptionStatus => {
     remaining_seats: remainingSeats,
     seats_ratio: seatsRatio,
     seats_left: remainingSeats,
-    diffDays: isPaid ? 30 : Math.max(0, Math.ceil(7 - diffInDays)),
-    hasExpiry: isCancelled,
+    diffDays: (isPaid || isInvitedClient) ? 30 : Math.max(0, Math.ceil(7 - diffInDays)),
+    hasExpiry: false,
     expiryOver: false,
     projectionZero: projectionLimit <= 0,
     isCancelled,
